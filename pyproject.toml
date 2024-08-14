@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "athena"
+version = "0.0.1"
+description = "Create, backtest and deploy trading strategies"
+authors = ["Baptiste Bouillon <1bouillonbaptiste@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.7"
+ruff = "0.5.7"
+pytest = "^8.3.2"
+
+[build-system]
+requires = ["poetry-core", "setuptools"]
+build-backend = "poetry.core.masonry.api"
