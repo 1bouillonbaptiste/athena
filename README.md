@@ -18,3 +18,10 @@ The project will then automatically configure itself with :
 ```bash
 make setup
 ```
+
+## Usage
+
+> [!WARNING]
+> You need cuda 12.2 to be installed on your machine with recommended nvidia-535 drivers
+
+Build the docker image using ```make build``` and then run it locally with ```make local```.
