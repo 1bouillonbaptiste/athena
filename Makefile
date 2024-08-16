@@ -7,7 +7,6 @@ setup:
 	pre-commit install
 	poetry install
 
-
 build:
 	docker buildx build \
 	--build-arg CACHEBUST=$(date +%s) \
