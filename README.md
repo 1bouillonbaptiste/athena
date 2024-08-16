@@ -5,12 +5,12 @@
 
 ## Installation
 
-Install ```pyenv``` with python ```3.10```.
+Install ```pyenv``` with python ```3.10.12```.
 
 Create your own environment with :
 
 ```bash
-pyenv virtualenv 3.12.5 athena
+pyenv virtualenv 3.10.12 athena
 ```
 
 The project will then automatically configure itself with :
