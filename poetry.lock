@@ -164,16 +164,6 @@ tests = ["cloudpickle", "hypothesis", "mypy (>=1.11.1)", "pympler", "pytest (>=4
 tests-mypy = ["mypy (>=1.11.1)", "pytest-mypy-plugins"]
 
 [[package]]
-name = "binance"
-version = "0.3"
-description = "Binance API wrapper"
-optional = false
-python-versions = "*"
-files = [
-    {file = "binance-0.3-py2.py3-none-any.whl", hash = "sha256:9bdcfac96a5c2713f8a018d9f19a21317bf25ab5f9e12a542d8a6f08f73189c9"},
-]
-
-[[package]]
 name = "certifi"
 version = "2024.7.4"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -1404,4 +1394,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ee40d2ab0195366a33409f4b3bfabb27eac8556be79f14fd34afbadc45116736"
+content-hash = "ba5ef339d781e5f9b4b03c4a905492380112b89c07ba0b457869f5f57289d765"
