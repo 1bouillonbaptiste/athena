@@ -6,7 +6,10 @@ class BinanceClient:
     """Main interface between binance and athena."""
 
     def __init__(self):
-        self._client = Client(BINANCE_KEY, BINANCE_SECRET)
+        if BINANCE_KEY is None or BINANCE_SECRET is None:
+            self._client = None
+        else:
+            self._client = Client(BINANCE_KEY, BINANCE_SECRET)
 
     def get_account(self):
         """Get account infos."""
