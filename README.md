@@ -5,7 +5,7 @@
 
 ## Installation
 
-Install ```pyenv``` with python ```3.12.5```.
+Install ```pyenv``` with python ```3.10```.
 
 Create your own environment with :
 
