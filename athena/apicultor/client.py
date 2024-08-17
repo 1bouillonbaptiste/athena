@@ -1,4 +1,5 @@
 from binance.client import Client
+
 from athena.apicultor.constants import BINANCE_KEY, BINANCE_SECRET
 
 
@@ -14,6 +15,18 @@ class BinanceClient:
     def get_account(self):
         """Get account infos."""
         return self._client.get_account()
+
+    def get_historical_klines(
+        self,
+        symbol: str,
+        interval: str,
+        start_str: str,
+        end_str: str,
+    ):
+        """Get historical klines."""
+        return self._client.get_historical_klines(
+            symbol=symbol, interval=interval, start_str=start_str, end_str=end_str
+        )
 
 
 def get_assets_balances(client: BinanceClient) -> dict[str, float]:
