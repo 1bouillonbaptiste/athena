@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from athena.apicultor.client import BinanceClient
-from athena.apicultor.types import Candle, Period
+from athena.types import Candle, Period
 
 
 def fetch_historical_data(
@@ -59,7 +59,7 @@ def fetch_historical_data(
             Candle(
                 coin=coin,
                 currency=currency,
-                period=period,
+                period=period.timeframe,
                 open_time=open_time,
                 open=float(bar[1]),
                 high=float(bar[2]),

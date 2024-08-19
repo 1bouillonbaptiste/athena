@@ -1,7 +1,5 @@
 from datetime import datetime
 
-from athena.apicultor.types.period import Period
-
 
 class Candle:
     """Indicators of a specific candle.
@@ -25,7 +23,7 @@ class Candle:
         self,
         coin: str,
         currency: str,
-        period: Period,
+        period: str,
         open_time: datetime,
         open: float,
         high: float,
@@ -52,7 +50,10 @@ class Candle:
         self.taker_quote_volume = taker_quote_volume
 
     def __repr__(self):
-        return self.__dict__
+        return str(self.__dict__)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def to_dict(self):
+        return self.__dict__
