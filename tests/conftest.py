@@ -2,6 +2,7 @@ import pytest
 import datetime
 
 from athena.types import Candle
+import pandas as pd
 
 
 @pytest.fixture
@@ -61,3 +62,33 @@ def sample_candles(sample_bars):
         ]
 
     return generate_candles
+
+
+@pytest.fixture()
+def sample_fluctuations():
+    def generate_fluctuations(coin="BTC", currency="USDT", timeframe="4h"):
+        return pd.DataFrame(
+            {
+                "coin": [coin] * 2,
+                "currency": [currency] * 2,
+                "period": [timeframe] * 2,
+                "open_time": [
+                    datetime.datetime.fromisoformat("2020-01-01 00:00:00"),
+                    datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
+                ],
+                "open": [7195.2, 7225.0],
+                "high": [7245.0, 7236.2],
+                "low": [7175.4, 7199.1],
+                "close": [7225.0, 7209.8],
+                "volume": [2833.7, 2061.3],
+                "quote_volume": [20445895.8, 14890182.3],
+                "nb_trades": [32476, 29991],
+                "taker_volume": [
+                    1548.8,
+                    1049.7,
+                ],
+                "taker_quote_volume": [11176594.4, 7582850.4],
+            }
+        )
+
+    return generate_fluctuations

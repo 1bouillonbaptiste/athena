@@ -25,7 +25,7 @@ class Database:
         fluctuations = (
             pd.concat([pd.read_csv(file) for file in path.glob("*.csv")])
             .sort_values(by="open_time", ascending=True)
-            .drop_duplicates(subset="open_time")
+            .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
             .reset_index(drop=True)
             .astype({"open_time": "datetime64[ns]"})
         )
