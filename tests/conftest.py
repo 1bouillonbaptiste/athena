@@ -9,13 +9,13 @@ import pandas as pd
 def sample_bars():
     return [
         [
-            1577833200000,
+            datetime.datetime.fromisoformat("2020-01-01 00:00:00").timestamp() * 1000,
             "7195.2",
             "7245.",
             "7175.4",
             "7225.0",
             "2833.7",
-            1577847599999,
+            datetime.datetime.fromisoformat("2020-01-01 03:59:59").timestamp() * 1000,
             "20445895.8",
             32476,
             "1548.8",
@@ -23,13 +23,13 @@ def sample_bars():
             "0",
         ],
         [
-            1577847600000,
+            datetime.datetime.fromisoformat("2020-01-01 04:00:00").timestamp() * 1000,
             "7225.0",
             "7236.2",
             "7199.1",
             "7209.8",
             "2061.3",
-            1577861999999,
+            datetime.datetime.fromisoformat("2020-01-01 07:59:59").timestamp() * 1000,
             "14890182.3",
             29991,
             "1049.7",
