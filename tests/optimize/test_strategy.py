@@ -16,8 +16,20 @@ class DummyStrategy(Strategy):
                     signals.append(Signal.BUY)
                 case 5:  # panic sell on friday
                     signals.append(Signal.SELL)
-            print(row["open_time"].isoweekday())
         return signals
+
+
+def test_strategy_params(sample_fluctuations):
+    strategy = DummyStrategy(
+        fluctuations=sample_fluctuations(),
+        position_size=0.33,
+        take_profit_pct=0.01,
+        stop_loss_pct=0.01,
+    )
+    assert strategy.name == "dummy_strategy"
+    assert strategy.position_size == 0.33
+    assert strategy.take_profit_pct == 0.01
+    assert strategy.stop_loss_pct == 0.01
 
 
 def test_strategy_compute_signals():
