@@ -19,9 +19,8 @@ class DummyStrategy(Strategy):
         return signals
 
 
-def test_strategy_params(sample_fluctuations):
+def test_strategy_params():
     strategy = DummyStrategy(
-        fluctuations=sample_fluctuations(),
         position_size=0.33,
         take_profit_pct=0.01,
         stop_loss_pct=0.01,
@@ -32,12 +31,12 @@ def test_strategy_params(sample_fluctuations):
     assert strategy.stop_loss_pct == 0.01
 
 
-def test_strategy_compute_signals():
+def test_strategy_get_signals():
     fluctuations = pd.DataFrame(
         {"open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D")}
     )
-    strategy = DummyStrategy(fluctuations)
-    assert strategy.signals == {
+    strategy = DummyStrategy()
+    assert strategy.get_signals(fluctuations=fluctuations) == {
         date: signal
         for date, signal in zip(
             fluctuations["open_time"],
@@ -52,3 +51,19 @@ def test_strategy_compute_signals():
             ],
         )
     }
+
+
+def test_strategy_compute_signals():
+    fluctuations = pd.DataFrame(
+        {"open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D")}
+    )
+    strategy = DummyStrategy()
+    assert strategy.compute_signals(fluctuations=fluctuations) == [
+        Signal.BUY,
+        Signal.BUY,
+        Signal.BUY,
+        Signal.BUY,
+        Signal.SELL,
+        Signal.WAIT,
+        Signal.WAIT,
+    ]

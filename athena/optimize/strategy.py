@@ -14,7 +14,6 @@ class Strategy:
 
     def __init__(
         self,
-        fluctuations: pd.DataFrame,
         name: str = None,
         position_size: float = 1,
         stop_loss_pct: float = None,
@@ -28,11 +27,34 @@ class Strategy:
         self.position_size = position_size
         self.stop_loss_pct = stop_loss_pct
         self.take_profit_pct = take_profit_pct
-        self.signals = {
+        self.signals = None
+
+    def get_signals(self, fluctuations: pd.DataFrame) -> {datetime.datetime, Signal}:
+        """Get the strategy signals associated to input fluctuations.
+
+        Args:
+            fluctuations: financial data
+
+        Returns:
+            a mapping of signal for each date as a dictionary
+
+        Raises:
+            ValueError: if signals are inconsistent with fluctuations
+        """
+        signals = self.compute_signals(fluctuations=fluctuations)
+
+        if len(signals) > len(fluctuations):
+            raise ValueError(
+                f"The strategy `{self.name}` produced too many signals, expected {len(fluctuations)}, got {len(signals)}"
+            )
+
+        # fill signals with WAIT at the beginning
+        signals = [Signal.WAIT] * (len(fluctuations) - len(signals)) + signals
+        return {
             date: signal
             for date, signal in zip(
                 fluctuations["open_time"],
-                self.compute_signals(fluctuations=fluctuations),
+                signals,
             )
         }
 
@@ -40,6 +62,7 @@ class Strategy:
         """Compute the signals associated to fluctuations based on a strategy.
 
         Overwrite this method with your own signals computation function.
+        The output signal size must match the input fluctuations size, otherwise WAIT will be added at the beginning.
 
         Args:
             fluctuations: market data fluctuations
