@@ -22,7 +22,7 @@ def position():
 
 
 def test_position(position):
-    assert position.__dict__ == {
+    assert position.model_dump() == {
         "strategy_name": "my_strategy",
         "coin": "BTC",
         "currency": "USDT",
@@ -38,7 +38,7 @@ def test_position(position):
 def test_trade(position):
     assert Trade.from_position(
         position, close_date=datetime.datetime(2024, 8, 25), close_price=125
-    ).__dict__ == {
+    ).model_dump() == {
         "strategy_name": "my_strategy",
         "coin": "BTC",
         "currency": "USDT",
