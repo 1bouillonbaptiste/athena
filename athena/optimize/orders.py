@@ -1,6 +1,6 @@
 import datetime
 
-from athena.types import Side
+from athena.types import Side, Coin
 from pydantic import BaseModel
 
 
@@ -52,3 +52,13 @@ class Trade(Position):
         return cls(
             close_date=close_date, close_price=close_price, **position.model_dump()
         )
+
+
+class Portfolio(BaseModel):
+    """A mapping of an account's available coins.
+
+    Attributes:
+        assets: a dictionary where each key is a coin and the associated value is the available amount of that coin
+    """
+
+    assets: dict[Coin, float]
