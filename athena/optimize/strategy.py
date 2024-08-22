@@ -76,4 +76,4 @@ class Strategy:
 
 
 def split_uppercase_words(string: str) -> list[str]:
-    return re.findall("[A-Z][^A-Z]*", string)
+    return re.sub(r"([A-Z]+)", r" \1", string).split()
