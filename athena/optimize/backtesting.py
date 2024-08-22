@@ -88,13 +88,13 @@ def get_trades_from_strategy_and_fluctuations(
 
 
 def check_position_exit_signals(
-    position: Position | None, row: pd.Series
+    position: Position | None, row: pd.DataFrame
 ) -> tuple[float | None, datetime.datetime | None]:
     """Check if a candle reaches position's take profit or stop loss.
 
     Args:
         position: any open position
-        row: a market candle
+        row: a market candle as a dataframe of size 1
 
     Returns:
         close_price: the sell price of the position or None if position remains open
@@ -119,23 +119,30 @@ def check_position_exit_signals(
         price_reach_tp and price_reach_sl
     ):  # candle is very wide, check which signal occurred first
         if ("high_time" in row) and ("low_time" in row):
-            if row["high_time"] < row["low_time"]:  # price reached high before low
+            if (
+                row["high_time"].values[0] < row["low_time"].values[0]
+            ):  # price reached high before low
                 close_price = position.take_profit
                 close_date = pd.to_datetime(row["high_time"].values[0]).to_pydatetime()
             else:  # price reached low before high
                 close_price = position.stop_loss
                 close_date = pd.to_datetime(row["low_time"].values[0]).to_pydatetime()
         else:  # we don't have granularity, assume close price is close enough to real sell price
-            close_price = row["close"]
-            close_date = pd.to_datetime(
-                row["low_time"].values[0]
-            ).to_pydatetime() + datetime.timedelta(**{period.unit_full: period.value})
+            close_price = row["close"].values[0]
+            if "close_time" in row:
+                close_date = pd.to_datetime(row["close_time"].values[0]).to_pydatetime()
+            else:
+                close_date = pd.to_datetime(
+                    row["open_time"].values[0]
+                ).to_pydatetime() + datetime.timedelta(
+                    **{period.unit_full: period.value}
+                )
     elif price_reach_tp:
         time_column = "high_time" if "high_time" in row else "close_time"
         close_price = position.take_profit
         close_date = pd.to_datetime(row[time_column].values[0]).to_pydatetime()
     elif price_reach_sl:
-        time_column = "low_time" if "high_time" in row else "close_time"
+        time_column = "low_time" if "low_time" in row else "close_time"
         close_price = position.stop_loss
         close_date = pd.to_datetime(row[time_column].values[0]).to_pydatetime()
     else:  # we don't close the position
