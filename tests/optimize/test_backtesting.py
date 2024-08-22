@@ -42,7 +42,11 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal():
     fluctuations = pd.DataFrame(
         {
             "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
+            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
             "period": "1d",
+            "open": [50, 100, 150, 200, 250, 300, 350],
+            "high": [125, 175, 225, 275, 325, 375, 425],
+            "low": [40, 90, 140, 190, 240, 290, 340],
             "close": [100, 150, 200, 250, 300, 350, 400],
         }
     )
@@ -83,6 +87,7 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp():
     fluctuations = pd.DataFrame(
         {
             "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
+            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
             "period": "1d",
             "open": [50, 100, 150, 200, 250, 300, 350],
             "high": [125, 175, 225, 275, 325, 375, 425],
@@ -103,19 +108,19 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp():
             "2024-08-20 00:00:00"
         ),  # open next day = tuesday
         "close_date": datetime.datetime.fromisoformat(
-            "2024-08-24 00:00:00"
+            "2024-08-21 00:00:00"  # "high_time" is missing, so we take close_time
         ),  # close next day = saturday
-        "trade_duration": datetime.timedelta(days=4),
+        "trade_duration": datetime.timedelta(days=1),
         "initial_investment": 33.0,
         "open_price": 100.0,
-        "close_price": 300.0,
+        "close_price": 110.00000000000001,
         "amount": 0.32966999999999996,
         "stop_loss": None,
         "take_profit": 110.00000000000001,
         "open_fees": 0.033,
-        "close_fees": 0.09890099999999999,
-        "total_fees": 0.131901,
-        "total_profit": 65.76909899999998,
+        "close_fees": 0.0362637,
+        "total_fees": 0.06926370000000001,
+        "total_profit": 3.1944363,
         "is_win": True,
         "side": Side.LONG,
     }
@@ -127,6 +132,7 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl():
     fluctuations = pd.DataFrame(
         {
             "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
+            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
             "period": "1d",
             "open": [50, 100, 150, 200, 250, 300, 350],
             "high": [125, 175, 225, 275, 325, 375, 425],
@@ -171,7 +177,11 @@ def test_get_trades_from_strategy_and_fluctuations_position_not_closed():
     fluctuations = pd.DataFrame(
         {
             "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
+            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
             "period": "1d",
+            "open": [50, 100, 150, 200, 250, 300, 350],
+            "high": [125, 175, 225, 275, 325, 375, 425],
+            "low": [40, 90, 140, 190, 240, 290, 340],
             "close": [100, 150, 200, 250, 300, 350, 400],
         }
     )
