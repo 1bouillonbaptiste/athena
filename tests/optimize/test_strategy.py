@@ -36,8 +36,8 @@ def test_strategy_get_signals():
         {"open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D")}
     )
     strategy = DummyStrategy()
-    assert strategy.get_signals(fluctuations=fluctuations) == {
-        date: signal
+    assert list(strategy.get_signals(fluctuations=fluctuations)) == [
+        (date, signal)
         for date, signal in zip(
             fluctuations["open_time"],
             [
@@ -50,7 +50,7 @@ def test_strategy_get_signals():
                 Signal.WAIT,
             ],
         )
-    }
+    ]
 
 
 def test_strategy_compute_signals():

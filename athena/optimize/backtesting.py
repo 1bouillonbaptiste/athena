@@ -1,6 +1,8 @@
 from athena.optimize import Strategy, Trade
 import pandas as pd
 
+from athena.types import Signal
+
 
 def get_trades_from_strategy_and_fluctuations(
     strategy: Strategy, fluctuations: pd.DataFrame
@@ -14,9 +16,19 @@ def get_trades_from_strategy_and_fluctuations(
     Returns:
         market movement as a list of trades
     """
-    # TODO: iterate over fluctuations
-    #       1/ get entry signal
-    #       2/ when buy, open a position at close price (= beginning of next candle)
-    #       3/ check exit conditions (strategy sell, tp or sl)
-    #       4/ close position & create new trade
-    return []
+    trades = []
+    for open_time, signal in strategy.get_signals(fluctuations):
+        match signal:
+            case Signal.WAIT:
+                continue
+            case Signal.BUY:
+                # TODO : check if an open position already exists
+                #        if not, open a position at close price
+                continue
+            case Signal.SELL:
+                # TODO : check if an open position already exists
+                #        if yes, close it at close price and create a new trade
+                continue
+        # TODO : check if a position needs to be closed (price reaches tp, sl, limit date)
+        #        if yes, close it at price and create a new trade
+    return trades

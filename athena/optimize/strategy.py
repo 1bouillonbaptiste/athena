@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import pandas as pd
 import datetime
 from athena.types import Signal
@@ -9,8 +11,6 @@ class Strategy:
     position_size: float
     stop_loss_pct: float | None = None
     take_profit_pct: float | None = None
-
-    signals: dict[datetime.datetime, Signal] = {}
 
     def __init__(
         self,
@@ -27,15 +27,16 @@ class Strategy:
         self.position_size = position_size
         self.stop_loss_pct = stop_loss_pct
         self.take_profit_pct = take_profit_pct
-        self.signals = None
 
-    def get_signals(self, fluctuations: pd.DataFrame) -> {datetime.datetime, Signal}:
+    def get_signals(
+        self, fluctuations: pd.DataFrame
+    ) -> Iterable[tuple[datetime.datetime, Signal]]:
         """Get the strategy signals associated to input fluctuations.
 
         Args:
             fluctuations: financial data
 
-        Returns:
+        Yields:
             a mapping of signal for each date as a dictionary
 
         Raises:
@@ -50,13 +51,11 @@ class Strategy:
 
         # fill signals with WAIT at the beginning
         signals = [Signal.WAIT] * (len(fluctuations) - len(signals)) + signals
-        return {
-            date: signal
-            for date, signal in zip(
-                fluctuations["open_time"],
-                signals,
-            )
-        }
+        for date, signal in zip(
+            fluctuations["open_time"],
+            signals,
+        ):
+            yield date, signal
 
     def compute_signals(self, fluctuations: pd.DataFrame) -> list[Signal]:
         """Compute the signals associated to fluctuations based on a strategy.
