@@ -1,4 +1,4 @@
 from athena.optimize.strategy import Strategy
-from athena.optimize.orders import Position, Trade
+from athena.optimize.orders import Position, Trade, Portfolio
 
-__all__ = ["Strategy", "Position", "Trade"]
+__all__ = ["Strategy", "Position", "Trade", "Portfolio"]

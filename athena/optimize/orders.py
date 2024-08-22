@@ -23,8 +23,8 @@ class Position(BaseModel):
     """
 
     strategy_name: str = ""
-    coin: str
-    currency: str
+    coin: Coin
+    currency: Coin
 
     open_date: datetime.datetime
     open_price: float
@@ -40,8 +40,8 @@ class Position(BaseModel):
     def from_money_to_invest(
         cls,
         strategy_name: str,
-        coin: str,
-        currency: str,
+        coin: Coin,
+        currency: Coin,
         open_date: datetime.datetime,
         open_price: float,
         money_to_invest: float,
@@ -115,3 +115,6 @@ class Portfolio(BaseModel):
     """
 
     assets: dict[Coin, float]
+
+    def get_available(self, coin: Coin) -> float:
+        return self.assets.get(coin, 0)
