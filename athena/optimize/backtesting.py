@@ -23,6 +23,8 @@ def get_trades_from_strategy_and_fluctuations(
     open_position = None
     portfolio = Portfolio.model_validate({"assets": {currency: 100}})
 
+    period = Period(timeframe=fluctuations["period"].values[0])
+
     trades = []
     for open_time, signal in strategy.get_signals(fluctuations):
         df_row = fluctuations.loc[fluctuations["open_time"] == open_time]
@@ -47,8 +49,6 @@ def get_trades_from_strategy_and_fluctuations(
         match signal:
             case Signal.BUY:
                 if open_position is None:
-                    df_row = fluctuations.loc[fluctuations["open_time"] == open_time]
-                    period = Period(timeframe=df_row["period"].values[0])
                     open_position = Position.from_money_to_invest(
                         strategy_name=strategy.name,
                         coin=traded_coin,
@@ -69,8 +69,6 @@ def get_trades_from_strategy_and_fluctuations(
                     )
             case Signal.SELL:
                 if open_position is not None:
-                    df_row = fluctuations.loc[fluctuations["open_time"] == open_time]
-                    period = Period(timeframe=df_row["period"].values[0])
                     new_trade = Trade.from_position(
                         position=open_position,
                         close_date=pd.to_datetime(
