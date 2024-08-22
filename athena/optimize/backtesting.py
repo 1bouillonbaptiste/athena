@@ -8,7 +8,7 @@ from athena.types import Signal
 
 def get_trades_from_strategy_and_fluctuations(
     strategy: Strategy, fluctuations: pd.DataFrame
-) -> tuple[list[Trade], Position | None]:
+) -> tuple[list[Trade], Position | None, Portfolio]:
     """Compute the trades that a strategy would have made given fluctuations.
 
     Args:
@@ -41,10 +41,10 @@ def get_trades_from_strategy_and_fluctuations(
                         open_price=df_row["close"],
                         money_to_invest=portfolio.get_available(currency)
                         * strategy.position_size,
-                        stop_loss=df_row["close"] * strategy.stop_loss_pct
+                        stop_loss=df_row["close"] * (1 - strategy.stop_loss_pct)
                         if strategy.stop_loss_pct is not None
                         else None,
-                        take_profit=df_row["close"] * strategy.take_profit_pct
+                        take_profit=df_row["close"] * (1 + strategy.take_profit_pct)
                         if strategy.take_profit_pct is not None
                         else None,
                     )
@@ -68,4 +68,4 @@ def get_trades_from_strategy_and_fluctuations(
                 # TODO : check if a position needs to be closed (price reaches tp, sl, limit date)
                 #        if yes, close it at price and create a new trade
                 continue
-    return trades, open_position
+    return trades, open_position, portfolio
