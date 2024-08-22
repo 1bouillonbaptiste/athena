@@ -3,6 +3,8 @@ import datetime
 from athena.types import Side, Coin
 from pydantic import BaseModel
 
+FEES_PCT = 0.001
+
 
 class Position(BaseModel):
     """A position is an opened long or short that is waiting an exit signal. When a Position is closed, it usually leads
@@ -27,10 +29,42 @@ class Position(BaseModel):
     open_date: datetime.datetime
     open_price: float
     amount: float
+    open_fees: float
+    initial_investment: float
 
-    stop_loss: float
-    take_profit: float
+    stop_loss: float | None
+    take_profit: float | None
     side: Side
+
+    @classmethod
+    def from_money_to_invest(
+        cls,
+        strategy_name: str,
+        coin: str,
+        currency: str,
+        open_date: datetime.datetime,
+        open_price: float,
+        money_to_invest: float,
+        stop_loss: float | None = None,
+        take_profit: float | None = None,
+        side: Side = Side.LONG,
+    ):
+        """Invest some money on a coin, compute associated fees and real amount bought."""
+        open_fees = money_to_invest * FEES_PCT
+        amount = (money_to_invest - open_fees) / open_price
+        return cls(
+            strategy_name=strategy_name,
+            coin=coin,
+            currency=currency,
+            open_date=open_date,
+            open_price=open_price,
+            amount=amount,
+            open_fees=open_fees,
+            initial_investment=money_to_invest,
+            stop_loss=stop_loss,
+            take_profit=take_profit,
+            side=side,
+        )
 
 
 class Trade(Position):
@@ -44,13 +78,32 @@ class Trade(Position):
 
     close_date: datetime.datetime
     close_price: float
+    close_fees: float
+
+    total_fees: float
+    total_profit: float
+    is_win: bool
+    trade_duration: datetime.timedelta
 
     @classmethod
     def from_position(
         cls, position: Position, close_date: datetime.datetime, close_price: float
     ):
+        close_fees = close_price * position.amount * FEES_PCT
+        total_fees = close_fees + position.open_fees
+        total_profit = (
+            (position.amount * close_price) - position.initial_investment - total_fees
+        )
+        trade_duration = close_date - position.open_date
         return cls(
-            close_date=close_date, close_price=close_price, **position.model_dump()
+            close_fees=close_fees,
+            total_fees=total_fees,
+            close_date=close_date,
+            close_price=close_price,
+            total_profit=total_profit,
+            is_win=total_profit > 0,
+            trade_duration=trade_duration,
+            **position.model_dump(),
         )
 
 

@@ -1,53 +1,37 @@
 import datetime
 
 from athena.optimize.orders import Position, Trade
-from athena.types import Side
 
 import pytest
 
 
 @pytest.fixture
 def position():
-    return Position(
+    return Position.from_money_to_invest(
         strategy_name="my_strategy",
         coin="BTC",
         currency="USDT",
         open_date=datetime.datetime(2024, 8, 20),
         open_price=100,
-        amount=0.1,
-        stop_loss=50,
-        take_profit=150,
-        side=Side.LONG,
+        money_to_invest=50,
     )
 
 
-def test_position(position):
-    assert position.model_dump() == {
-        "strategy_name": "my_strategy",
-        "coin": "BTC",
-        "currency": "USDT",
-        "open_date": datetime.datetime(2024, 8, 20),
-        "open_price": 100,
-        "amount": 0.1,
-        "stop_loss": 50,
-        "take_profit": 150,
-        "side": Side.LONG,
-    }
+def test_position_from_money_to_invest(position):
+    assert position.initial_investment == 50
+    assert position.open_fees == 0.05
+    assert position.amount == 0.49950000000000006
+    assert position.amount * position.open_price + position.open_fees == 50
 
 
-def test_trade(position):
-    assert Trade.from_position(
+def test_trade_from_position(position):
+    new_trade = Trade.from_position(
         position, close_date=datetime.datetime(2024, 8, 25), close_price=125
-    ).model_dump() == {
-        "strategy_name": "my_strategy",
-        "coin": "BTC",
-        "currency": "USDT",
-        "open_date": datetime.datetime(2024, 8, 20),
-        "close_date": datetime.datetime(2024, 8, 25),
-        "open_price": 100,
-        "close_price": 125,
-        "amount": 0.1,
-        "stop_loss": 50,
-        "take_profit": 150,
-        "side": Side.LONG,
-    }
+    )
+    assert new_trade.close_fees == 125 * position.amount * 0.001
+    assert new_trade.total_fees == 125 * position.amount * 0.001 + position.open_fees
+    assert (
+        pytest.approx(new_trade.total_profit)
+        == position.amount * 125 - 50 - new_trade.total_fees
+    )
+    assert new_trade.trade_duration == datetime.timedelta(days=5)
