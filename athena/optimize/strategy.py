@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import pandas as pd
 import datetime
 from athena.types import Signal
@@ -10,11 +12,8 @@ class Strategy:
     stop_loss_pct: float | None = None
     take_profit_pct: float | None = None
 
-    signals: dict[datetime.datetime, Signal] = {}
-
     def __init__(
         self,
-        fluctuations: pd.DataFrame,
         name: str = None,
         position_size: float = 1,
         stop_loss_pct: float = None,
@@ -28,18 +27,42 @@ class Strategy:
         self.position_size = position_size
         self.stop_loss_pct = stop_loss_pct
         self.take_profit_pct = take_profit_pct
-        self.signals = {
-            date: signal
-            for date, signal in zip(
-                fluctuations["open_time"],
-                self.compute_signals(fluctuations=fluctuations),
+
+    def get_signals(
+        self, fluctuations: pd.DataFrame
+    ) -> Iterable[tuple[datetime.datetime, Signal]]:
+        """Get the strategy signals associated to input fluctuations.
+
+        Args:
+            fluctuations: financial data
+
+        Yields:
+            a mapping of signal for each date as a dictionary
+
+        Raises:
+            ValueError: if signals are inconsistent with fluctuations
+        """
+        signals = self.compute_signals(fluctuations=fluctuations)
+
+        # TODO : check for some decorator to check size of compute_signals() ?
+        if len(signals) > len(fluctuations):
+            raise ValueError(
+                f"The strategy `{self.name}` produced too many signals, expected {len(fluctuations)}, got {len(signals)}"
             )
-        }
+
+        # fill signals with WAIT at the beginning
+        signals = [Signal.WAIT] * (len(fluctuations) - len(signals)) + signals
+        for date, signal in zip(
+            fluctuations["open_time"],
+            signals,
+        ):
+            yield date, signal
 
     def compute_signals(self, fluctuations: pd.DataFrame) -> list[Signal]:
         """Compute the signals associated to fluctuations based on a strategy.
 
         Overwrite this method with your own signals computation function.
+        The output signal size must match the input fluctuations size, otherwise WAIT will be added at the beginning.
 
         Args:
             fluctuations: market data fluctuations
@@ -54,4 +77,4 @@ class Strategy:
 
 
 def split_uppercase_words(string: str) -> list[str]:
-    return re.findall("[A-Z][^A-Z]*", string)
+    return re.sub(r"([A-Z]+)", r" \1", string).split()

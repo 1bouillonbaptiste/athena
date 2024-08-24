@@ -1,4 +1,5 @@
 from datetime import datetime
+import pandas as pd
 
 
 class Candle:
@@ -48,6 +49,11 @@ class Candle:
         self.nb_trades = nb_trades
         self.taker_volume = taker_volume
         self.taker_quote_volume = taker_quote_volume
+
+    @classmethod
+    def from_fluctuation(cls, row: pd.Series):
+        """Temporary, wait for collection of candles class."""
+        return cls(**row.to_dict())
 
     def __repr__(self):
         return str(self.__dict__)

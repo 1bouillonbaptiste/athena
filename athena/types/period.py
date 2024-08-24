@@ -3,6 +3,7 @@ from typing import Literal
 UNITS = {
     "m": "minutes",
     "h": "hours",
+    "d": "days",
 }
 
 
