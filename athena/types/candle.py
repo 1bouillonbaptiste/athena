@@ -1,8 +1,9 @@
-from datetime import datetime
+import datetime
 import pandas as pd
+from pydantic import BaseModel, model_validator
 
 
-class Candle:
+class Candle(BaseModel):
     """Indicators of a specific candle.
 
     coin: the base coin
@@ -20,48 +21,65 @@ class Candle:
     taker_quote_volume: the volume of currency earned by selling orders that have been filled
     """
 
-    def __init__(
-        self,
-        coin: str,
-        currency: str,
-        period: str,
-        open_time: datetime,
-        close_time: datetime,
-        open: float,
-        high: float,
-        low: float,
-        close: float,
-        volume: float,
-        quote_volume: float,
-        nb_trades: int,
-        taker_volume: float,
-        taker_quote_volume: float,
-    ):
-        self.coin = coin
-        self.currency = currency
-        self.period = period
-        self.open_time = open_time
-        self.close_time = close_time
-        self.open = open
-        self.high = high
-        self.low = low
-        self.close = close
-        self.volume = volume
-        self.quote_volume = quote_volume
-        self.nb_trades = nb_trades
-        self.taker_volume = taker_volume
-        self.taker_quote_volume = taker_quote_volume
+    coin: str
+    currency: str
+    period: str
+    open_time: datetime.datetime
+    close_time: datetime.datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+    quote_volume: float
+    nb_trades: int
+    taker_volume: float
+    taker_quote_volume: float
 
     @classmethod
     def from_fluctuation(cls, row: pd.Series):
         """Temporary, wait for collection of candles class."""
-        return cls(**row.to_dict())
+        return cls.model_validate(**row.to_dict())
 
     def __repr__(self):
         return str(self.__dict__)
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        return self.model_dump() == other.model_dump()
 
-    def to_dict(self):
-        return self.__dict__
+
+class Fluctuations(BaseModel):
+    """Collection of candles.
+
+    Attributes:
+        _candles: list of candles ordered by their open_time attribute.
+        period: candles collection time period (e.g. '1d' or '4h')
+    """
+
+    _candles: dict[datetime.datetime, Candle]
+    period: str
+
+    @classmethod
+    def from_candles(cls, candles: list[Candle]):
+        return cls.model_validate(
+            {
+                "_candles": {
+                    candle.open_time: candle
+                    for candle in sorted(candles, key=lambda candle: candle.open_time)
+                },
+                "period": candles[0].period,
+            }
+        )
+
+    @model_validator(mode="after")
+    def check_candles_have_same_period(self):
+        """Check candles have the same period."""
+        periods = set([candle.period for candle in self._candles.values()])
+        if len(periods) > 1:
+            periods_str = "[" + ", ".join(periods) + "]"
+            raise ValueError(
+                f"All candles must have the same period, found {periods_str}."
+            )
+
+    def get_candle(self, open_time: datetime.datetime) -> Candle:
+        return self._candles.get(open_time)

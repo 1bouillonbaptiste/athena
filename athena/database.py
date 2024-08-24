@@ -11,7 +11,9 @@ class Database:
     def from_candles(cls, candles: list[Candle]):
         """Convert candles to a single dataframe."""
         fluctuations = (
-            pd.concat([pd.DataFrame(candle.to_dict(), index=[0]) for candle in candles])
+            pd.concat(
+                [pd.DataFrame(candle.model_dump(), index=[0]) for candle in candles]
+            )
             .sort_values(by="open_time", ascending=True)
             .drop_duplicates(subset="open_time")
             .reset_index(drop=True)
