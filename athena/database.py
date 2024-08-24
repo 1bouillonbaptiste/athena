@@ -15,7 +15,7 @@ class Database:
             .sort_values(by="open_time", ascending=True)
             .drop_duplicates(subset="open_time")
             .reset_index(drop=True)
-            .astype({"open_time": "datetime64[ns]"})
+            .astype({"open_time": "datetime64[ns]", "close_time": "datetime64[ns]"})
         )
         return cls(fluctuations)
 
@@ -27,7 +27,7 @@ class Database:
             .sort_values(by="open_time", ascending=True)
             .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
             .reset_index(drop=True)
-            .astype({"open_time": "datetime64[ns]"})
+            .astype({"open_time": "datetime64[ns]", "close_time": "datetime64[ns]"})
         )
 
         unique_coins = fluctuations["coin"].unique()

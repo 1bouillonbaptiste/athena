@@ -51,7 +51,7 @@ def get_trades_from_strategy_and_fluctuations(
                 coin=traded_coin,
                 currency=currency,
                 open_date=pd.to_datetime(df_row["open_time"].values[0]).to_pydatetime()
-                + datetime.timedelta(**{period.unit_full: period.value}),
+                + period.to_timedelta(),
                 open_price=df_row["close"],
                 money_to_invest=portfolio.get_available(currency)
                 * strategy.position_size,
@@ -72,7 +72,7 @@ def get_trades_from_strategy_and_fluctuations(
             new_trade = Trade.from_position(
                 position=open_position,
                 close_date=pd.to_datetime(df_row["open_time"].values[0]).to_pydatetime()
-                + datetime.timedelta(**{period.unit_full: period.value}),
+                + period.to_timedelta(),
                 close_price=df_row["close"],
             )
             trades.append(new_trade)

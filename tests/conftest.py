@@ -1,7 +1,7 @@
 import pytest
 import datetime
 
-from athena.types import Candle
+from athena.types import Candle, Period
 import pandas as pd
 
 
@@ -48,6 +48,8 @@ def sample_candles(sample_bars):
                 currency="USDT",
                 period=timeframe,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00"),
+                close_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00")
+                + Period(timeframe=timeframe).to_timedelta(),
                 open=7195.2,
                 high=7245.0,
                 low=7175.4,
@@ -63,6 +65,8 @@ def sample_candles(sample_bars):
                 currency="USDT",
                 period=timeframe,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
+                close_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00")
+                + Period(timeframe=timeframe).to_timedelta(),
                 open=7225.0,
                 high=7236.2,
                 low=7199.1,
@@ -89,6 +93,10 @@ def sample_fluctuations():
                 "open_time": [
                     datetime.datetime.fromisoformat("2020-01-01 00:00:00"),
                     datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
+                ],
+                "close_time": [
+                    datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
+                    datetime.datetime.fromisoformat("2020-01-01 08:00:00"),
                 ],
                 "open": [7195.2, 7225.0],
                 "high": [7245.0, 7236.2],

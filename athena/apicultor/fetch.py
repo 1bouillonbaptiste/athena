@@ -51,9 +51,7 @@ def fetch_historical_data(
     for bar in bars:
         open_time = datetime.fromtimestamp(bar[0] / 1000.0)
         close_time = datetime.fromtimestamp(bar[6] / 1000.0)
-        if close_time - open_time < (
-            timedelta(**{period.unit_full: period.value}) - timedelta(seconds=1)
-        ):
+        if close_time - open_time < (period.to_timedelta() - timedelta(seconds=1)):
             continue
         candles.append(
             Candle(
@@ -61,6 +59,7 @@ def fetch_historical_data(
                 currency=currency,
                 period=period.timeframe,
                 open_time=open_time,
+                close_time=open_time + period.to_timedelta(),
                 open=float(bar[1]),
                 high=float(bar[2]),
                 low=float(bar[3]),
