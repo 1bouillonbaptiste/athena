@@ -29,7 +29,6 @@ def get_trades_from_strategy_and_fluctuations(
     for open_time, signal in strategy.get_signals(fluctuations):
         df_row = fluctuations.loc[fluctuations["open_time"] == open_time]
 
-        # check tp / sl exit signals
         close_price, close_date = check_position_exit_signals(
             position=open_position, row=df_row
         )
@@ -46,41 +45,46 @@ def get_trades_from_strategy_and_fluctuations(
             trades.append(new_trade)
             open_position = None
 
-        match signal:
-            case Signal.BUY:
-                if open_position is None:
-                    open_position = Position.from_money_to_invest(
-                        strategy_name=strategy.name,
-                        coin=traded_coin,
-                        currency=currency,
-                        open_date=pd.to_datetime(
-                            df_row["open_time"].values[0]
-                        ).to_pydatetime()
-                        + datetime.timedelta(**{period.unit_full: period.value}),
-                        open_price=df_row["close"],
-                        money_to_invest=portfolio.get_available(currency)
-                        * strategy.position_size,
-                        stop_loss=df_row["close"] * (1 - strategy.stop_loss_pct)
-                        if strategy.stop_loss_pct is not None
-                        else None,
-                        take_profit=df_row["close"] * (1 + strategy.take_profit_pct)
-                        if strategy.take_profit_pct is not None
-                        else None,
-                    )
-            case Signal.SELL:
-                if open_position is not None:
-                    new_trade = Trade.from_position(
-                        position=open_position,
-                        close_date=pd.to_datetime(
-                            df_row["open_time"].values[0]
-                        ).to_pydatetime()
-                        + datetime.timedelta(**{period.unit_full: period.value}),
-                        close_price=df_row["close"],
-                    )
-                    trades.append(new_trade)
-                    open_position = None
-            case _:  # is Signal.WAIT
-                continue
+        if signal == Signal.BUY and open_position is None:
+            open_position = Position.from_money_to_invest(
+                strategy_name=strategy.name,
+                coin=traded_coin,
+                currency=currency,
+                open_date=pd.to_datetime(df_row["open_time"].values[0]).to_pydatetime()
+                + datetime.timedelta(**{period.unit_full: period.value}),
+                open_price=df_row["close"],
+                money_to_invest=portfolio.get_available(currency)
+                * strategy.position_size,
+                stop_loss=df_row["close"] * (1 - strategy.stop_loss_pct)
+                if strategy.stop_loss_pct is not None
+                else None,
+                take_profit=df_row["close"] * (1 + strategy.take_profit_pct)
+                if strategy.take_profit_pct is not None
+                else None,
+            )
+            portfolio.update_coin_amount(
+                coin=currency, amount_to_add=-open_position.initial_investment
+            )
+            portfolio.update_coin_amount(
+                coin=traded_coin, amount_to_add=open_position.amount
+            )
+        elif signal == Signal.SELL and open_position is not None:
+            new_trade = Trade.from_position(
+                position=open_position,
+                close_date=pd.to_datetime(df_row["open_time"].values[0]).to_pydatetime()
+                + datetime.timedelta(**{period.unit_full: period.value}),
+                close_price=df_row["close"],
+            )
+            trades.append(new_trade)
+            open_position = None
+
+            portfolio.update_coin_amount(
+                coin=currency,
+                amount_to_add=new_trade.initial_investment + new_trade.total_profit,
+            )
+            portfolio.update_coin_amount(
+                coin=traded_coin, amount_to_add=-new_trade.amount
+            )
 
     return trades, open_position, portfolio
 
@@ -115,7 +119,7 @@ def check_position_exit_signals(
 
     if (
         price_reach_tp and price_reach_sl
-    ):  # candle is very wide, check which signal occurred first
+    ):  # candle's price range is very wide, check which bound was reached first
         if ("high_time" in row) and ("low_time" in row):
             if (
                 row["high_time"].values[0] < row["low_time"].values[0]

@@ -125,3 +125,18 @@ class Portfolio(BaseModel):
 
     def get_available(self, coin: Coin) -> float:
         return self.assets.get(coin, 0)
+
+    def update_coin_amount(self, coin: Coin, amount_to_add: float) -> None:
+        """Update coin's available amount in portfolio.
+
+        Args:
+            coin: the coin name to update
+            amount_to_add: the coin's amount to be added, could be negative
+
+        Raises:
+            ValueError: if coin's amount falls below zero
+        """
+        updated_amount = self.get_available(coin) + amount_to_add
+        if updated_amount < 0:
+            raise ValueError(f"Trying to set a negative amount of `{coin}`")
+        self.assets[coin] = updated_amount

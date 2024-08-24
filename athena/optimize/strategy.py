@@ -44,6 +44,7 @@ class Strategy:
         """
         signals = self.compute_signals(fluctuations=fluctuations)
 
+        # TODO : check for some decorator to check size of compute_signals() ?
         if len(signals) > len(fluctuations):
             raise ValueError(
                 f"The strategy `{self.name}` produced too many signals, expected {len(fluctuations)}, got {len(signals)}"
