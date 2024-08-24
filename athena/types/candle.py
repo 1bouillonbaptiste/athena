@@ -1,6 +1,7 @@
 import datetime
 import pandas as pd
 from pydantic import BaseModel, model_validator
+from pathlib import Path
 
 
 class Candle(BaseModel):
@@ -39,7 +40,7 @@ class Candle(BaseModel):
     @classmethod
     def from_fluctuation(cls, row: pd.Series):
         """Temporary, wait for collection of candles class."""
-        return cls.model_validate(**row.to_dict())
+        return cls.model_validate(row.to_dict())
 
     def __repr__(self):
         return str(self.__dict__)
@@ -52,34 +53,102 @@ class Fluctuations(BaseModel):
     """Collection of candles.
 
     Attributes:
-        _candles: list of candles ordered by their open_time attribute.
+        candles_mapping: list of candles ordered by their open_time attribute.
         period: candles collection time period (e.g. '1d' or '4h')
     """
 
-    _candles: dict[datetime.datetime, Candle]
+    # TODO : fix this ugly tuple (coin, currency, period) key as attributes are fixed
+    candles_mapping: dict[tuple[datetime.datetime, str, str, str], Candle]
     period: str
+    coin: str
+    currency: str
 
     @classmethod
     def from_candles(cls, candles: list[Candle]):
-        return cls.model_validate(
-            {
-                "_candles": {
-                    candle.open_time: candle
-                    for candle in sorted(candles, key=lambda candle: candle.open_time)
-                },
-                "period": candles[0].period,
-            }
+        return cls(
+            candles_mapping={
+                (candle.open_time, candle.coin, candle.currency, candle.period): candle
+                for candle in sorted(candles, key=lambda candle: candle.open_time)
+            },
+            period=candles[0].period,
+            coin=candles[0].coin,
+            currency=candles[0].currency,
         )
 
     @model_validator(mode="after")
-    def check_candles_have_same_period(self):
+    def check_candles_period_coin_currency_unicity(self):
         """Check candles have the same period."""
-        periods = set([candle.period for candle in self._candles.values()])
-        if len(periods) > 1:
-            periods_str = "[" + ", ".join(periods) + "]"
+        periods, coins, currencies = list(
+            zip(
+                *[
+                    (candle.period, candle.coin, candle.currency)
+                    for candle in self.candles_mapping.values()
+                ]
+            )
+        )
+
+        if len(set(periods)) > 1:
+            periods_str = "[" + ", ".join(set(periods)) + "]"
             raise ValueError(
                 f"All candles must have the same period, found {periods_str}."
             )
 
+        if len(set(coins)) > 1:
+            coins_str = "[" + ", ".join(set(coins)) + "]"
+            raise ValueError(f"All candles must have the same coin, found {coins_str}.")
+
+        if len(set(currencies)) > 1:
+            currencies_str = "[" + ", ".join(set(currencies)) + "]"
+            raise ValueError(
+                f"All candles must have the same currency, found {currencies_str}."
+            )
+
     def get_candle(self, open_time: datetime.datetime) -> Candle:
-        return self._candles.get(open_time)
+        return self.candles_mapping.get(
+            (open_time, self.coin, self.currency, self.period)
+        )
+
+    def save(self, path: Path) -> None:
+        """Save fluctuations to disk.
+
+        Fluctuations are saved as a pandas dataframe where each row is a candle.
+        We don't need to save the period for now as it can be inferred from candles.
+        A future improvement is to create a local sql database to store candles.
+
+        Args:
+            path: csv file to dump fluctuations
+        """
+        if path.is_dir():
+            path = path / "fluctuations.csv"
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        df = pd.concat(
+            [
+                pd.DataFrame(candle.model_dump(), index=[0])
+                for candle in self.candles_mapping.values()
+            ]
+        )
+        df.to_csv(path.as_posix(), index=False)
+
+    @classmethod
+    def load(cls, path: Path):
+        """Load fluctuations from disk.
+
+        Args:
+            path: load file if file else load all csv files in dir
+
+        Returns:
+            merged candles as a single fluctuations instance.
+        """
+        if path.is_dir():
+            df = pd.concat([pd.read_csv(file) for file in path.glob("*.csv")])
+        else:
+            df = pd.read_csv(path)
+        df = (
+            df.sort_values(by="open_time", ascending=True)
+            .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
+            .reset_index(drop=True)
+            .astype({"open_time": "datetime64[ns]", "close_time": "datetime64[ns]"})
+        )
+        candles = [Candle.from_fluctuation(row) for _, row in df.iterrows()]
+        return cls.from_candles(candles)
