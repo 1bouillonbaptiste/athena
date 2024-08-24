@@ -1,3 +1,4 @@
+import datetime
 from typing import Literal
 
 UNITS = {
@@ -20,6 +21,9 @@ class Period:
             timeframe, value, unit
         )
         self.unit_full = UNITS[self.unit]
+
+    def to_timedelta(self):
+        return datetime.timedelta(**{self.unit_full: self.value})
 
 
 def fill_missing_attributes(

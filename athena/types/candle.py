@@ -26,6 +26,7 @@ class Candle:
         currency: str,
         period: str,
         open_time: datetime,
+        close_time: datetime,
         open: float,
         high: float,
         low: float,
@@ -40,6 +41,7 @@ class Candle:
         self.currency = currency
         self.period = period
         self.open_time = open_time
+        self.close_time = close_time
         self.open = open
         self.high = high
         self.low = low
