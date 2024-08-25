@@ -1,16 +1,27 @@
 from binance.client import Client
+import os
 
-from athena.apicultor.constants import BINANCE_KEY, BINANCE_SECRET
+from athena.core.context import ProjectContext
+
+
+def get_credentials(context: ProjectContext = ProjectContext()):
+    """Retrieve binance credentials from creds file."""
+    if context.credentials_file.exists():
+        for line in context.credentials_file.open("r"):
+            name, value = line.replace("\n", "").split("=")
+            os.environ[name] = value
+    return os.environ.get("BINANCE_KEY", None), os.environ.get("BINANCE_SECRET", None)
 
 
 class BinanceClient:
     """Main interface between binance and athena."""
 
     def __init__(self):
-        if BINANCE_KEY is None or BINANCE_SECRET is None:
+        binance_secret, binance_key = get_credentials()
+        if binance_key is None or binance_secret is None:
             self._client = None
         else:
-            self._client = Client(BINANCE_KEY, BINANCE_SECRET)
+            self._client = Client(binance_key, binance_secret)
 
     def get_account(self):
         """Get account infos."""
