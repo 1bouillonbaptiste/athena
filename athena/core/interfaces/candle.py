@@ -30,6 +30,8 @@ class Candle(BaseModel):
     currency: str
     period: str
     open_time: datetime.datetime
+    high_time: datetime.datetime | None = None
+    low_time: datetime.datetime | None = None
     close_time: datetime.datetime
     open: float
     high: float
@@ -150,7 +152,14 @@ class Fluctuations(BaseModel):
             df.sort_values(by="open_time", ascending=True)
             .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
             .reset_index(drop=True)
-            .astype({"open_time": "datetime64[ns]", "close_time": "datetime64[ns]"})
+            .astype(
+                {
+                    "open_time": "datetime64[ns]",
+                    "high_time": "datetime64[ns]",
+                    "low_time": "datetime64[ns]",
+                    "close_time": "datetime64[ns]",
+                }
+            )
         )
         candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
         return cls.from_candles(candles)

@@ -1,24 +1,21 @@
-import pandas as pd
-
 from athena.optimize import Strategy
 from athena.core.types import Signal
+from athena.core.interfaces import Fluctuations
 
 import pytest
 
 
 class StrategyBuyWeekSellFriday(Strategy):
-    """"""
-
-    def compute_signals(self, fluctuations: pd.DataFrame) -> list[Signal]:
+    def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
         """Return dummy signals."""
         signals = []
-        for _, row in fluctuations.iterrows():
-            match row["open_time"].isoweekday():
+        for candle in fluctuations.candles:
+            match candle.open_time.isoweekday():
                 case 6 | 7:  # weekend
                     signals.append(Signal.WAIT)
                 case 1 | 2 | 3 | 4:  # buy from monday to thursday
                     signals.append(Signal.BUY)
-                case 5:  # panic sell on friday
+                case 5:  # panic sell on friday, typical crypto player
                     signals.append(Signal.SELL)
         return signals
 
@@ -26,11 +23,11 @@ class StrategyBuyWeekSellFriday(Strategy):
 class InvalidStrategy(Strategy):
     """This strategy returns too many signals."""
 
-    def compute_signals(self, fluctuations: pd.DataFrame) -> list[Signal]:
+    def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
         """Return dummy signals."""
         signals = []
-        for _, row in fluctuations.iterrows():
-            match row["open_time"].isoweekday():
+        for candle in fluctuations.candles:
+            match candle.open_time.isoweekday():
                 case 6 | 7:  # weekend
                     signals.append(Signal.WAIT)
                 case 1 | 2 | 3 | 4:  # buy from monday to thursday
@@ -49,15 +46,12 @@ def test_strategy_name():
     assert strategy.name == "strategy_buy_week_sell_friday"
 
 
-def test_strategy_get_signals():
-    fluctuations = pd.DataFrame(
-        {"open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D")}
-    )
+def test_strategy_get_signals(fluctuations):
     strategy = StrategyBuyWeekSellFriday()
-    assert list(strategy.get_signals(fluctuations=fluctuations)) == [
-        (date, signal)
-        for date, signal in zip(
-            fluctuations["open_time"],
+    assert list(strategy.get_signals(fluctuations=fluctuations(timeframe="1d"))) == [
+        (candle, signal)
+        for candle, signal in zip(
+            fluctuations(timeframe="1d").candles,
             [
                 Signal.BUY,
                 Signal.BUY,
@@ -71,22 +65,16 @@ def test_strategy_get_signals():
     ]
 
 
-def test_strategy_get_signals_raises():
-    fluctuations = pd.DataFrame(
-        {"open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D")}
-    )
+def test_strategy_get_signals_raises(fluctuations):
     strategy = InvalidStrategy()
-
     with pytest.raises(ValueError):
-        list(strategy.get_signals(fluctuations=fluctuations))
+        list(strategy.get_signals(fluctuations=fluctuations()))
 
 
-def test_strategy_compute_signals():
-    fluctuations = pd.DataFrame(
-        {"open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D")}
-    )
+def test_strategy_compute_signals(fluctuations):
     strategy = StrategyBuyWeekSellFriday()
-    assert strategy.compute_signals(fluctuations=fluctuations) == [
+    print([candle.open_time for candle in fluctuations(timeframe="1d").candles])
+    assert strategy.compute_signals(fluctuations=fluctuations(timeframe="1d")) == [
         Signal.BUY,
         Signal.BUY,
         Signal.BUY,

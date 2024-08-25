@@ -1,17 +1,17 @@
 from athena.optimize import Strategy, Trade, Portfolio, Position
-from athena.core.types import Coin, Period, Signal
-import pandas as pd
+from athena.core.types import Coin, Signal
+from athena.core.interfaces import Fluctuations, Candle
 import datetime
 
 
 def get_trades_from_strategy_and_fluctuations(
-    strategy: Strategy, fluctuations: pd.DataFrame
+    strategy: Strategy, fluctuations: Fluctuations
 ) -> tuple[list[Trade], Position | None, Portfolio]:
     """Compute the trades that a strategy would have made given fluctuations.
 
     Args:
         strategy: the strategy to get entry signals
-        fluctuations: financial data
+        fluctuations: collections of candles
 
     Returns:
         market movement as a list of trades
@@ -21,14 +21,10 @@ def get_trades_from_strategy_and_fluctuations(
     open_position = None
     portfolio = Portfolio.model_validate({"assets": {currency: 100}})
 
-    period = Period(timeframe=fluctuations["period"].values[0])
-
     trades = []
-    for open_time, signal in strategy.get_signals(fluctuations):
-        df_row = fluctuations.loc[fluctuations["open_time"] == open_time]
-
+    for candle, signal in strategy.get_signals(fluctuations):
         close_price, close_date = check_position_exit_signals(
-            position=open_position, row=df_row
+            position=open_position, candle=candle
         )
         if (
             (close_price is not None)
@@ -48,15 +44,14 @@ def get_trades_from_strategy_and_fluctuations(
                 strategy_name=strategy.name,
                 coin=traded_coin,
                 currency=currency,
-                open_date=pd.to_datetime(df_row["open_time"].values[0]).to_pydatetime()
-                + period.to_timedelta(),
-                open_price=df_row["close"],
+                open_date=candle.close_time,
+                open_price=candle.close,
                 money_to_invest=portfolio.get_available(currency)
                 * strategy.position_size,
-                stop_loss=df_row["close"] * (1 - strategy.stop_loss_pct)
+                stop_loss=candle.close * (1 - strategy.stop_loss_pct)
                 if strategy.stop_loss_pct is not None
                 else None,
-                take_profit=df_row["close"] * (1 + strategy.take_profit_pct)
+                take_profit=candle.close * (1 + strategy.take_profit_pct)
                 if strategy.take_profit_pct is not None
                 else None,
             )
@@ -69,9 +64,8 @@ def get_trades_from_strategy_and_fluctuations(
         elif signal == Signal.SELL and open_position is not None:
             new_trade = Trade.from_position(
                 position=open_position,
-                close_date=pd.to_datetime(df_row["open_time"].values[0]).to_pydatetime()
-                + period.to_timedelta(),
-                close_price=df_row["close"],
+                close_date=candle.close_time,
+                close_price=candle.close,
             )
             trades.append(new_trade)
             open_position = None
@@ -88,13 +82,13 @@ def get_trades_from_strategy_and_fluctuations(
 
 
 def check_position_exit_signals(
-    position: Position | None, row: pd.DataFrame
+    position: Position | None, candle: Candle
 ) -> tuple[float | None, datetime.datetime | None]:
     """Check if a candle reaches position's take profit or stop loss.
 
     Args:
         position: any open position
-        row: a market candle as a dataframe of size 1
+        candle: a market candle
 
     Returns:
         close_price: the sell price of the position or None if position remains open
@@ -103,48 +97,34 @@ def check_position_exit_signals(
     if position is None:
         return None, None
 
-    period = Period(timeframe=row["period"].values[0])
     price_reach_tp = (
-        (position.take_profit < row["high"].item())
+        (position.take_profit < candle.high)
         if position.take_profit is not None
         else False
     )
     price_reach_sl = (
-        (position.stop_loss > row["low"].item())
-        if position.stop_loss is not None
-        else False
+        (position.stop_loss > candle.low) if position.stop_loss is not None else False
     )
 
     if (
         price_reach_tp and price_reach_sl
     ):  # candle's price range is very wide, check which bound was reached first
-        if ("high_time" in row) and ("low_time" in row):
-            if (
-                row["high_time"].values[0] < row["low_time"].values[0]
-            ):  # price reached high before low
+        if (candle.high_time is not None) and (candle.low_time is not None):
+            if candle.high_time < candle.low_time:  # price reached high before low
                 close_price = position.take_profit
-                close_date = pd.to_datetime(row["high_time"].values[0]).to_pydatetime()
+                close_date = candle.high_time
             else:  # price reached low before high
                 close_price = position.stop_loss
-                close_date = pd.to_datetime(row["low_time"].values[0]).to_pydatetime()
+                close_date = candle.low_time
         else:  # we don't have granularity, assume close price is close enough to real sell price
-            close_price = row["close"].values[0]
-            if "close_time" in row:
-                close_date = pd.to_datetime(row["close_time"].values[0]).to_pydatetime()
-            else:
-                close_date = pd.to_datetime(
-                    row["open_time"].values[0]
-                ).to_pydatetime() + datetime.timedelta(
-                    **{period.unit_full: period.value}
-                )
+            close_price = candle.close
+            close_date = candle.close_time
     elif price_reach_tp:
-        time_column = "high_time" if "high_time" in row else "close_time"
         close_price = position.take_profit
-        close_date = pd.to_datetime(row[time_column].values[0]).to_pydatetime()
+        close_date = candle.high_time or candle.close_time
     elif price_reach_sl:
-        time_column = "low_time" if "low_time" in row else "close_time"
         close_price = position.stop_loss
-        close_date = pd.to_datetime(row[time_column].values[0]).to_pydatetime()
+        close_date = candle.low_time or candle.close_time
     else:  # we don't close the position
         close_price = None
         close_date = None

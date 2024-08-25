@@ -1,8 +1,7 @@
 from typing import Iterable
 
-import pandas as pd
-import datetime
 from athena.core.types import Signal
+from athena.core.interfaces import Fluctuations, Candle
 import re
 
 
@@ -29,12 +28,12 @@ class Strategy:
         self.take_profit_pct = take_profit_pct
 
     def get_signals(
-        self, fluctuations: pd.DataFrame
-    ) -> Iterable[tuple[datetime.datetime, Signal]]:
+        self, fluctuations: Fluctuations
+    ) -> Iterable[tuple[Candle, Signal]]:
         """Get the strategy signals associated to input fluctuations.
 
         Args:
-            fluctuations: financial data
+            fluctuations: collection of candles
 
         Yields:
             a mapping of signal for each date as a dictionary
@@ -45,20 +44,20 @@ class Strategy:
         signals = self.compute_signals(fluctuations=fluctuations)
 
         # TODO : check for some decorator to check size of compute_signals() ?
-        if len(signals) > len(fluctuations):
+        if len(signals) > len(fluctuations.candles):
             raise ValueError(
-                f"The strategy `{self.name}` produced too many signals, expected {len(fluctuations)}, got {len(signals)}"
+                f"The strategy `{self.name}` produced too many signals, expected {len(fluctuations.candles)}, got {len(signals)}"
             )
 
         # fill signals with WAIT at the beginning
-        signals = [Signal.WAIT] * (len(fluctuations) - len(signals)) + signals
-        for date, signal in zip(
-            fluctuations["open_time"],
+        signals = [Signal.WAIT] * (len(fluctuations.candles) - len(signals)) + signals
+        for candle, signal in zip(
+            fluctuations.candles,
             signals,
         ):
-            yield date, signal
+            yield candle, signal
 
-    def compute_signals(self, fluctuations: pd.DataFrame) -> list[Signal]:
+    def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
         """Compute the signals associated to fluctuations based on a strategy.
 
         Overwrite this method with your own signals computation function.

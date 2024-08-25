@@ -28,11 +28,18 @@ def test_fetch_historical_data(mocker, sample_bars, sample_candles):
         ],
     )
     period = Period(timeframe="4h")
-    assert fetch_historical_data(
-        client=BinanceClient(),
-        coin="BTC",
-        currency="USDT",
-        period=period,
-        start_date="2020-01-01",
-        end_date="2020-01-02",
-    ) == Fluctuations.from_candles(sample_candles(timeframe=period.timeframe))
+    candles = sample_candles(timeframe=period.timeframe)
+    for candle in candles:
+        candle.high_time = None
+        candle.low_time = None
+    assert (
+        fetch_historical_data(
+            client=BinanceClient(),
+            coin="BTC",
+            currency="USDT",
+            period=period,
+            start_date="2020-01-01",
+            end_date="2020-01-02",
+        ).model_dump()
+        == Fluctuations.from_candles(candles).model_dump()
+    )

@@ -1,8 +1,8 @@
 import pytest
 import datetime
 
-from athena.core.types import Period
-from athena.core.interfaces import Candle
+from athena.core.types import Period, Coin
+from athena.core.interfaces import Candle, Fluctuations
 import pandas as pd
 
 
@@ -49,6 +49,8 @@ def sample_candles(sample_bars):
                 currency=currency,
                 period=timeframe,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00"),
+                high_time=datetime.datetime.fromisoformat("2020-01-01 03:35:00"),
+                low_time=datetime.datetime.fromisoformat("2020-01-01 01:15:00"),
                 close_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00")
                 + Period(timeframe=timeframe).to_timedelta(),
                 open=7195.2,
@@ -66,6 +68,8 @@ def sample_candles(sample_bars):
                 currency=currency,
                 period=timeframe,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
+                high_time=datetime.datetime.fromisoformat("2020-01-01 07:35:00"),
+                low_time=datetime.datetime.fromisoformat("2020-01-01 05:15:00"),
                 close_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00")
                 + Period(timeframe=timeframe).to_timedelta(),
                 open=7225.0,
@@ -95,6 +99,14 @@ def sample_fluctuations():
                     datetime.datetime.fromisoformat("2020-01-01 00:00:00"),
                     datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
                 ],
+                "high_time": [
+                    datetime.datetime.fromisoformat("2020-01-01 03:35:00"),
+                    datetime.datetime.fromisoformat("2020-01-01 07:35:00"),
+                ],
+                "low_time": [
+                    datetime.datetime.fromisoformat("2020-01-01 01:15:00"),
+                    datetime.datetime.fromisoformat("2020-01-01 05:15:00"),
+                ],
                 "close_time": [
                     datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
                     datetime.datetime.fromisoformat("2020-01-01 08:00:00"),
@@ -112,3 +124,55 @@ def sample_fluctuations():
         )
 
     return generate_fluctuations
+
+
+@pytest.fixture
+def fluctuations():
+    def _fluctuations(
+        coin=Coin.BTC,
+        currency=Coin.USDT,
+        timeframe="4h",
+        include_high_time: bool = True,
+        include_low_time: bool = True,
+    ) -> Fluctuations:
+        period = Period(timeframe=timeframe)
+        return Fluctuations.from_candles(
+            candles=[
+                Candle.model_validate(
+                    {
+                        "coin": coin,
+                        "currency": currency,
+                        "open_time": open_time,
+                        "period": period.timeframe,
+                        "close_time": open_time + period.to_timedelta(),
+                        "high_time": (open_time + datetime.timedelta(hours=12))
+                        if include_high_time
+                        else None,
+                        "low_time": (open_time + datetime.timedelta(hours=3))
+                        if include_low_time
+                        else None,
+                        "open": open,
+                        "high": high,
+                        "low": low,
+                        "close": close,
+                        "volume": 100,
+                        "quote_volume": (open + high) / 2 * 100,
+                        "nb_trades": 100,
+                        "taker_volume": 50,
+                        "taker_quote_volume": (open + high) / 2 * 100 / 2,
+                    }
+                )
+                for open_time, open, high, low, close in zip(
+                    [
+                        datetime.datetime(2024, 8, 19) + ii * period.to_timedelta()
+                        for ii in range(7)
+                    ],
+                    [50, 100, 150, 200, 250, 300, 350],
+                    [125, 175, 225, 275, 325, 375, 425],
+                    [40, 90, 140, 190, 240, 290, 340],
+                    [100, 150, 200, 250, 300, 350, 400],
+                )
+            ]
+        )
+
+    return _fluctuations
