@@ -1,4 +1,6 @@
 import datetime
+from functools import cached_property
+
 import pandas as pd
 from pydantic import BaseModel, model_validator
 from pathlib import Path
@@ -37,11 +39,6 @@ class Candle(BaseModel):
     taker_volume: float
     taker_quote_volume: float
 
-    @classmethod
-    def from_fluctuation(cls, row: pd.Series):
-        """Temporary, wait for collection of candles class."""
-        return cls.model_validate(row.to_dict())
-
     def __repr__(self):
         return str(self.__dict__)
 
@@ -53,23 +50,27 @@ class Fluctuations(BaseModel):
     """Collection of candles.
 
     Attributes:
-        candles_mapping: list of candles ordered by their open_time attribute.
+        candles: list of candles ordered by their open_time attribute.
+        coin: the base coin
+        currency: the currency used to trade the coin
         period: candles collection time period (e.g. '1d' or '4h')
     """
 
-    # TODO : fix this ugly tuple (coin, currency, period) key as attributes are fixed
-    candles_mapping: dict[tuple[datetime.datetime, str, str, str], Candle]
+    candles: list[Candle]
     period: str
     coin: str
     currency: str
 
+    @cached_property
+    def candles_mapping(self):
+        """Maps a date to a candle's index with the same `open_time`."""
+        return {candle.open_time: ii for ii, candle in enumerate(self.candles)}
+
     @classmethod
     def from_candles(cls, candles: list[Candle]):
+        sorted_candles = sorted(candles, key=lambda candle: candle.open_time)
         return cls(
-            candles_mapping={
-                (candle.open_time, candle.coin, candle.currency, candle.period): candle
-                for candle in sorted(candles, key=lambda candle: candle.open_time)
-            },
+            candles=sorted_candles,
             period=candles[0].period,
             coin=candles[0].coin,
             currency=candles[0].currency,
@@ -82,7 +83,7 @@ class Fluctuations(BaseModel):
             zip(
                 *[
                     (candle.period, candle.coin, candle.currency)
-                    for candle in self.candles_mapping.values()
+                    for candle in self.candles
                 ]
             )
         )
@@ -103,10 +104,12 @@ class Fluctuations(BaseModel):
                 f"All candles must have the same currency, found {currencies_str}."
             )
 
+        # check candle's list size equals unique indexes size
+        if len(self.candles) != len(set(self.candles_mapping.values())):
+            raise ValueError("Inconsistent candles mapping.")
+
     def get_candle(self, open_time: datetime.datetime) -> Candle:
-        return self.candles_mapping.get(
-            (open_time, self.coin, self.currency, self.period)
-        )
+        return self.candles[self.candles_mapping.get(open_time)]
 
     def save(self, path: Path) -> None:
         """Save fluctuations to disk.
@@ -123,10 +126,7 @@ class Fluctuations(BaseModel):
 
         path.parent.mkdir(parents=True, exist_ok=True)
         df = pd.concat(
-            [
-                pd.DataFrame(candle.model_dump(), index=[0])
-                for candle in self.candles_mapping.values()
-            ]
+            [pd.DataFrame(candle.model_dump(), index=[0]) for candle in self.candles]
         )
         df.to_csv(path.as_posix(), index=False)
 
@@ -150,5 +150,5 @@ class Fluctuations(BaseModel):
             .reset_index(drop=True)
             .astype({"open_time": "datetime64[ns]", "close_time": "datetime64[ns]"})
         )
-        candles = [Candle.from_fluctuation(row) for _, row in df.iterrows()]
+        candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
         return cls.from_candles(candles)

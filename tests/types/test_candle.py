@@ -11,8 +11,8 @@ def test_fluctuations_from_candles(sample_candles):
     assert Fluctuations.from_candles(
         candles=sample_candles(timeframe="4h")
     ).model_dump() == {
-        "candles_mapping": {
-            (datetime.datetime(2020, 1, 1, 0, 0), "BTC", "USDT", "4h"): {
+        "candles": [
+            {
                 "close": 7225.0,
                 "close_time": datetime.datetime(2020, 1, 1, 4, 0),
                 "coin": "BTC",
@@ -28,7 +28,7 @@ def test_fluctuations_from_candles(sample_candles):
                 "taker_volume": 1548.8,
                 "volume": 2833.7,
             },
-            (datetime.datetime(2020, 1, 1, 4, 0), "BTC", "USDT", "4h"): {
+            {
                 "close": 7209.8,
                 "close_time": datetime.datetime(2020, 1, 1, 8, 0),
                 "coin": "BTC",
@@ -44,11 +44,21 @@ def test_fluctuations_from_candles(sample_candles):
                 "taker_volume": 1049.7,
                 "volume": 2061.3,
             },
-        },
+        ],
         "coin": "BTC",
         "currency": "USDT",
         "period": Period(timeframe="4h").timeframe,
     }
+
+
+def test_fluctuations_get_candle(sample_candles):
+    candles = sample_candles(timeframe="4h")
+    assert (
+        Fluctuations.from_candles(candles=candles).get_candle(
+            open_time=candles[0].open_time
+        )
+        == candles[0]
+    )
 
 
 def test_fluctuations_fails_on_coins(sample_candles):
