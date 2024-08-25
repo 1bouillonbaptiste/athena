@@ -5,7 +5,7 @@ import datetime
 import pytest
 
 from athena.optimize import Strategy, Position
-from athena.types import Signal, Coin, Side
+from athena.core.types import Signal, Coin, Side
 from athena.optimize.backtesting import (
     get_trades_from_strategy_and_fluctuations,
     check_position_exit_signals,

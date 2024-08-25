@@ -2,7 +2,8 @@ from athena.apicultor.fetch import fetch_historical_data
 from athena.apicultor.client import (
     BinanceClient,
 )
-from athena.types import Period, Fluctuations
+from athena.core.types import Period
+from athena.core.interfaces import Fluctuations
 
 
 def test_fetch_historical_data(mocker, sample_bars, sample_candles):

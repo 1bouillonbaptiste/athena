@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 
 from athena.apicultor.client import BinanceClient
-from athena.types import Candle, Period, Fluctuations
+from athena.core.types import Period
+from athena.core.interfaces import Candle, Fluctuations
 
 
 def fetch_historical_data(

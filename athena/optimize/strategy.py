@@ -2,7 +2,7 @@ from typing import Iterable
 
 import pandas as pd
 import datetime
-from athena.types import Signal
+from athena.core.types import Signal
 import re
 
 

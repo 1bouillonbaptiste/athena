@@ -2,7 +2,8 @@ import pytest
 import pandas as pd
 import datetime
 
-from athena.types import Fluctuations, Period
+from athena.core.interfaces import Fluctuations
+from athena.core.types import Period, Coin
 
 from pandas.testing import assert_frame_equal
 
@@ -45,8 +46,8 @@ def test_fluctuations_from_candles(sample_candles):
                 "volume": 2061.3,
             },
         ],
-        "coin": "BTC",
-        "currency": "USDT",
+        "coin": Coin.BTC,
+        "currency": Coin.USDT,
         "period": Period(timeframe="4h").timeframe,
     }
 

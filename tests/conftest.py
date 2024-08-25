@@ -1,7 +1,8 @@
 import pytest
 import datetime
 
-from athena.types import Candle, Period
+from athena.core.types import Period
+from athena.core.interfaces import Candle
 import pandas as pd
 
 

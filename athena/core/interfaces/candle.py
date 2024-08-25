@@ -5,6 +5,8 @@ import pandas as pd
 from pydantic import BaseModel, model_validator
 from pathlib import Path
 
+from athena.core.types import Coin
+
 
 class Candle(BaseModel):
     """Indicators of a specific candle.
@@ -53,13 +55,13 @@ class Fluctuations(BaseModel):
         candles: list of candles ordered by their open_time attribute.
         coin: the base coin
         currency: the currency used to trade the coin
-        period: candles collection time period (e.g. '1d' or '4h')
+        period: candles time period (e.g. '1d' or '4h')
     """
 
     candles: list[Candle]
-    period: str
-    coin: str
-    currency: str
+    coin: Coin
+    currency: Coin
+    period: str  # TODO : fix type `Period` raises pydantic error when create Fluctuations schema
 
     @cached_property
     def candles_mapping(self):
