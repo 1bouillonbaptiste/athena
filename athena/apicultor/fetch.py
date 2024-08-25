@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from athena.apicultor.client import BinanceClient
-from athena.types import Candle, Period
+from athena.types import Candle, Period, Fluctuations
 
 
 def fetch_historical_data(
@@ -11,7 +11,7 @@ def fetch_historical_data(
     period: Period,
     start_date: str,
     end_date: str,
-) -> list[Candle]:
+) -> Fluctuations:
     """Get candles data between two dates.
 
     bars contain list of OHLCV values (
@@ -72,4 +72,4 @@ def fetch_historical_data(
             )
         )
 
-    return candles
+    return Fluctuations.from_candles(candles)
