@@ -11,7 +11,7 @@ def get_trades_from_strategy_and_fluctuations(
 
     Args:
         strategy: the strategy to get entry signals
-        fluctuations: collections of candles
+        fluctuations: collection of candles
 
     Returns:
         market movement as a list of trades
