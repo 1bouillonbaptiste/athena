@@ -1,6 +1,6 @@
 import datetime
 
-from athena.types import Side, Coin
+from athena.core.types import Side, Coin
 from pydantic import BaseModel
 
 FEES_PCT = 0.001

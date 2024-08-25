@@ -1,9 +1,7 @@
 from athena.optimize import Strategy, Trade, Portfolio, Position
-from athena.types import Coin, Period
+from athena.core.types import Coin, Period, Signal
 import pandas as pd
 import datetime
-
-from athena.types import Signal
 
 
 def get_trades_from_strategy_and_fluctuations(

@@ -1,7 +1,8 @@
 import pytest
 import datetime
 
-from athena.types import Candle, Period
+from athena.core.types import Period
+from athena.core.interfaces import Candle
 import pandas as pd
 
 
@@ -41,11 +42,11 @@ def sample_bars():
 
 @pytest.fixture()
 def sample_candles(sample_bars):
-    def generate_candles(timeframe):
+    def generate_candles(coin="BTC", currency="USDT", timeframe="4h"):
         return [
             Candle(
-                coin="BTC",
-                currency="USDT",
+                coin=coin,
+                currency=currency,
                 period=timeframe,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00"),
                 close_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00")
@@ -61,8 +62,8 @@ def sample_candles(sample_bars):
                 taker_quote_volume=11176594.4,
             ),
             Candle(
-                coin="BTC",
-                currency="USDT",
+                coin=coin,
+                currency=currency,
                 period=timeframe,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
                 close_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00")

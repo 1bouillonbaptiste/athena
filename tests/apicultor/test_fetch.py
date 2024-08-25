@@ -2,7 +2,8 @@ from athena.apicultor.fetch import fetch_historical_data
 from athena.apicultor.client import (
     BinanceClient,
 )
-from athena.types import Period
+from athena.core.types import Period
+from athena.core.interfaces import Fluctuations
 
 
 def test_fetch_historical_data(mocker, sample_bars, sample_candles):
@@ -34,4 +35,4 @@ def test_fetch_historical_data(mocker, sample_bars, sample_candles):
         period=period,
         start_date="2020-01-01",
         end_date="2020-01-02",
-    ) == sample_candles(timeframe=period.timeframe)
+    ) == Fluctuations.from_candles(sample_candles(timeframe=period.timeframe))

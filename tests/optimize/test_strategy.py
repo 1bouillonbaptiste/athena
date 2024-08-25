@@ -1,7 +1,7 @@
 import pandas as pd
 
 from athena.optimize import Strategy
-from athena.types import Signal
+from athena.core.types import Signal
 
 import pytest
 

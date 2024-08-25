@@ -1,6 +1,6 @@
 import pytest
 
-from athena.types.period import fill_missing_attributes
+from athena.core.types.period import fill_missing_attributes
 
 
 @pytest.mark.parametrize(
