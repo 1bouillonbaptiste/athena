@@ -1,9 +1,8 @@
-import pandas as pd
-
 import datetime
 
 import pytest
 
+from athena.core.interfaces import Fluctuations, Candle
 from athena.optimize import Strategy, Position
 from athena.core.types import Signal, Coin, Side
 from athena.optimize.backtesting import (
@@ -13,11 +12,11 @@ from athena.optimize.backtesting import (
 
 
 class StrategyBuyMondaySellFriday(Strategy):
-    def compute_signals(self, fluctuations: pd.DataFrame) -> list[Signal]:
+    def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
         """Return dummy signals."""
         signals = []
-        for _, row in fluctuations.iterrows():
-            match row["open_time"].isoweekday():
+        for candle in fluctuations.candles:
+            match candle.open_time.isoweekday():
                 case 6 | 7:  # weekend
                     signals.append(Signal.WAIT)
                 case 1:  # all-in on monday, typical crypto player
@@ -30,11 +29,11 @@ class StrategyBuyMondaySellFriday(Strategy):
 
 
 class StrategyMondayDCA(Strategy):
-    def compute_signals(self, fluctuations: pd.DataFrame) -> list[Signal]:
+    def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
         """Return dummy signals."""
         signals = []
-        for _, row in fluctuations.iterrows():
-            match row["open_time"].isoweekday():
+        for candle in fluctuations.candles:
+            match candle.open_time.isoweekday():
                 case 1:  # dca on monday
                     signals.append(Signal.BUY)
                 case _:
@@ -42,21 +41,13 @@ class StrategyMondayDCA(Strategy):
         return signals
 
 
-def test_get_trades_from_strategy_and_fluctuations_with_sell_signal():
+def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33)
-    fluctuations = pd.DataFrame(
-        {
-            "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
-            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
-            "period": "1d",
-            "open": [50, 100, 150, 200, 250, 300, 350],
-            "high": [125, 175, 225, 275, 325, 375, 425],
-            "low": [40, 90, 140, 190, 240, 290, 340],
-            "close": [100, 150, 200, 250, 300, 350, 400],
-        }
-    )
     trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy, fluctuations=fluctuations
+        strategy=strategy,
+        fluctuations=fluctuations(
+            timeframe="1d", include_high_time=False, include_low_time=False
+        ),
     )
 
     assert len(trades) == 1
@@ -87,21 +78,13 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal():
     assert open_position is None
 
 
-def test_get_trades_from_strategy_and_fluctuations_price_reach_tp():
+def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33, take_profit_pct=0.1)
-    fluctuations = pd.DataFrame(
-        {
-            "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
-            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
-            "period": "1d",
-            "open": [50, 100, 150, 200, 250, 300, 350],
-            "high": [125, 175, 225, 275, 325, 375, 425],
-            "low": [40, 90, 140, 190, 240, 290, 340],
-            "close": [100, 150, 200, 250, 300, 350, 400],
-        }
-    )
     trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy, fluctuations=fluctuations
+        strategy=strategy,
+        fluctuations=fluctuations(
+            timeframe="1d", include_high_time=False, include_low_time=False
+        ),
     )
 
     assert len(trades) == 1
@@ -132,21 +115,13 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp():
     assert open_position is None
 
 
-def test_get_trades_from_strategy_and_fluctuations_price_reach_sl():
+def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33, stop_loss_pct=0.1)
-    fluctuations = pd.DataFrame(
-        {
-            "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
-            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
-            "period": "1d",
-            "open": [50, 100, 150, 200, 250, 300, 350],
-            "high": [125, 175, 225, 275, 325, 375, 425],
-            "low": [40, 90, 140, 190, 240, 290, 340],
-            "close": [100, 150, 200, 250, 300, 350, 400],
-        }
-    )
     trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy, fluctuations=fluctuations
+        strategy=strategy,
+        fluctuations=fluctuations(
+            timeframe="1d", include_high_time=False, include_low_time=False
+        ),
     )
 
     assert len(trades) == 1
@@ -177,21 +152,13 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl():
     assert open_position is None
 
 
-def test_get_trades_from_strategy_and_fluctuations_position_not_closed():
+def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuations):
     strategy = StrategyMondayDCA(position_size=0.33)
-    fluctuations = pd.DataFrame(
-        {
-            "open_time": pd.date_range("2024-08-19", "2024-08-25", freq="D"),
-            "close_time": pd.date_range("2024-08-20", "2024-08-26", freq="D"),
-            "period": "1d",
-            "open": [50, 100, 150, 200, 250, 300, 350],
-            "high": [125, 175, 225, 275, 325, 375, 425],
-            "low": [40, 90, 140, 190, 240, 290, 340],
-            "close": [100, 150, 200, 250, 300, 350, 400],
-        }
-    )
     trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy, fluctuations=fluctuations
+        strategy=strategy,
+        fluctuations=fluctuations(
+            timeframe="1d", include_high_time=False, include_low_time=False
+        ),
     )
     assert trades == []
     assert open_position.model_dump() == {
@@ -230,81 +197,69 @@ def open_position():
     )
 
 
-def test_check_position_exit_signals_take_profit(open_position):
-    row = pd.DataFrame(
+@pytest.fixture
+def candle():
+    return Candle.model_validate(
         {
-            "close_time": datetime.datetime(2024, 8, 25),
+            "coin": Coin.BTC,
+            "currency": Coin.USDT,
+            "period": "1h",
+            "open_time": datetime.datetime(2024, 8, 25),
+            "close_time": datetime.datetime(2024, 8, 26),
             "high_time": datetime.datetime(2024, 8, 25, hour=12),
-            "period": "1d",
+            "low_time": datetime.datetime(2024, 8, 25, hour=3),
             "open": 130,
             "high": 151,
             "low": 122,
             "close": 130,
-        },
-        index=[0],
+            "volume": 100,
+            "quote_volume": 140,
+            "nb_trades": 100,
+            "taker_volume": 50,
+            "taker_quote_volume": 70,
+        }
     )
-    close_price, close_date = check_position_exit_signals(open_position, row)
 
-    # take_prodit is reached at high_time, everything went well
+
+def test_check_position_exit_signals_take_profit(open_position, candle):
+    close_price, close_date = check_position_exit_signals(
+        position=open_position, candle=candle
+    )
+
+    # take_profit is reached at high_time, everything went well
     assert close_price == open_position.take_profit
     assert close_date == datetime.datetime(2024, 8, 25, hour=12)
 
 
-def test_check_position_exit_signals_stop_loss(open_position):
-    row = pd.DataFrame(
-        {
-            "close_time": datetime.datetime(2024, 8, 25),
-            "high_time": datetime.datetime(2024, 8, 25, hour=12),
-            "period": "1d",
-            "open": 90,
-            "high": 110,
-            "low": 30,
-            "close": 40,
-        },
-        index=[0],
+def test_check_position_exit_signals_stop_loss(open_position, candle):
+    candle.low_time = None
+    candle.high = 140  # below take_profit
+    candle.low = 40  # below stop_loss
+    close_price, close_date = check_position_exit_signals(
+        position=open_position, candle=candle
     )
-    close_price, close_date = check_position_exit_signals(open_position, row)
 
     # "low_time" not in row, take close_time
     assert close_price == open_position.stop_loss
-    assert close_date == datetime.datetime(2024, 8, 25)
+    assert close_date == datetime.datetime(2024, 8, 26)
 
 
-def test_check_position_exit_signals_tp_sl_conflict(open_position):
-    row = pd.DataFrame(
-        {
-            "close_time": datetime.datetime(2024, 8, 25),
-            "high_time": datetime.datetime(2024, 8, 25, hour=12),
-            "low_time": datetime.datetime(2024, 8, 25, hour=3),
-            "period": "1d",
-            "open": 100,
-            "high": 160,
-            "low": 30,
-            "close": 150,
-        },
-        index=[0],
+def test_check_position_exit_signals_tp_sl_conflict(open_position, candle):
+    candle.low = 40  # below stop_loss
+    close_price, close_date = check_position_exit_signals(
+        position=open_position, candle=candle
     )
-    close_price, close_date = check_position_exit_signals(open_position, row)
 
     # even if candle ended well, we reached low before high
     assert close_price == open_position.stop_loss
     assert close_date == datetime.datetime(2024, 8, 25, hour=3)
 
 
-def test_check_position_exit_signals_tp_sl_conflict_fiftyfifty(open_position):
-    row = pd.DataFrame(
-        {
-            "close_time": datetime.datetime(2024, 8, 25),
-            "period": "1d",
-            "open": 100,
-            "high": 160,
-            "low": 30,
-            "close": 150,
-        },
-        index=[0],
-    )
-    close_price, close_date = check_position_exit_signals(open_position, row)
+def test_check_position_exit_signals_undefined_winner(open_position, candle):
+    candle.high_time = None
+    candle.low_time = None
+    close_price, close_date = check_position_exit_signals(open_position, candle=candle)
 
     # we don't know which of low or high came first, so we take close
     assert close_price == 150
-    assert close_date == datetime.datetime(2024, 8, 25)
+    assert close_date == datetime.datetime(2024, 8, 26)

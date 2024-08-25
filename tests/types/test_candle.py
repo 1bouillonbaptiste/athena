@@ -14,36 +14,40 @@ def test_fluctuations_from_candles(sample_candles):
     ).model_dump() == {
         "candles": [
             {
-                "close": 7225.0,
+                "open_time": datetime.datetime(2020, 1, 1, 0, 0),
                 "close_time": datetime.datetime(2020, 1, 1, 4, 0),
+                "high_time": datetime.datetime(2020, 1, 1, 3, 35),
+                "low_time": datetime.datetime(2020, 1, 1, 1, 15),
                 "coin": "BTC",
                 "currency": "USDT",
+                "period": "4h",
+                "open": 7195.2,
                 "high": 7245.0,
                 "low": 7175.4,
+                "close": 7225.0,
                 "nb_trades": 32476,
-                "open": 7195.2,
-                "open_time": datetime.datetime(2020, 1, 1, 0, 0),
-                "period": "4h",
+                "volume": 2833.7,
                 "quote_volume": 20445895.8,
                 "taker_quote_volume": 11176594.4,
                 "taker_volume": 1548.8,
-                "volume": 2833.7,
             },
             {
-                "close": 7209.8,
+                "open_time": datetime.datetime(2020, 1, 1, 4, 0),
                 "close_time": datetime.datetime(2020, 1, 1, 8, 0),
+                "high_time": datetime.datetime(2020, 1, 1, 7, 35),
+                "low_time": datetime.datetime(2020, 1, 1, 5, 15),
                 "coin": "BTC",
                 "currency": "USDT",
+                "period": "4h",
+                "open": 7225.0,
                 "high": 7236.2,
                 "low": 7199.1,
+                "close": 7209.8,
                 "nb_trades": 29991,
-                "open": 7225.0,
-                "open_time": datetime.datetime(2020, 1, 1, 4, 0),
-                "period": "4h",
+                "volume": 2061.3,
                 "quote_volume": 14890182.3,
                 "taker_quote_volume": 7582850.4,
                 "taker_volume": 1049.7,
-                "volume": 2061.3,
             },
         ],
         "coin": Coin.BTC,
@@ -89,7 +93,12 @@ def test_fluctuations_save_to_file(tmp_path, sample_candles, sample_fluctuations
     )
     assert_frame_equal(
         pd.read_csv(tmp_path / "fluctuations.csv").astype(
-            {"open_time": "datetime64[ns]", "close_time": "datetime64[ns]"}
+            {
+                "open_time": "datetime64[ns]",
+                "high_time": "datetime64[ns]",
+                "low_time": "datetime64[ns]",
+                "close_time": "datetime64[ns]",
+            }
         ),
         sample_fluctuations(),
     )
