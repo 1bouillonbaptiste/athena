@@ -1,6 +1,8 @@
-# kouign amann
+# Athena
 
+Hand-crafted library to create, analyze and deploy your trading strategies.
 
+:warning: The development of this repo is still in progress
 
 
 ## Installation
