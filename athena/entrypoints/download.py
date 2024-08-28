@@ -18,7 +18,7 @@ def download_market_candles(
     period: Period,
     output_dir: Path,
 ) -> None:
-    """Download market data from coin / currency pair and save it.
+    """Download market data from coin / currency pair as fluctuations and save them.
 
     Args:
         coin: the base coin to download
