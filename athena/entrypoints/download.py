@@ -10,9 +10,6 @@ from athena.core.types import Coin, Period
 from tqdm import tqdm
 
 
-# TODO : CLI asking for coin / currency / start_date / end_date / period / ...
-
-
 def download_market_candles(
     coin: Coin,
     currency: Coin,

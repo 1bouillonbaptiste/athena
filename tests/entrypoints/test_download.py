@@ -100,4 +100,6 @@ def test_download_market_candles(generate_bars, mocker, tmp_path):
 
     fluctuations_tmp = Fluctuations.load(dataset_filename)
 
-    assert len(fluctuations_tmp.candles) == 6 * 14  # 6 candles * 14 days
+    assert len(fluctuations_tmp.candles) == 6 * 14  # 6 candles a day * 14 days
+    assert fluctuations_tmp.candles[0].open_time == from_date
+    assert fluctuations_tmp.candles[-1].close_time == to_date
