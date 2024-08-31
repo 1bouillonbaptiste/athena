@@ -10,7 +10,7 @@ def get_credentials(context: ProjectContext = ProjectContext()):
         for line in context.credentials_file.open("r"):
             name, value = line.replace("\n", "").split("=")
             os.environ[name] = value
-    return os.environ.get("BINANCE_KEY", None), os.environ.get("BINANCE_SECRET", None)
+    return os.environ.get("BINANCE_SECRET", None), os.environ.get("BINANCE_KEY", None)
 
 
 class BinanceClient:

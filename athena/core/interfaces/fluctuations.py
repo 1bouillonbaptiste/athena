@@ -33,14 +33,16 @@ class Fluctuations(BaseModel):
         sorted_candles = sorted(candles, key=lambda candle: candle.open_time)
         return cls(
             candles=sorted_candles,
-            period=candles[0].period,
-            coin=candles[0].coin,
-            currency=candles[0].currency,
+            period=candles[0].period if candles else "1m",
+            coin=candles[0].coin if candles else Coin.BTC,
+            currency=candles[0].currency if candles else Coin.USDT,
         )
 
     @model_validator(mode="after")
     def check_candles_period_coin_currency_unicity(self):
         """Check candles have the same period."""
+        if not self.candles:
+            return
         periods, coins, currencies = list(
             zip(
                 *[
@@ -85,6 +87,9 @@ class Fluctuations(BaseModel):
         """
         if path.is_dir():
             path = path / "fluctuations.csv"
+
+        if not self.candles:  # don't save anything
+            return
 
         path.parent.mkdir(parents=True, exist_ok=True)
         df = pd.concat(

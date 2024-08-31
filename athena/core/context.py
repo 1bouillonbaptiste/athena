@@ -6,7 +6,7 @@ class ProjectContext:
     def __init__(self, root_dir: Path | None = None):
         if root_dir is None:
             try:  # works when running the code
-                root_dir = Path(__file__).parent.parent
+                root_dir = Path(__file__).parent.parent.parent
             except NameError:  # `__file__` does not exist with python interpreter
                 root_dir = os.getcwd()
 

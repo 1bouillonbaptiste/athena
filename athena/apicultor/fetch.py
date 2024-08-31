@@ -1,8 +1,18 @@
-from datetime import datetime, timedelta
+import logging
+
+from athena.core.interfaces import Candle
+
+import datetime
+import tempfile
+from pathlib import Path
+
 
 from athena.apicultor.client import BinanceClient
-from athena.core.types import Period
-from athena.core.interfaces import Candle, Fluctuations
+from athena.core.interfaces import Fluctuations, DatasetLayout
+from athena.core.types import Coin, Period
+from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_historical_data(
@@ -50,9 +60,11 @@ def fetch_historical_data(
     )
     candles = []
     for bar in bars:
-        open_time = datetime.fromtimestamp(bar[0] / 1000.0)
-        close_time = datetime.fromtimestamp(bar[6] / 1000.0)
-        if close_time - open_time < (period.to_timedelta() - timedelta(seconds=1)):
+        open_time = datetime.datetime.fromtimestamp(bar[0] / 1000.0)
+        close_time = datetime.datetime.fromtimestamp(bar[6] / 1000.0)
+        if close_time - open_time < (
+            period.to_timedelta() - datetime.timedelta(seconds=1)
+        ):
             continue
         candles.append(
             Candle(
@@ -72,5 +84,50 @@ def fetch_historical_data(
                 taker_quote_volume=float(bar[10]),
             )
         )
-
     return Fluctuations.from_candles(candles)
+
+
+def download_daily_market_candles(
+    coin: str,
+    currency: str,
+    from_date: datetime.datetime,
+    to_date: datetime.datetime,
+    timeframe: str,
+    output_dir: Path,
+):
+    """Download market data from coin / currency pair as fluctuations and save them.
+
+    Args:
+        coin: the base coin to download
+        currency: the quote currency
+        from_date: lower bound date to download candles
+        to_date: upper bound date to download candles
+        timeframe: timeframe of candles to download
+        output_dir: directory to save downloaded candles
+    """
+
+    client = BinanceClient()
+    period = Period(timeframe=timeframe)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_dir = Path(tmp_dir)
+        # retrieve data day by day to limit transfer size
+        for day_ii in tqdm(range((to_date - from_date).days)):
+            fluctuations = fetch_historical_data(
+                client=client,
+                coin=coin,
+                currency=currency,
+                period=period,
+                start_date=(from_date + datetime.timedelta(days=day_ii)).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                end_date=(from_date + datetime.timedelta(days=day_ii + 1)).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+            )
+            fluctuations.save(tmp_dir / f"fluctuations_{day_ii}.csv")
+        filename = DatasetLayout(output_dir).get_dataset_filename(
+            coin=Coin[coin], currency=Coin[currency], period=period
+        )
+        Fluctuations.load(tmp_dir).save(filename)
+        logger.info(f"Saved fluctuations to {filename.as_posix()}")
