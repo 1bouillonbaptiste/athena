@@ -27,7 +27,7 @@ def app():
 )
 @click.option(
     "--timeframe",
-    required=True,
+    default="1m",
     type=str,
     help="The base timeframe of each candle (e.g. '1m' or '4h').",
 )
