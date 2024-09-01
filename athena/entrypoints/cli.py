@@ -49,8 +49,8 @@ def download(
     download_daily_market_candles(
         coin=coin,
         currency=currency,
-        from_date=datetime.datetime.strptime(from_date, "%Y-%m-%d"),
-        to_date=datetime.datetime.strptime(to_date, "%Y-%m-%d"),
+        from_date=from_date,
+        to_date=to_date,
         timeframe=timeframe,
         output_dir=output_dir,
     )
