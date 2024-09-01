@@ -137,6 +137,12 @@ def download_daily_market_candles(
         if not fluctuations.candles:
             continue
 
+        candles_expected_number = datetime.timedelta(days=1) / period.to_timedelta()
+        if len(fluctuations.candles) != candles_expected_number:
+            logger.warning(
+                f"Expected {candles_expected_number} candles to be downloaded, got {len(fluctuations.candles)}."
+            )
+
         filename = dataset_layout.localize_file(
             coin=Coin[coin],
             currency=Coin[currency],
