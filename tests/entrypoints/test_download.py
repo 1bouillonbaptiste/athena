@@ -106,13 +106,15 @@ def test_download_market_candles(generate_bars, mocker, tmp_path):
     assert runner.exit_code == 0
 
     dataset_layout = DatasetLayout(tmp_path)
-    dataset_filename = dataset_layout.get_dataset_filename(
-        coin=Coin.BTC, currency=Coin.USDT, period=period
+
+    dataset_filename = dataset_layout.localize_file(
+        coin=Coin.BTC, currency=Coin.USDT, period=period, date=from_date
     )
 
     assert dataset_filename.exists()
 
-    fluctuations_tmp = Fluctuations.load(dataset_filename)
+    # we cannot test each date because the mocker returns a bulk of 15 days
+    fluctuations_tmp = Fluctuations.load(dataset_filename.parent)
 
     assert len(fluctuations_tmp.candles) == 6 * 14  # 6 candles a day * 14 days
     assert fluctuations_tmp.candles[0].open_time == from_date
