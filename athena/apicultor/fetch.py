@@ -62,10 +62,18 @@ def fetch_historical_data(
     for bar in bars:
         open_time = datetime.datetime.fromtimestamp(bar[0] / 1000.0)
         close_time = datetime.datetime.fromtimestamp(bar[6] / 1000.0)
+
+        # check the candle is closed
         if close_time - open_time < (
             period.to_timedelta() - datetime.timedelta(seconds=1)
         ):
             continue
+
+        # check the datetime is valid
+        # see https://docs.python.org/3/library/datetime.html#datetime.datetime.fold
+        if open_time.fold == 1:
+            continue
+
         candles.append(
             Candle(
                 coin=coin,
@@ -90,8 +98,8 @@ def fetch_historical_data(
 def download_daily_market_candles(
     coin: str,
     currency: str,
-    from_date: datetime.datetime,
-    to_date: datetime.datetime,
+    from_date: str,
+    to_date: str,
     timeframe: str,
     output_dir: Path,
 ):
@@ -108,6 +116,8 @@ def download_daily_market_candles(
 
     client = BinanceClient()
     period = Period(timeframe=timeframe)
+    from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d")
+    to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_dir = Path(tmp_dir)
