@@ -2,8 +2,9 @@ import datetime
 
 import pytest
 import numpy as np
+from click.testing import CliRunner
 
-from athena.entrypoints.download import download_market_candles
+from athena.entrypoints.cli import app
 from athena.core.types import Period, Coin
 from athena.core.interfaces import DatasetLayout, Fluctuations
 
@@ -82,23 +83,38 @@ def test_download_market_candles(generate_bars, mocker, tmp_path):
             timeframe=period.timeframe,
         ),
     )
-    download_market_candles(
-        coin=Coin.BTC,
-        currency=Coin.USDT,
-        from_date=from_date,
-        to_date=to_date,
-        output_dir=tmp_path,
-        period=period,
+
+    runner = CliRunner().invoke(
+        app,
+        [
+            "download",
+            "--coin",
+            "BTC",
+            "--currency",
+            "USDT",
+            "--from-date",
+            from_date.strftime("%Y-%m-%d"),
+            "--to-date",
+            to_date.strftime("%Y-%m-%d"),
+            "--output-dir",
+            str(tmp_path),
+            "--timeframe",
+            period.timeframe,
+        ],
     )
 
+    assert runner.exit_code == 0
+
     dataset_layout = DatasetLayout(tmp_path)
-    dataset_filename = dataset_layout.get_dataset_filename(
-        coin=Coin.BTC, currency=Coin.USDT, period=period
+
+    dataset_filename = dataset_layout.localize_file(
+        coin=Coin.BTC, currency=Coin.USDT, period=period, date=from_date
     )
 
     assert dataset_filename.exists()
 
-    fluctuations_tmp = Fluctuations.load(dataset_filename)
+    # we cannot test each date because the mocker returns a bulk of 15 days
+    fluctuations_tmp = Fluctuations.load(dataset_filename.parent)
 
     assert len(fluctuations_tmp.candles) == 6 * 14  # 6 candles a day * 14 days
     assert fluctuations_tmp.candles[0].open_time == from_date

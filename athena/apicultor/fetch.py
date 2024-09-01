@@ -1,8 +1,17 @@
-from datetime import datetime, timedelta
+import logging
+
+from athena.core.interfaces import Candle
+
+import datetime
+from pathlib import Path
+
 
 from athena.apicultor.client import BinanceClient
-from athena.core.types import Period
-from athena.core.interfaces import Candle, Fluctuations
+from athena.core.interfaces import Fluctuations, DatasetLayout
+from athena.core.types import Coin, Period
+from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_historical_data(
@@ -50,10 +59,20 @@ def fetch_historical_data(
     )
     candles = []
     for bar in bars:
-        open_time = datetime.fromtimestamp(bar[0] / 1000.0)
-        close_time = datetime.fromtimestamp(bar[6] / 1000.0)
-        if close_time - open_time < (period.to_timedelta() - timedelta(seconds=1)):
+        open_time = datetime.datetime.fromtimestamp(bar[0] / 1000.0)
+        close_time = datetime.datetime.fromtimestamp(bar[6] / 1000.0)
+
+        # check the candle is closed
+        if close_time - open_time < (
+            period.to_timedelta() - datetime.timedelta(seconds=1)
+        ):
             continue
+
+        # check the datetime is valid
+        # see https://docs.python.org/3/library/datetime.html#datetime.datetime.fold
+        if open_time.fold == 1:
+            continue
+
         candles.append(
             Candle(
                 coin=coin,
@@ -72,5 +91,63 @@ def fetch_historical_data(
                 taker_quote_volume=float(bar[10]),
             )
         )
-
     return Fluctuations.from_candles(candles)
+
+
+def download_daily_market_candles(
+    coin: str,
+    currency: str,
+    from_date: str,
+    to_date: str,
+    timeframe: str,
+    output_dir: Path,
+):
+    """Download market data from coin / currency pair as fluctuations and save them.
+
+    Args:
+        coin: the base coin to download
+        currency: the quote currency
+        from_date: lower bound date to download candles
+        to_date: upper bound date to download candles
+        timeframe: timeframe of candles to download
+        output_dir: directory to save downloaded candles
+    """
+
+    client = BinanceClient()
+    period = Period(timeframe=timeframe)
+    from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d")
+    to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d")
+
+    dataset_layout = DatasetLayout(output_dir)
+    # retrieve data day by day to limit transfer size
+    for day_ii in tqdm(range((to_date - from_date).days)):
+        fluctuations = fetch_historical_data(
+            client=client,
+            coin=coin,
+            currency=currency,
+            period=period,
+            start_date=(from_date + datetime.timedelta(days=day_ii)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            end_date=(from_date + datetime.timedelta(days=day_ii + 1)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+        )
+
+        if not fluctuations.candles:
+            continue
+
+        candles_expected_number = datetime.timedelta(days=1) / period.to_timedelta()
+        if len(fluctuations.candles) != candles_expected_number:
+            logger.warning(
+                f"Expected {candles_expected_number} candles to be downloaded, got {len(fluctuations.candles)}."
+            )
+
+        filename = dataset_layout.localize_file(
+            coin=Coin[coin],
+            currency=Coin[currency],
+            period=period,
+            date=fluctuations.candles[0].open_time,
+        )
+
+        fluctuations.save(filename)
