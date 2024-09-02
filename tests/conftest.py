@@ -1,9 +1,115 @@
 import pytest
 import datetime
 
+
 from athena.core.types import Period, Coin
 from athena.core.interfaces import Candle, Fluctuations
 import pandas as pd
+import numpy as np
+
+
+@pytest.fixture(autouse=True)
+def patch_client(mocker):
+    mocker.patch("athena.apicultor.client.get_credentials", return_value=(None, None))
+
+
+@pytest.fixture
+def generate_bars():
+    def _generate_bars(
+        size=1000,
+        timeframe="1m",
+        from_date: datetime.datetime | None = None,
+        to_date: datetime.datetime | None = None,
+    ):
+        period = Period(timeframe=timeframe)
+
+        if from_date is None and to_date is None:
+            initial_open_time = datetime.datetime.fromisoformat("2020-01-01 00:00:00")
+            last_close_time = initial_open_time + period.to_timedelta() * size
+        elif from_date is None and to_date is not None:
+            last_close_time = to_date
+            initial_open_time = to_date - period.to_timedelta() * size
+        elif from_date is not None and to_date is None:
+            initial_open_time = from_date
+            last_close_time = from_date + period.to_timedelta() * size
+        else:
+            initial_open_time = from_date
+            last_close_time = to_date
+
+        size = int((last_close_time - initial_open_time) / period.to_timedelta())
+        close_price = 1000
+        bars = []
+        for ii in range(size):
+            open_price = close_price
+            close_price = open_price * (1 + np.random.normal(scale=0.01))
+            high_price = np.max([open_price, close_price]) * (
+                1 + np.random.beta(a=2, b=5) / 100
+            )
+            low_price = np.min([open_price, close_price]) * (
+                1 - np.random.beta(a=2, b=5) / 100
+            )
+            volume = (np.random.beta(a=2, b=2) / 2 + 0.25) * 1000
+            buyer_volume = volume * (np.random.beta(a=2, b=2) / 2 + 0.25)
+            bars.append(
+                [
+                    (initial_open_time + ii * period.to_timedelta()).timestamp() * 1000,
+                    str(open_price),
+                    str(high_price),
+                    str(low_price),
+                    str(close_price),
+                    str(volume),
+                    (
+                        initial_open_time
+                        + (ii + 1) * period.to_timedelta()
+                        - datetime.timedelta(milliseconds=90)
+                    ).timestamp()
+                    * 1000,
+                    str((open_price + close_price) / 2 * volume),
+                    np.random.randint(low=1000, high=10000),
+                    str(buyer_volume),
+                    str((open_price + close_price) / 2 * buyer_volume),
+                    "0",
+                ]
+            )
+        return bars
+
+    return _generate_bars
+
+
+@pytest.fixture
+def generate_candles(generate_bars):
+    def _generate_candles(
+        size: int = 1000,
+        coin="BTC",
+        currency="USDT",
+        timeframe="4h",
+        from_date: datetime.datetime | None = None,
+        to_date: datetime.datetime | None = None,
+    ):
+        return [
+            Candle(
+                coin=coin,
+                currency=currency,
+                period=timeframe,
+                open_time=datetime.datetime.fromtimestamp(bar[0] / 1000.0),
+                close_time=datetime.datetime.fromtimestamp(bar[0] / 1000.0)
+                + Period(timeframe=timeframe).to_timedelta(),
+                open=float(bar[1]),
+                high=float(bar[2]),
+                low=float(bar[3]),
+                close=float(bar[4]),
+                volume=float(bar[5]),
+                quote_volume=float(bar[7]),
+                nb_trades=int(bar[8]),
+                taker_volume=float(bar[9]),
+                taker_quote_volume=float(bar[10]),
+            )
+            for bar in generate_bars(
+                size=size, timeframe=timeframe, from_date=from_date, to_date=to_date
+            )
+        ]
+
+    return _generate_candles
 
 
 @pytest.fixture

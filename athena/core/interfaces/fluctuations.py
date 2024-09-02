@@ -126,3 +126,25 @@ class Fluctuations(BaseModel):
         )
         candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
         return cls.from_candles(candles)
+
+
+def get_high_time(candles: list[Candle]) -> datetime.datetime:
+    """Get the time when the highest price is reached."""
+    high_time = candles[0].high_time
+    high_price = candles[0].high
+    for candle in candles:
+        if candle.high > high_price:
+            high_price = candle.high
+            high_time = candle.open_time
+    return high_time
+
+
+def get_low_time(candles: list[Candle]) -> datetime.datetime:
+    """Get the time when the highest price is reached."""
+    low_time = candles[0].low_time
+    low_price = candles[0].low
+    for candle in candles:
+        if candle.low < low_price:
+            low_price = candle.low
+            low_time = candle.open_time
+    return low_time
