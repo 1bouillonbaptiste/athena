@@ -25,6 +25,18 @@ def test_merge_candles(generate_candles):
     assert (merged_candle.close_time - merged_candle.open_time) == (to_date - from_date)
 
 
+def test_convert_candles_to_same_period(generate_candles):
+    from_date = datetime.datetime(2020, 1, 1)
+    to_date = datetime.datetime(2020, 1, 2)
+
+    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+    target_period = Period(timeframe="1m")
+
+    merged_candles = convert_candles_to_period(candles, target_period)
+
+    assert len(merged_candles) == len(candles)
+
+
 def test_convert_candles_to_period(generate_candles):
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 2)

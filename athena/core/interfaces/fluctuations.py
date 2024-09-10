@@ -102,11 +102,12 @@ class Fluctuations(BaseModel):
         df.to_csv(path.as_posix(), index=False)
 
     @classmethod
-    def load(cls, path: Path):
+    def load(cls, path: Path, target_period: Period = None):
         """Load fluctuations from disk.
 
         Args:
             path: load file if file else load all csv files in dir
+            target_period: target period
 
         Returns:
             merged candles as a single fluctuations instance.
@@ -129,6 +130,9 @@ class Fluctuations(BaseModel):
             )
         )
         candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
+
+        if target_period is not None:
+            candles = convert_candles_to_period(candles, target_period=target_period)
         return cls.from_candles(candles)
 
 
@@ -209,9 +213,10 @@ def convert_candles_to_period(
     new_candle_from_date = sorted_candles[new_candle_start_index].open_time
 
     for ii in range(len(sorted_candles)):
-        if sorted_candles[ii].close_time >= (
+        theoretical_close_time_is_reached = sorted_candles[ii].close_time >= (
             new_candle_from_date + target_period.to_timedelta()
-        ):
+        )
+        if theoretical_close_time_is_reached & (new_candle_start_index != ii):
             new_candles.append(merge_candles(sorted_candles[new_candle_start_index:ii]))
             new_candle_start_index = ii
             new_candle_from_date = sorted_candles[new_candle_start_index].open_time
