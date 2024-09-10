@@ -2,10 +2,14 @@ import datetime
 from functools import cached_property
 from pydantic import BaseModel, model_validator
 from athena.core.interfaces import Candle
-from athena.core.types import Coin
+from athena.core.types import Coin, Period
 
 import pandas as pd
 from pathlib import Path
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Fluctuations(BaseModel):
@@ -128,23 +132,89 @@ class Fluctuations(BaseModel):
         return cls.from_candles(candles)
 
 
-def get_high_time(candles: list[Candle]) -> datetime.datetime:
-    """Get the time when the highest price is reached."""
-    high_time = candles[0].high_time
-    high_price = candles[0].high
-    for candle in candles:
-        if candle.high > high_price:
-            high_price = candle.high
-            high_time = candle.open_time
-    return high_time
+def merge_candles(candles: list[Candle]) -> Candle:
+    """Generate a new candle aggregating input candles information.
+
+    This function assumes every candle have the same coin, currency and period.
+
+    Args:
+        candles: a list containing candles to be merged
+
+    Returns:
+        a new candle aggregating input candles information.
+
+    Raises:
+        ValueError: if the input list is empty
+    """
+    if not candles:
+        raise ValueError("Empty candles list.")
+    open_candle = min(candles, key=lambda candle: candle.open_time)
+    close_candle = max(candles, key=lambda candle: candle.close_time)
+    highest_candle = max(candles, key=lambda candle: candle.high)
+    lowest_candle = min(candles, key=lambda candle: candle.low)
+    return Candle(
+        coin=candles[0].coin,
+        currency=candles[0].currency,
+        period=candles[0].period,
+        open_time=open_candle.open_time,
+        high_time=highest_candle.open_time,
+        low_time=lowest_candle.open_time,
+        close_time=close_candle.close_time,
+        open=open_candle.open,
+        high=highest_candle.high,
+        low=lowest_candle.low,
+        close=close_candle.close,
+        volume=sum([candle.volume for candle in candles]),
+        quote_volume=sum([candle.quote_volume for candle in candles]),
+        nb_trades=sum([candle.nb_trades for candle in candles]),
+        taker_volume=sum([candle.taker_volume for candle in candles]),
+        taker_quote_volume=sum([candle.taker_quote_volume for candle in candles]),
+    )
 
 
-def get_low_time(candles: list[Candle]) -> datetime.datetime:
-    """Get the time when the highest price is reached."""
-    low_time = candles[0].low_time
-    low_price = candles[0].low
-    for candle in candles:
-        if candle.low < low_price:
-            low_price = candle.low
-            low_time = candle.open_time
-    return low_time
+def convert_candles_to_period(
+    candles: list[Candle], target_period: Period
+) -> list[Candle]:
+    """Merge close candles into 'bigger' ones.
+
+    We iterate over sorted candles until we reach a theoretical `close_time`.
+    Merge candles between last generated candle and current time into a new candle.
+
+
+    Args:
+        candles: list of unsorted candles
+        target_period: period of every new candle
+
+    Returns:
+        candles whose attributes are computed from input candles.
+
+    Raises:
+        ValueError: if an input candle period is lower than target period (e.g. convert "4h" to "1h" is impossible)
+    """
+
+    if not candles:
+        return []
+
+    if any(
+        [
+            Period(candle.period).to_timedelta() > target_period.to_timedelta()
+            for candle in candles
+        ]
+    ):
+        raise ValueError("Cannot convert candles to lower timeframe.")
+
+    sorted_candles = sorted(candles, key=lambda candle: candle.open_time)
+    new_candles = []
+    new_candle_start_index = 0
+    new_candle_from_date = sorted_candles[new_candle_start_index].open_time
+
+    for ii in range(len(sorted_candles)):
+        if sorted_candles[ii].close_time >= (
+            new_candle_from_date + target_period.to_timedelta()
+        ):
+            new_candles.append(merge_candles(sorted_candles[new_candle_start_index:ii]))
+            new_candle_start_index = ii
+            new_candle_from_date = sorted_candles[new_candle_start_index].open_time
+    if new_candle_start_index != (len(sorted_candles) - 1):
+        logger.warning("Last candle could not be closed, won't be kept.")
+    return new_candles
