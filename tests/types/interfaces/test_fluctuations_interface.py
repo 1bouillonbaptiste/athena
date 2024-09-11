@@ -110,3 +110,14 @@ def test_load_fluctuations_from_dir(tmp_path, sample_candles, sample_fluctuation
         Fluctuations.load(tmp_path).model_dump()
         == Fluctuations.from_candles(sample_candles()).model_dump()
     )
+
+
+def test_load_fluctuations_convert_period(tmp_path, sample_candles, generate_candles):
+    from_date = datetime.datetime(2020, 1, 1)
+    to_date = datetime.datetime(2020, 1, 1, hour=8)
+    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+
+    Fluctuations.from_candles(candles=candles).save(tmp_path / "fluctuations.csv")
+
+    fluctuations = Fluctuations.load(tmp_path, target_period=Period(timeframe="4h"))
+    assert len(fluctuations.candles) == 2
