@@ -101,6 +101,7 @@ def download_daily_market_candles(
     to_date: str,
     timeframe: str,
     output_dir: Path,
+    overwrite: bool = False,
 ):
     """Download market data from coin / currency pair as fluctuations and save them.
 
@@ -111,6 +112,7 @@ def download_daily_market_candles(
         to_date: upper bound date to download candles
         timeframe: timeframe of candles to download
         output_dir: directory to save downloaded candles
+        overwrite: replace existing candles with freshly downloaded ones
     """
 
     client = BinanceClient()
@@ -121,15 +123,29 @@ def download_daily_market_candles(
     dataset_layout = DatasetLayout(output_dir)
     # retrieve data day by day to limit transfer size
     for day_ii in tqdm(range((to_date - from_date).days)):
+        start_date = from_date + datetime.timedelta(days=day_ii)
+        candles_expected_number = datetime.timedelta(days=1) / period.to_timedelta()
+
+        filename = dataset_layout.localize_file(
+            coin=Coin[coin],
+            currency=Coin[currency],
+            period=period,
+            date=start_date,
+        )
+
+        if overwrite:
+            filename.unlink(missing_ok=True)
+        elif filename.exists():
+            if len(Fluctuations.load(filename).candles) >= candles_expected_number:
+                continue
+
         fluctuations = fetch_historical_data(
             client=client,
             coin=coin,
             currency=currency,
             period=period,
-            start_date=(from_date + datetime.timedelta(days=day_ii)).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
-            end_date=(from_date + datetime.timedelta(days=day_ii + 1)).strftime(
+            start_date=start_date.strftime("%Y-%m-%d %H:%M:%S"),
+            end_date=(start_date + datetime.timedelta(days=1)).strftime(
                 "%Y-%m-%d %H:%M:%S"
             ),
         )
@@ -137,17 +153,9 @@ def download_daily_market_candles(
         if not fluctuations.candles:
             continue
 
-        candles_expected_number = datetime.timedelta(days=1) / period.to_timedelta()
-        if len(fluctuations.candles) != candles_expected_number:
+        if len(fluctuations.candles) < candles_expected_number:
             logger.warning(
-                f"Expected {candles_expected_number} candles to be downloaded, got {len(fluctuations.candles)}."
+                f"Expected {candles_expected_number} candles to be downloaded, got {len(fluctuations.candles)} for day {start_date.strftime('%Y-%m-%d')}."
             )
-
-        filename = dataset_layout.localize_file(
-            coin=Coin[coin],
-            currency=Coin[currency],
-            period=period,
-            date=fluctuations.candles[0].open_time,
-        )
 
         fluctuations.save(filename)

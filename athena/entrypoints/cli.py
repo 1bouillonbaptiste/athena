@@ -38,6 +38,12 @@ def app():
     type=Path,
     help="Directory to save downloaded candles.",
 )
+@click.option(
+    "--overwrite",
+    default=False,
+    is_flag=True,
+    help="Remove existing candles if set.",
+)
 def download(
     coin: str,
     currency: str,
@@ -45,14 +51,16 @@ def download(
     to_date: str,
     timeframe: str,
     output_dir: Path,
+    overwrite: bool,
 ):
     download_daily_market_candles(
-        coin=coin,
-        currency=currency,
+        coin=coin.upper(),
+        currency=currency.upper(),
         from_date=from_date,
         to_date=to_date,
         timeframe=timeframe,
         output_dir=output_dir,
+        overwrite=overwrite,
     )
 
 
