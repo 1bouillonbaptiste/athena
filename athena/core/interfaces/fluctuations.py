@@ -120,27 +120,31 @@ class Fluctuations(BaseModel):
         Returns:
             merged candles as a single fluctuations instance.
         """
-        if path.is_dir():
-            df = pd.concat([pd.read_csv(file) for file in path.glob("*.csv")])
-        else:
-            df = pd.read_csv(path)
-        df = (
-            df.sort_values(by="open_time", ascending=True)
-            .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
-            .reset_index(drop=True)
-            .astype(
-                {
-                    "open_time": "datetime64[ns]",
-                    "high_time": "datetime64[ns]",
-                    "low_time": "datetime64[ns]",
-                    "close_time": "datetime64[ns]",
-                }
+        all_candles = []
+        filenames = list(path.glob("*.csv")) if path.is_dir() else [path]
+        for filename in filenames:
+            df = (
+                pd.read_csv(filename)
+                .sort_values(by="open_time", ascending=True)
+                .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
+                .reset_index(drop=True)
+                .astype(
+                    {
+                        "open_time": "datetime64[ns]",
+                        "high_time": "datetime64[ns]",
+                        "low_time": "datetime64[ns]",
+                        "close_time": "datetime64[ns]",
+                    }
+                )
             )
-        )
-        candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
+            candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
 
-        if target_period is not None:
-            candles = convert_candles_to_period(candles, target_period=target_period)
+            if target_period is not None:
+                candles = convert_candles_to_period(
+                    candles, target_period=target_period
+                )
+
+            all_candles.extend(candles)
         return cls.from_candles(candles)
 
 
