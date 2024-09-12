@@ -120,27 +120,31 @@ class Fluctuations(BaseModel):
         Returns:
             merged candles as a single fluctuations instance.
         """
-        if path.is_dir():
-            df = pd.concat([pd.read_csv(file) for file in path.glob("*.csv")])
-        else:
-            df = pd.read_csv(path)
-        df = (
-            df.sort_values(by="open_time", ascending=True)
-            .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
-            .reset_index(drop=True)
-            .astype(
-                {
-                    "open_time": "datetime64[ns]",
-                    "high_time": "datetime64[ns]",
-                    "low_time": "datetime64[ns]",
-                    "close_time": "datetime64[ns]",
-                }
+        all_candles = []
+        filenames = list(path.glob("*.csv")) if path.is_dir() else [path]
+        for filename in filenames:
+            df = (
+                pd.read_csv(filename)
+                .sort_values(by="open_time", ascending=True)
+                .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
+                .reset_index(drop=True)
+                .astype(
+                    {
+                        "open_time": "datetime64[ns]",
+                        "high_time": "datetime64[ns]",
+                        "low_time": "datetime64[ns]",
+                        "close_time": "datetime64[ns]",
+                    }
+                )
             )
-        )
-        candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
+            candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
 
-        if target_period is not None:
-            candles = convert_candles_to_period(candles, target_period=target_period)
+            if target_period is not None:
+                candles = convert_candles_to_period(
+                    candles, target_period=target_period
+                )
+
+            all_candles.extend(candles)
         return cls.from_candles(candles)
 
 
@@ -192,6 +196,7 @@ def convert_candles_to_period(
     We iterate over sorted candles until we reach a theoretical `close_time`.
     Merge candles between last generated candle and current time into a new candle.
 
+    This function assumes every candle have the same coin, currency and period.
 
     Args:
         candles: list of unsorted candles
@@ -207,13 +212,13 @@ def convert_candles_to_period(
     if not candles:
         return []
 
-    if any(
-        [
-            Period(candle.period).to_timedelta() > target_period.to_timedelta()
-            for candle in candles
-        ]
-    ):
+    src_period = Period(timeframe=candles[0].period)
+
+    if src_period.to_timedelta() > target_period.to_timedelta():
         raise ValueError("Cannot convert candles to lower timeframe.")
+
+    if src_period.to_timedelta() == target_period.to_timedelta():
+        return candles
 
     sorted_candles = sorted(candles, key=lambda candle: candle.open_time)
     new_candles = []
@@ -224,7 +229,7 @@ def convert_candles_to_period(
         theoretical_close_time_is_reached = sorted_candles[ii].close_time >= (
             new_candle_from_date + target_period.to_timedelta()
         )
-        if theoretical_close_time_is_reached & (new_candle_start_index != ii):
+        if theoretical_close_time_is_reached:
             new_candles.append(merge_candles(sorted_candles[new_candle_start_index:ii]))
             new_candle_start_index = ii
             new_candle_from_date = sorted_candles[new_candle_start_index].open_time

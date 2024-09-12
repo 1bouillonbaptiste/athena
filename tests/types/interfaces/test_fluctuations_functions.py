@@ -34,8 +34,7 @@ def test_convert_candles_to_same_period(generate_candles):
 
     merged_candles = convert_candles_to_period(candles, target_period)
 
-    # FIXME : converting from 1m to 1m, last candle is not taken, so add -1
-    assert len(merged_candles) == len(candles) - 1
+    assert len(merged_candles) == len(candles)
 
 
 def test_convert_candles_to_period(generate_candles):
