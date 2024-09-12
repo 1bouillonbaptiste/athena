@@ -1,4 +1,4 @@
-from athena.apicultor.fetch import download_daily_market_candles
+from athena.hub.fetch import download_daily_market_candles
 from pathlib import Path
 import datetime
 

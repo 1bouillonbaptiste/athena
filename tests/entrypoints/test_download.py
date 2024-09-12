@@ -13,7 +13,7 @@ def test_download_market_candles(generate_bars, mocker, tmp_path):
     period = Period(timeframe="4h")
 
     mocker.patch(
-        "athena.apicultor.client.BinanceClient.get_historical_klines",
+        "athena.hub.client.BinanceClient.get_historical_klines",
         return_value=generate_bars(
             from_date=from_date,
             to_date=to_date,
