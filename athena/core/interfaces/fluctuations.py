@@ -192,6 +192,7 @@ def convert_candles_to_period(
     We iterate over sorted candles until we reach a theoretical `close_time`.
     Merge candles between last generated candle and current time into a new candle.
 
+    This function assumes every candle have the same coin, currency and period.
 
     Args:
         candles: list of unsorted candles
@@ -207,13 +208,13 @@ def convert_candles_to_period(
     if not candles:
         return []
 
-    if any(
-        [
-            Period(candle.period).to_timedelta() > target_period.to_timedelta()
-            for candle in candles
-        ]
-    ):
+    src_period = Period(timeframe=candles[0].period)
+
+    if src_period.to_timedelta() > target_period.to_timedelta():
         raise ValueError("Cannot convert candles to lower timeframe.")
+
+    if src_period.to_timedelta() == target_period.to_timedelta():
+        return candles
 
     sorted_candles = sorted(candles, key=lambda candle: candle.open_time)
     new_candles = []
@@ -224,7 +225,7 @@ def convert_candles_to_period(
         theoretical_close_time_is_reached = sorted_candles[ii].close_time >= (
             new_candle_from_date + target_period.to_timedelta()
         )
-        if theoretical_close_time_is_reached & (new_candle_start_index != ii):
+        if theoretical_close_time_is_reached:
             new_candles.append(merge_candles(sorted_candles[new_candle_start_index:ii]))
             new_candle_start_index = ii
             new_candle_from_date = sorted_candles[new_candle_start_index].open_time
