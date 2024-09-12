@@ -1,5 +1,7 @@
 import datetime
 from functools import cached_property
+
+import numpy as np
 from pydantic import BaseModel, model_validator
 from athena.core.interfaces import Candle
 from athena.core.types import Coin, Period
@@ -78,6 +80,12 @@ class Fluctuations(BaseModel):
 
     def get_candle(self, open_time: datetime.datetime) -> Candle:
         return self.candles[self.candles_mapping.get(open_time)]
+
+    def get_series(self, attribute_name: str) -> np.ndarray:
+        """Get the time series of attribute `name` from candles."""
+        if not Candle.is_available_attribute(attribute_name):
+            raise ValueError("Trying to access unavailable attribute.")
+        return np.array([getattr(candle, attribute_name) for candle in self.candles])
 
     def save(self, path: Path) -> None:
         """Save fluctuations to disk.

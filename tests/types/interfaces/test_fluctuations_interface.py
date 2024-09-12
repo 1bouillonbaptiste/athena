@@ -6,6 +6,7 @@ from athena.core.interfaces import Fluctuations
 from athena.core.types import Period, Coin
 
 from pandas.testing import assert_frame_equal
+import numpy as np
 
 
 def test_fluctuations_from_candles(sample_candles):
@@ -121,3 +122,18 @@ def test_load_fluctuations_convert_period(tmp_path, sample_candles, generate_can
 
     fluctuations = Fluctuations.load(tmp_path, target_period=Period(timeframe="4h"))
     assert len(fluctuations.candles) == 2
+
+
+def test_load_fluctuations_get_series(tmp_path, sample_candles, generate_candles):
+    from_date = datetime.datetime(2020, 1, 1)
+    to_date = datetime.datetime(2020, 1, 1, hour=8)
+    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+
+    fluctuations = Fluctuations.from_candles(candles=candles)
+
+    assert np.allclose(
+        fluctuations.get_series("open"), np.array([candle.open for candle in candles])
+    )
+
+    with pytest.raises(ValueError, match="Trying to access unavailable attribute"):
+        fluctuations.get_series("this_attribute_does_not_exist")

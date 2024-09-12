@@ -3,6 +3,23 @@ import datetime
 from pydantic import BaseModel
 
 
+AVAILABLE_ATTRIBUTES = (
+    "open",
+    "high",
+    "low",
+    "close",
+    "open_time",
+    "high_time",
+    "low_time",
+    "close_time",
+    "volume",
+    "quote_volume",
+    "nb_trades",
+    "taker_volume",
+    "taker_quote_volume",
+)
+
+
 class Candle(BaseModel):
     """Indicators of a specific candle.
 
@@ -38,8 +55,9 @@ class Candle(BaseModel):
     taker_volume: float
     taker_quote_volume: float
 
-    def __repr__(self):
-        return str(self.__dict__)
-
     def __eq__(self, other):
         return self.model_dump() == other.model_dump()
+
+    @classmethod
+    def is_available_attribute(cls, attr: str) -> bool:
+        return attr in AVAILABLE_ATTRIBUTES
