@@ -1,5 +1,5 @@
-from athena.apicultor.fetch import fetch_historical_data
-from athena.apicultor.client import (
+from athena.hub.fetch import fetch_historical_data
+from athena.hub.client import (
     BinanceClient,
 )
 from athena.core.types import Period
@@ -8,7 +8,7 @@ from athena.core.interfaces import Fluctuations
 
 def test_fetch_historical_data(mocker, sample_bars, sample_candles):
     mocker.patch(
-        "athena.apicultor.client.BinanceClient.get_historical_klines",
+        "athena.hub.client.BinanceClient.get_historical_klines",
         return_value=sample_bars
         + [
             [

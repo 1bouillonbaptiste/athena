@@ -6,7 +6,7 @@ import datetime
 from pathlib import Path
 
 
-from athena.apicultor.client import BinanceClient
+from athena.hub.client import BinanceClient
 from athena.core.interfaces import Fluctuations, DatasetLayout
 from athena.core.types import Coin, Period
 from tqdm import tqdm

@@ -10,7 +10,7 @@ import numpy as np
 
 @pytest.fixture(autouse=True)
 def patch_client(mocker):
-    mocker.patch("athena.apicultor.client.get_credentials", return_value=(None, None))
+    mocker.patch("athena.hub.client.get_credentials", return_value=(None, None))
 
 
 @pytest.fixture
