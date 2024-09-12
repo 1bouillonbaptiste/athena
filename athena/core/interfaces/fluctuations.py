@@ -145,7 +145,11 @@ class Fluctuations(BaseModel):
                 )
 
             all_candles.extend(candles)
-        return cls.from_candles(candles)
+        # remove duplicated candles based on their `open_time`
+        all_candles = list(
+            {candle.open_time: candle for candle in all_candles}.values()
+        )
+        return cls.from_candles(all_candles)
 
 
 def merge_candles(candles: list[Candle]) -> Candle:
@@ -230,9 +234,15 @@ def convert_candles_to_period(
             new_candle_from_date + target_period.to_timedelta()
         )
         if theoretical_close_time_is_reached:
-            new_candles.append(merge_candles(sorted_candles[new_candle_start_index:ii]))
-            new_candle_start_index = ii
-            new_candle_from_date = sorted_candles[new_candle_start_index].open_time
+            new_candles.append(
+                merge_candles(sorted_candles[new_candle_start_index : ii + 1])
+            )
+            if ii < (len(sorted_candles) - 1):
+                new_candle_start_index = ii + 1
+                new_candle_from_date = sorted_candles[new_candle_start_index].open_time
+            else:
+                # we have reached the end of the loop, don't initiate a new candle
+                pass
     if new_candle_start_index != (len(sorted_candles) - 1):
         logger.warning("Last candle could not be closed, won't be kept.")
     return new_candles

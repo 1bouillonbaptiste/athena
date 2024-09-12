@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from athena.hub.fetch import fetch_historical_data
 from athena.hub.client import (
     BinanceClient,
@@ -38,8 +40,8 @@ def test_fetch_historical_data(mocker, sample_bars, sample_candles):
             coin="BTC",
             currency="USDT",
             period=period,
-            start_date="2020-01-01",
-            end_date="2020-01-02",
+            start_date=datetime.strptime("2020-01-01", "%Y-%m-%d"),
+            end_date=datetime.strptime("2020-01-02", "%Y-%m-%d"),
         ).model_dump()
         == Fluctuations.from_candles(candles).model_dump()
     )
