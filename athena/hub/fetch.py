@@ -19,8 +19,8 @@ def fetch_historical_data(
     coin: str,
     currency: str,
     period: Period,
-    start_date: str,
-    end_date: str,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
 ) -> Fluctuations:
     """Get candles data between two dates.
 
@@ -54,8 +54,10 @@ def fetch_historical_data(
     bars = client.get_historical_klines(
         symbol=coin + currency,
         interval=period.timeframe,
-        start_str=start_date,
-        end_str=end_date,
+        start_str=int(
+            start_date.timestamp() * 1_000
+        ),  # .strftime("%Y-%m-%d %H:%M:%S"),
+        end_str=int(end_date.timestamp() * 1_000),  # .strftime("%Y-%m-%d %H:%M:%S"),
     )
     candles = []
     for bar in bars:
@@ -144,10 +146,8 @@ def download_daily_market_candles(
             coin=coin,
             currency=currency,
             period=period,
-            start_date=start_date.strftime("%Y-%m-%d %H:%M:%S"),
-            end_date=(start_date + datetime.timedelta(days=1)).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            start_date=start_date,
+            end_date=start_date + datetime.timedelta(days=1),
         )
 
         if not fluctuations.candles:

@@ -31,8 +31,8 @@ class BinanceClient:
         self,
         symbol: str,
         interval: str,
-        start_str: str,
-        end_str: str,
+        start_str: str | int,
+        end_str: str | int,
     ):
         """Get historical klines."""
         return self._client.get_historical_klines(
