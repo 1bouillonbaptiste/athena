@@ -59,5 +59,5 @@ class Candle(BaseModel):
         return self.model_dump() == other.model_dump()
 
     @classmethod
-    def is_public_attribute(cls, attr: str) -> bool:
+    def is_available_attribute(cls, attr: str) -> bool:
         return attr in AVAILABLE_ATTRIBUTES

@@ -83,7 +83,7 @@ class Fluctuations(BaseModel):
 
     def get_series(self, attribute_name: str) -> np.ndarray:
         """Get the time series of attribute `name` from candles."""
-        if not Candle.is_public_attribute(attribute_name):
+        if not Candle.is_available_attribute(attribute_name):
             raise ValueError("Trying to access unavailable attribute.")
         return np.array([getattr(candle, attribute_name) for candle in self.candles])
 
