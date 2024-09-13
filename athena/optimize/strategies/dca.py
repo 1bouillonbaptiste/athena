@@ -13,6 +13,7 @@ class Weekday(Enum):
     friday = 4
     saturday = 5
     sunday = 6
+    every_day = 7
 
 
 class StrategyDCA(Strategy):
@@ -36,7 +37,9 @@ class StrategyDCA(Strategy):
         """
         signals = []
         for open_time in fluctuations.get_series("open_time"):
-            is_weekday = open_time.weekday() == self.weekday.value
+            is_weekday = (open_time.weekday() == self.weekday.value) or (
+                self.weekday.value == Weekday.every_day
+            )
             is_hour = open_time.hour == self.hour
             is_minute = open_time.minute == self.minute
             if is_weekday and is_hour and is_minute:
