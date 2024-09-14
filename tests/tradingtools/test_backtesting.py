@@ -43,7 +43,7 @@ class StrategyMondayDCA(Strategy):
 
 def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33)
-    trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
+    trades, _ = get_trades_from_strategy_and_fluctuations(
         strategy=strategy,
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
@@ -75,12 +75,11 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations
         "is_win": True,
         "side": Side.LONG,
     }
-    assert open_position is None
 
 
 def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33, take_profit_pct=0.1)
-    trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
+    trades, _ = get_trades_from_strategy_and_fluctuations(
         strategy=strategy,
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
@@ -112,12 +111,11 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
         "is_win": True,
         "side": Side.LONG,
     }
-    assert open_position is None
 
 
 def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33, stop_loss_pct=0.1)
-    trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
+    trades, _ = get_trades_from_strategy_and_fluctuations(
         strategy=strategy,
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
@@ -149,19 +147,19 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
         "is_win": True,
         "side": Side.LONG,
     }
-    assert open_position is None
 
 
 def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuations):
     strategy = StrategyMondayDCA(position_size=0.33)
-    trades, open_position, _ = get_trades_from_strategy_and_fluctuations(
+    trades, _ = get_trades_from_strategy_and_fluctuations(
         strategy=strategy,
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
     )
-    assert trades == []
-    assert open_position.model_dump() == {
+    assert len(trades) == 1
+    assert not trades[0].is_closed
+    assert trades[0].model_dump() == {
         "strategy_name": "strategy_monday_dca",
         "coin": Coin.BTC,
         "currency": Coin.USDT,
@@ -175,6 +173,13 @@ def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuati
         "side": Side.LONG,
         "stop_loss": None,
         "take_profit": None,
+        "close_date": None,
+        "close_fees": None,
+        "close_price": None,
+        "is_win": None,
+        "total_fees": None,
+        "total_profit": None,
+        "trade_duration": None,
     }
 
 

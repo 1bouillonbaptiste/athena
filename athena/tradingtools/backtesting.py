@@ -1,4 +1,4 @@
-from athena.tradingtools import Strategy, Trade, Portfolio, Position
+from athena.tradingtools import Strategy, Portfolio, Position
 from athena.core.types import Coin, Signal
 from athena.core.interfaces import Fluctuations, Candle
 import datetime
@@ -6,41 +6,40 @@ import datetime
 
 def get_trades_from_strategy_and_fluctuations(
     strategy: Strategy, fluctuations: Fluctuations
-) -> tuple[list[Trade], Position | None, Portfolio]:
-    """Compute the trades that a strategy would have made given fluctuations.
+) -> tuple[list[Position], Portfolio]:
+    """Apply the trading strategy on market data and get the trades that would have been made on live trading.
 
     Args:
-        strategy: the strategy to get entry signals
-        fluctuations: collection of candles
+        strategy: the strategy to apply
+        fluctuations: collection of candles, mocks a market
 
     Returns:
         market movement as a list of trades
     """
     traded_coin = Coin.BTC
     currency = Coin.USDT
-    open_position = None
+    position = None
     portfolio = Portfolio.model_validate({"assets": {currency: 100}})
 
-    trades = []
+    trades = []  # collection of closed positions
     for candle, signal in strategy.get_signals(fluctuations):
         close_price, close_date = check_position_exit_signals(
-            position=open_position, candle=candle
+            position=position, candle=candle
         )
         if (
             (close_price is not None)
             & (close_date is not None)
-            & (open_position is not None)
+            & (position is not None)
         ):
-            new_trade = Trade.from_position(
-                position=open_position,
+            position.close(
                 close_date=close_date,
                 close_price=close_price,
             )
-            trades.append(new_trade)
-            open_position = None
+            trades.append(position)
+            position = None
 
-        if signal == Signal.BUY and open_position is None:
-            open_position = Position.from_money_to_invest(
+        if signal == Signal.BUY and position is None:
+            position = Position.open(
                 strategy_name=strategy.name,
                 coin=traded_coin,
                 currency=currency,
@@ -56,29 +55,30 @@ def get_trades_from_strategy_and_fluctuations(
                 else None,
             )
             portfolio.update_coin_amount(
-                coin=currency, amount_to_add=-open_position.initial_investment
+                coin=currency, amount_to_add=-position.initial_investment
             )
             portfolio.update_coin_amount(
-                coin=traded_coin, amount_to_add=open_position.amount
+                coin=traded_coin, amount_to_add=position.amount
             )
-        elif signal == Signal.SELL and open_position is not None:
-            new_trade = Trade.from_position(
-                position=open_position,
+        elif signal == Signal.SELL and position is not None:
+            position.close(
                 close_date=candle.close_time,
                 close_price=candle.close,
             )
-            trades.append(new_trade)
-            open_position = None
+            trades.append(position)
 
             portfolio.update_coin_amount(
                 coin=currency,
-                amount_to_add=new_trade.initial_investment + new_trade.total_profit,
+                amount_to_add=position.initial_investment + position.total_profit,
             )
             portfolio.update_coin_amount(
-                coin=traded_coin, amount_to_add=-new_trade.amount
+                coin=traded_coin, amount_to_add=-position.amount
             )
 
-    return trades, open_position, portfolio
+            position = None
+    if position is not None:
+        trades.append(position)
+    return trades, portfolio
 
 
 def check_position_exit_signals(
