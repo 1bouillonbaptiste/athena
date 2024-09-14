@@ -1,7 +1,6 @@
 from athena.tradingtools import Strategy, Portfolio, Position
 from athena.core.types import Coin, Signal
-from athena.core.interfaces import Fluctuations, Candle
-import datetime
+from athena.core.interfaces import Fluctuations
 
 
 def get_trades_from_strategy_and_fluctuations(
@@ -23,9 +22,12 @@ def get_trades_from_strategy_and_fluctuations(
 
     trades = []  # collection of closed positions
     for candle, signal in strategy.get_signals(fluctuations):
-        close_price, close_date = check_position_exit_signals(
-            position=position, candle=candle
-        )
+        if position is not None:
+            close_price, close_date = position.check_position_exit_signals(
+                candle=candle
+            )
+        else:
+            close_price = close_date = None
         if (
             (close_price is not None)
             & (close_date is not None)
@@ -79,54 +81,3 @@ def get_trades_from_strategy_and_fluctuations(
     if position is not None:
         trades.append(position)
     return trades, portfolio
-
-
-def check_position_exit_signals(
-    position: Position | None, candle: Candle
-) -> tuple[float | None, datetime.datetime | None]:
-    """Check if a candle reaches position's take profit or stop loss.
-
-    Args:
-        position: any open position
-        candle: a market candle
-
-    Returns:
-        close_price: the sell price of the position or None if position remains open
-        close_date: the close date of the position or None if position remains open
-    """
-    if position is None:
-        return None, None
-
-    price_reach_tp = (
-        (position.take_profit < candle.high)
-        if position.take_profit is not None
-        else False
-    )
-    price_reach_sl = (
-        (position.stop_loss > candle.low) if position.stop_loss is not None else False
-    )
-
-    if (
-        price_reach_tp and price_reach_sl
-    ):  # candle's price range is very wide, check which bound was reached first
-        if (candle.high_time is not None) and (candle.low_time is not None):
-            if candle.high_time < candle.low_time:  # price reached high before low
-                close_price = position.take_profit
-                close_date = candle.high_time
-            else:  # price reached low before high
-                close_price = position.stop_loss
-                close_date = candle.low_time
-        else:  # we don't have granularity, assume close price is close enough to real sell price
-            close_price = candle.close
-            close_date = candle.close_time
-    elif price_reach_tp:
-        close_price = position.take_profit
-        close_date = candle.high_time or candle.close_time
-    elif price_reach_sl:
-        close_price = position.stop_loss
-        close_date = candle.low_time or candle.close_time
-    else:  # we don't close the position
-        close_price = None
-        close_date = None
-
-    return close_price, close_date

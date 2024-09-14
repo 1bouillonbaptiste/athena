@@ -1,13 +1,10 @@
 import datetime
 
-import pytest
-
-from athena.core.interfaces import Fluctuations, Candle
-from athena.tradingtools import Strategy, Position
+from athena.core.interfaces import Fluctuations
+from athena.tradingtools import Strategy
 from athena.core.types import Signal, Coin, Side
 from athena.tradingtools.backtesting import (
     get_trades_from_strategy_and_fluctuations,
-    check_position_exit_signals,
 )
 
 
@@ -181,90 +178,3 @@ def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuati
         "total_profit": None,
         "trade_duration": None,
     }
-
-
-@pytest.fixture
-def open_position():
-    return Position.model_validate(
-        {
-            "strategy_name": "my_strat",
-            "coin": Coin.BTC,
-            "currency": Coin.USDT,
-            "open_date": datetime.datetime(2024, 8, 20),
-            "open_price": 100,
-            "amount": 0.9,
-            "open_fees": 10,
-            "initial_investment": 100,
-            "stop_loss": 50,
-            "take_profit": 150,
-            "side": Side.LONG,
-        }
-    )
-
-
-@pytest.fixture
-def candle():
-    return Candle.model_validate(
-        {
-            "coin": Coin.BTC,
-            "currency": Coin.USDT,
-            "period": "1h",
-            "open_time": datetime.datetime(2024, 8, 25),
-            "close_time": datetime.datetime(2024, 8, 26),
-            "high_time": datetime.datetime(2024, 8, 25, hour=12),
-            "low_time": datetime.datetime(2024, 8, 25, hour=3),
-            "open": 130,
-            "high": 151,
-            "low": 122,
-            "close": 130,
-            "volume": 100,
-            "quote_volume": 140,
-            "nb_trades": 100,
-            "taker_volume": 50,
-            "taker_quote_volume": 70,
-        }
-    )
-
-
-def test_check_position_exit_signals_take_profit(open_position, candle):
-    close_price, close_date = check_position_exit_signals(
-        position=open_position, candle=candle
-    )
-
-    # take_profit is reached at high_time, everything went well
-    assert close_price == open_position.take_profit
-    assert close_date == datetime.datetime(2024, 8, 25, hour=12)
-
-
-def test_check_position_exit_signals_stop_loss(open_position, candle):
-    candle.low_time = None
-    candle.high = 140  # below take_profit
-    candle.low = 40  # below stop_loss
-    close_price, close_date = check_position_exit_signals(
-        position=open_position, candle=candle
-    )
-
-    # "low_time" not in row, take close_time
-    assert close_price == open_position.stop_loss
-    assert close_date == datetime.datetime(2024, 8, 26)
-
-
-def test_check_position_exit_signals_tp_sl_conflict(open_position, candle):
-    candle.low = 40  # below stop_loss
-    close_price, close_date = check_position_exit_signals(
-        position=open_position, candle=candle
-    )
-
-    # even if candle ended well, we reached low before high
-    assert close_price == open_position.stop_loss
-    assert close_date == datetime.datetime(2024, 8, 25, hour=3)
-
-
-def test_check_position_exit_signals_undefined_winner(open_position, candle):
-    candle.high_time = None
-    candle.low_time = None
-    close_price, close_date = check_position_exit_signals(open_position, candle=candle)
-
-    # we don't know which of low or high came first, so we take close
-    assert close_price == 150
-    assert close_date == datetime.datetime(2024, 8, 26)

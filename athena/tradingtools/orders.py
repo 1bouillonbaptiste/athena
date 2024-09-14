@@ -1,6 +1,7 @@
 import datetime
 
 from athena.core.types import Side, Coin
+from athena.core.interfaces import Candle
 from pydantic import BaseModel
 
 FEES_PCT = 0.001
@@ -116,6 +117,51 @@ class Position(BaseModel):
 
         self.is_win = self.total_profit > 0
         self.trade_duration = self.close_date - self.open_date
+
+    def check_position_exit_signals(
+        self, candle: Candle
+    ) -> tuple[float | None, datetime.datetime | None]:
+        """Check if a candle reaches position's take profit or stop loss.
+
+        Args:
+            candle: a market candle
+
+        Returns:
+            close_price: the sell price of the position or None if position remains open
+            close_date: the close date of the position or None if position remains open
+        """
+
+        price_reach_tp = (
+            (self.take_profit < candle.high) if self.take_profit is not None else False
+        )
+        price_reach_sl = (
+            (self.stop_loss > candle.low) if self.stop_loss is not None else False
+        )
+
+        if (
+            price_reach_tp and price_reach_sl
+        ):  # candle's price range is very wide, check which bound was reached first
+            if (candle.high_time is not None) and (candle.low_time is not None):
+                if candle.high_time < candle.low_time:  # price reached high before low
+                    close_price = self.take_profit
+                    close_date = candle.high_time
+                else:  # price reached low before high
+                    close_price = self.stop_loss
+                    close_date = candle.low_time
+            else:  # we don't have granularity, assume close price is close enough to real sell price
+                close_price = candle.close
+                close_date = candle.close_time
+        elif price_reach_tp:
+            close_price = self.take_profit
+            close_date = candle.high_time or candle.close_time
+        elif price_reach_sl:
+            close_price = self.stop_loss
+            close_date = candle.low_time or candle.close_time
+        else:  # we don't close the position
+            close_price = None
+            close_date = None
+
+        return close_price, close_date
 
 
 class Portfolio(BaseModel):
