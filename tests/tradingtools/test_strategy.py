@@ -1,4 +1,4 @@
-from athena.optimize import Strategy
+from athena.tradingtools import Strategy
 from athena.core.types import Signal
 from athena.core.interfaces import Fluctuations
 

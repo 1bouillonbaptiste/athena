@@ -1,6 +1,6 @@
 import datetime
 
-from athena.optimize.orders import Position, Trade
+from athena.tradingtools.orders import Position, Trade
 
 import pytest
 

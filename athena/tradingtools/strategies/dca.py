@@ -2,7 +2,7 @@ from enum import Enum
 
 from athena.core.interfaces import Fluctuations
 from athena.core.types import Signal
-from athena.optimize.strategies.strategy import Strategy
+from athena.tradingtools.strategies.strategy import Strategy
 
 
 class Weekday(Enum):
