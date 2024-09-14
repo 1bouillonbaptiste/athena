@@ -3,9 +3,9 @@ import datetime
 import pytest
 
 from athena.core.interfaces import Fluctuations, Candle
-from athena.optimize import Strategy, Position
+from athena.tradingtools import Strategy, Position
 from athena.core.types import Signal, Coin, Side
-from athena.optimize.backtesting import (
+from athena.tradingtools.backtesting import (
     get_trades_from_strategy_and_fluctuations,
     check_position_exit_signals,
 )
