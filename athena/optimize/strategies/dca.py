@@ -38,7 +38,7 @@ class StrategyDCA(Strategy):
         signals = []
         for open_time in fluctuations.get_series("open_time"):
             is_weekday = (open_time.weekday() == self.weekday.value) or (
-                self.weekday.value == Weekday.every_day
+                self.weekday == Weekday.every_day
             )
             is_hour = open_time.hour == self.hour
             is_minute = open_time.minute == self.minute
@@ -46,3 +46,4 @@ class StrategyDCA(Strategy):
                 signals.append(Signal.BUY)
             else:
                 signals.append(Signal.WAIT)
+        return signals
