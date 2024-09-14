@@ -1,45 +1,75 @@
 import datetime
 
 from athena.core.types import Side, Coin
+from athena.core.interfaces import Candle
 from pydantic import BaseModel
 
 FEES_PCT = 0.001
 
 
 class Position(BaseModel):
-    """A position is an opened long or short that is waiting an exit signal. When a Position is closed, it usually leads
-    to a Trade.
+    """A position is the expression of a market commitment, or exposure, held by a trader. When the position is closed,
+    it becomes a trade, profit, loss or other metrics can then be calculated.
+
+    A position is defined by its size (amount of coin) and direction ('LONG' or 'SHORT').
+    - 'LONG' position means that you are buying an asset (or speculating that the asset will increase in value).
+    - 'SHORT' position aims to make a profit when an asset’s price decreases (not implemented yet).
 
     Attributes:
         strategy_name: the nickname of the strategy used to open the position
         coin: the coin that have been bought
-        currency: the currency use to buy the coin
-        open_date: the date when the position was opened, usually the open_date of a candle
-        open_price: coin's price when the position was opened
+        currency: the currency used to buy the coin
         amount: coin's amount that have been bought
-        open_fees: cost of opening a new position, fees are taken before calculating coin amount
+        side: weather the position is a 'LONG' or a 'SHORT'
+
+        open_date: the date when the position was open, usually the open_date of a candle
+        open_price: coin's price when the position was open
         initial_investment: the initial amount of currency the trader invested
-        stop_loss: stop your loss, close the position if the price reach this level
-        take_profit: take your profit, close the position if the price reach this level
-        side: weather the position is a long or a short
+        open_fees: cost of opening the position, fees are being taken before calculating coin amount
+        stop_loss: stop your loss if price drops too low (close the position)
+        take_profit: take your profits if price reaches your target (close the position)
+
+        close_date: the date when a position was closed, could be any time
+        close_price: coin's price when the position was closed
+        close_fees: fees from selling the position
+
+        total_fees: sum of open and close fees
+        total_profit: remaining money when we compare initial investment, return and fees
+        is_win: if we made money on this trade or not
+        trade_duration: position total lifetime
     """
 
     strategy_name: str = ""
     coin: Coin
     currency: Coin
+    amount: float
+    side: Side
 
     open_date: datetime.datetime
     open_price: float
-    amount: float
-    open_fees: float
     initial_investment: float
+    open_fees: float
+    stop_loss: float | None = None
+    take_profit: float | None = None
 
-    stop_loss: float | None
-    take_profit: float | None
-    side: Side
+    # these parameters are None until the position is closed
+
+    close_date: datetime.datetime | None = None
+    close_price: float | None = None
+    close_fees: float | None = None
+
+    total_fees: float | None = None
+    total_profit: float | None = None
+    is_win: bool | None = None
+    trade_duration: datetime.timedelta | None = None
+
+    @property
+    def is_closed(self) -> bool:
+        """Check if the position is closed or still opened."""
+        return self.close_date is not None
 
     @classmethod
-    def from_money_to_invest(
+    def open(
         cls,
         strategy_name: str,
         coin: Coin,
@@ -68,50 +98,70 @@ class Position(BaseModel):
             side=side,
         )
 
+    def close(self, close_date: datetime.datetime, close_price: float):
+        """Sell the traded amount.
 
-class Trade(Position):
-    """A trade is a closed Position.
+        Args:
+            close_date: time when the position is closed
+            close_price: price when the position is closed
+        """
+        self.close_date = close_date
+        self.close_price = close_price
 
-    Attributes:
-        ...
-        close_date: the date when a position was closed
-        close_price: the closing price of the position
-        close_fees: fees from selling the position
-        total_fees: sum of open and close fees
-        total_profit: remaining money when we sell the position and remove fees
-        is_win: if we made money on this trade or not
-        trade_duration: position total lifetime
-    """
-
-    close_date: datetime.datetime
-    close_price: float
-    close_fees: float
-
-    total_fees: float
-    total_profit: float
-    is_win: bool
-    trade_duration: datetime.timedelta
-
-    @classmethod
-    def from_position(
-        cls, position: Position, close_date: datetime.datetime, close_price: float
-    ):
-        close_fees = close_price * position.amount * FEES_PCT
-        total_fees = close_fees + position.open_fees
-        total_profit = (
-            (position.amount * close_price) - position.initial_investment - total_fees
+        self.close_fees = self.close_price * self.amount * FEES_PCT
+        self.total_fees = self.close_fees + self.open_fees
+        self.total_profit = (
+            (self.amount * self.close_price) - self.initial_investment - self.total_fees
         )
-        trade_duration = close_date - position.open_date
-        return cls(
-            close_fees=close_fees,
-            total_fees=total_fees,
-            close_date=close_date,
-            close_price=close_price,
-            total_profit=total_profit,
-            is_win=total_profit > 0,
-            trade_duration=trade_duration,
-            **position.model_dump(),
+        self.trade_duration = self.close_date - self.open_date
+
+        self.is_win = self.total_profit > 0
+        self.trade_duration = self.close_date - self.open_date
+
+    def check_exit_signals(
+        self, candle: Candle
+    ) -> tuple[float | None, datetime.datetime | None]:
+        """Check if a candle reaches position's take profit or stop loss.
+
+        Args:
+            candle: a market candle
+
+        Returns:
+            close_price: the sell price of the position or None if position remains open
+            close_date: the close date of the position or None if position remains open
+        """
+
+        price_reach_tp = (
+            (self.take_profit < candle.high) if self.take_profit is not None else False
         )
+        price_reach_sl = (
+            (self.stop_loss > candle.low) if self.stop_loss is not None else False
+        )
+
+        if (
+            price_reach_tp and price_reach_sl
+        ):  # candle's price range is very wide, check which bound was reached first
+            if (candle.high_time is not None) and (candle.low_time is not None):
+                if candle.high_time < candle.low_time:  # price reached high before low
+                    close_price = self.take_profit
+                    close_date = candle.high_time
+                else:  # price reached low before high
+                    close_price = self.stop_loss
+                    close_date = candle.low_time
+            else:  # we don't have granularity, assume close price is close enough to real sell price
+                close_price = candle.close
+                close_date = candle.close_time
+        elif price_reach_tp:
+            close_price = self.take_profit
+            close_date = candle.high_time or candle.close_time
+        elif price_reach_sl:
+            close_price = self.stop_loss
+            close_date = candle.low_time or candle.close_time
+        else:  # we don't close the position
+            close_price = None
+            close_date = None
+
+        return close_price, close_date
 
 
 class Portfolio(BaseModel):
