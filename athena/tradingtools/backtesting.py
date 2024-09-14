@@ -23,9 +23,7 @@ def get_trades_from_strategy_and_fluctuations(
     trades = []  # collection of closed positions
     for candle, signal in strategy.get_signals(fluctuations):
         if position is not None:
-            close_price, close_date = position.check_position_exit_signals(
-                candle=candle
-            )
+            close_price, close_date = position.check_exit_signals(candle=candle)
         else:
             close_price = close_date = None
         if (

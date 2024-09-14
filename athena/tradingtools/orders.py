@@ -118,7 +118,7 @@ class Position(BaseModel):
         self.is_win = self.total_profit > 0
         self.trade_duration = self.close_date - self.open_date
 
-    def check_position_exit_signals(
+    def check_exit_signals(
         self, candle: Candle
     ) -> tuple[float | None, datetime.datetime | None]:
         """Check if a candle reaches position's take profit or stop loss.
