@@ -36,7 +36,8 @@ class Fluctuations(BaseModel):
 
     @classmethod
     def from_candles(cls, candles: list[Candle]):
-        sorted_candles = sorted(candles, key=lambda candle: candle.open_time)
+        sanitized_candles = sanitize_candles(candles)
+        sorted_candles = sorted(sanitized_candles, key=lambda candle: candle.open_time)
         return cls(
             candles=sorted_candles,
             period=candles[0].period if candles else "1m",
@@ -246,3 +247,20 @@ def convert_candles_to_period(
     if new_candle_start_index != (len(sorted_candles) - 1):
         logger.warning("Last candle could not be closed, won't be kept.")
     return new_candles
+
+
+def sanitize_candles(candles: list[Candle]) -> list[Candle]:
+    """Remove candles that have a volume of 0, no trading activity.
+
+    We want a list of only avaible candles.
+    We iterate over the candles list, we remove every candle that has a volume of 0.
+
+    TODO: improve this function to check over prices / highs / lows / closes
+
+    Args:
+        candles: list of unsanitized candles
+
+    Returns:
+        list of only existing candles
+    """
+    return [candle for candle in candles if candle.volume > 0]
