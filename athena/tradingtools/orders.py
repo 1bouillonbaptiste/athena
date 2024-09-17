@@ -49,8 +49,8 @@ class Position(BaseModel):
     open_price: float
     initial_investment: float
     open_fees: float
-    stop_loss: float | None = None
-    take_profit: float | None = None
+    stop_loss: float = 0
+    take_profit: float = float("inf")
 
     # these parameters are None until the position is closed
 
@@ -77,8 +77,8 @@ class Position(BaseModel):
         open_date: datetime.datetime,
         open_price: float,
         money_to_invest: float,
-        stop_loss: float | None = None,
-        take_profit: float | None = None,
+        stop_loss: float = 0,
+        take_profit: float = float("inf"),
         side: Side = Side.LONG,
     ):
         """Invest some money on a coin, compute associated fees and real amount bought."""
@@ -131,12 +131,8 @@ class Position(BaseModel):
             close_date: the close date of the position or None if position remains open
         """
 
-        price_reach_tp = (
-            (self.take_profit < candle.high) if self.take_profit is not None else False
-        )
-        price_reach_sl = (
-            (self.stop_loss > candle.low) if self.stop_loss is not None else False
-        )
+        price_reach_tp = candle.high > self.take_profit
+        price_reach_sl = candle.low < self.stop_loss
 
         if (
             price_reach_tp and price_reach_sl
