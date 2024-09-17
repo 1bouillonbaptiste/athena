@@ -49,10 +49,10 @@ def get_trades_from_strategy_and_fluctuations(
                 * strategy.position_size,
                 stop_loss=candle.close * (1 - strategy.stop_loss_pct)
                 if strategy.stop_loss_pct is not None
-                else None,
+                else 0,
                 take_profit=candle.close * (1 + strategy.take_profit_pct)
                 if strategy.take_profit_pct is not None
-                else None,
+                else float("inf"),
             )
             portfolio.update_coin_amount(
                 coin=currency, amount_to_add=-position.initial_investment
