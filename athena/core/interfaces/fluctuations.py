@@ -255,7 +255,7 @@ def sanitize_candles(candles: list[Candle]) -> list[Candle]:
     We want a list of only avaible candles.
     We iterate over the candles list, we remove every candle that has a volume of 0.
 
-    TODO: improve this function to check over prices / highs / lows / closes
+    # TODO: improve this function to check over prices / highs / lows / closes
 
     Args:
         candles: list of unsanitized candles
