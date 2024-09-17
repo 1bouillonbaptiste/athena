@@ -250,17 +250,17 @@ def convert_candles_to_period(
 
 
 def sanitize_candles(candles: list[Candle]) -> list[Candle]:
-    """Remove candles that have a volume of 0, no trading activity.
+    """Remove invalid candles.
 
-    We want a list of only avaible candles.
-    We iterate over the candles list, we remove every candle that has a volume of 0.
+    Invalid candles are :
+        - candles with volume of 0.
 
     # TODO: improve this function to check over prices / highs / lows / closes
 
     Args:
-        candles: list of unsanitized candles
+        candles: list of raw candles
 
     Returns:
-        list of only existing candles
+        filtered candles as a list
     """
     return [candle for candle in candles if candle.volume > 0]
