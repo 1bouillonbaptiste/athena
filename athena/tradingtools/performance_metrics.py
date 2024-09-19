@@ -22,7 +22,7 @@ def trades_to_wealth(
     return np.array([]), []
 
 
-def max_drawdown(trades: list[Position]) -> float:
+def get_max_drawdown(trades: list[Position]) -> float:
     """Calculate the biggest loss of a portofolio during its lifetime.
 
     A drawdown is the gap between a high and the low before a new highest high.
@@ -38,7 +38,7 @@ def max_drawdown(trades: list[Position]) -> float:
     return 0
 
 
-def cagr(trades: list[Position]) -> float:
+def get_cagr(trades: list[Position]) -> float:
     """Calculate the CAGR (annualized average return) of the portfolio.
 
     Args:
@@ -51,7 +51,7 @@ def cagr(trades: list[Position]) -> float:
     return 0
 
 
-def sortino(trades: list[Position]) -> float:
+def get_sortino(trades: list[Position]) -> float:
     """
 
     TODO: check what sortino is
@@ -65,7 +65,7 @@ def sortino(trades: list[Position]) -> float:
     return 0
 
 
-def sharpe(trades: list[Position]) -> float:
+def get_sharpe(trades: list[Position]) -> float:
     """
 
     TODO: check what sharpe ratio is
@@ -79,7 +79,7 @@ def sharpe(trades: list[Position]) -> float:
     return 0
 
 
-def calmar(trades: list[Position]) -> float:
+def get_calmar(trades: list[Position]) -> float:
     """
 
     TODO: check what calmar ratio is

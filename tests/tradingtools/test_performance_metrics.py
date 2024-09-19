@@ -12,26 +12,26 @@ def test_trades_to_wealth():
     pass
 
 
-def test_max_drawdown():
+def test_get_max_drawdown():
     maw_drawdown = get_max_drawdown([])  # noqa : F841 (unused)
     pass
 
 
-def test_cagr():
+def test_get_cagr():
     cagr = get_cagr([])  # noqa : F841 (unused)
     pass
 
 
-def test_sharpe():
+def test_get_sharpe():
     sharpe = get_sharpe([])  # noqa : F841 (unused)
     pass
 
 
-def test_calmar():
+def test_get_calmar():
     calmar = get_calmar([])  # noqa : F841 (unused)
     pass
 
 
-def test_sortino():
+def test_get_sortino():
     sortino = get_sortino([])  # noqa : F841 (unused)
     pass
