@@ -6,7 +6,9 @@ import numpy as np
 
 
 def trades_to_wealth(
-    trades: list[Position]
+    trades: list[Position],
+    start_time: datetime.datetime | None = None,
+    end_time: datetime.datetime | None = None,
 ) -> tuple[np.ndarray, list[datetime.datetime]]:
     """Convert trades to wealth values over time.
 
@@ -14,12 +16,23 @@ def trades_to_wealth(
 
     Args:
         trades: a list of closed positions
+        start_time: the optional starting time of the trading session
+        end_time: the optional ending time of the trading session
 
     Returns:
-        wealth over time as numpy array
-        time values of the wealth
+        wealth as a list of float
+        time values of the wealth over time
     """
-    return np.array([]), []
+    wealth = [trade.total_profit for trade in trades]
+    time = [trade.close_date for trade in trades]
+    if start_time is not None:
+        wealth = wealth.insert(0, 0)
+        time = time.insert(0, start_time)
+    if end_time is not None:
+        wealth = wealth.append(wealth[-1])
+        time = time.append(end_time)
+
+    return wealth, time
 
 
 def get_max_drawdown(trades: list[Position]) -> float:
@@ -34,8 +47,11 @@ def get_max_drawdown(trades: list[Position]) -> float:
     Returns:
         the max drawdown of the portfolio.
     """
-    wealth, time = trades_to_wealth(trades)
-    return 0
+    if len(trades) < 2:
+        return 0
+    wealth, _ = trades_to_wealth(trades)
+    drawdown = [np.max(wealth[: ii + 1]) - wealth[ii] for ii in range(1, len(wealth))]
+    return np.max(drawdown)
 
 
 def get_cagr(trades: list[Position]) -> float:
@@ -47,7 +63,7 @@ def get_cagr(trades: list[Position]) -> float:
     Returns:
         the expected annualized return.
     """
-    wealth, time = trades_to_wealth(trades)
+    _, _ = trades_to_wealth(trades)
     return 0
 
 
@@ -62,6 +78,7 @@ def get_sortino(trades: list[Position]) -> float:
     Returns:
 
     """
+    _, _ = trades_to_wealth(trades)
     return 0
 
 
@@ -76,6 +93,7 @@ def get_sharpe(trades: list[Position]) -> float:
     Returns:
 
     """
+    _, _ = trades_to_wealth(trades)
     return 0
 
 
@@ -90,4 +108,5 @@ def get_calmar(trades: list[Position]) -> float:
     Returns:
 
     """
+    _, _ = trades_to_wealth(trades)
     return 0
