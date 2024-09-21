@@ -26,11 +26,11 @@ def trades_to_wealth(
     wealth = [trade.total_profit for trade in trades]
     time = [trade.close_date for trade in trades]
     if start_time is not None:
-        wealth = wealth.insert(0, 0)
-        time = time.insert(0, start_time)
+        wealth.insert(0, 0)
+        time.insert(0, start_time)
     if end_time is not None:
-        wealth = wealth.append(wealth[-1])
-        time = time.append(end_time)
+        wealth.append(wealth[-1] if wealth else 0)
+        time.append(end_time)
 
     return wealth, time
 

@@ -65,44 +65,44 @@ def trades():
         (
             None,
             None,
-            [100, 100, 100],
+            [9.83, -0.15, -3.988],
             [
-                datetime.datetime(2024, 8, 20),
                 datetime.datetime(2024, 8, 21),
-                datetime.datetime(2024, 8, 21),
+                datetime.datetime(2024, 8, 23),
+                datetime.datetime(2024, 8, 25),
             ],
         ),
         (
             datetime.datetime(2024, 8, 15),
             None,
-            [100, 100, 100, 100],
+            [0, 9.83, -0.15, -3.988],
             [
                 datetime.datetime(2024, 8, 15),
-                datetime.datetime(2024, 8, 20),
                 datetime.datetime(2024, 8, 21),
-                datetime.datetime(2024, 8, 21),
+                datetime.datetime(2024, 8, 23),
+                datetime.datetime(2024, 8, 25),
             ],
         ),
         (
             None,
             datetime.datetime(2024, 8, 30),
-            [100, 100, 100],
+            [9.83, -0.15, -3.988, -3.988],
             [
-                datetime.datetime(2024, 8, 20),
                 datetime.datetime(2024, 8, 21),
-                datetime.datetime(2024, 8, 21),
+                datetime.datetime(2024, 8, 23),
+                datetime.datetime(2024, 8, 25),
                 datetime.datetime(2024, 8, 30),
             ],
         ),
         (
             datetime.datetime(2024, 8, 15),
             datetime.datetime(2024, 8, 30),
-            [100, 100, 100],
+            [0, 9.83, -0.15, -3.988, -3.988],
             [
                 datetime.datetime(2024, 8, 15),
-                datetime.datetime(2024, 8, 20),
                 datetime.datetime(2024, 8, 21),
-                datetime.datetime(2024, 8, 21),
+                datetime.datetime(2024, 8, 23),
+                datetime.datetime(2024, 8, 25),
                 datetime.datetime(2024, 8, 30),
             ],
         ),
@@ -110,13 +110,13 @@ def trades():
 )
 def test_trades_to_wealth(start_time, end_time, expected_wealth, expected_time, trades):
     wealth, time = trades_to_wealth(trades, start_time=start_time, end_time=end_time)
-    assert np.allclose(wealth, expected_wealth)
+    assert np.allclose(wealth, expected_wealth, rtol=1e-3)
     assert time == expected_time
 
 
-def test_get_max_drawdown():
-    maw_drawdown = get_max_drawdown([])  # noqa : F841 (unused)
-    pass
+def test_get_max_drawdown(trades):
+    # the wealth goes from 9.83 to -3.988
+    assert get_max_drawdown(trades) == pytest.approx(13.818, abs=1e-3)
 
 
 def test_get_cagr():
