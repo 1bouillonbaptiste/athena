@@ -10,9 +10,6 @@ import pytest
 @pytest.fixture
 def position():
     return Position.open(
-        strategy_name="my_strategy",
-        coin="BTC",
-        currency="USDT",
         open_date=datetime.datetime(2024, 8, 20),
         open_price=100,
         money_to_invest=50,
@@ -23,8 +20,8 @@ def position():
 def candle():
     return Candle.model_validate(
         {
-            "coin": Coin.BTC,
-            "currency": Coin.USDT,
+            "coin": Coin.default_coin(),
+            "currency": Coin.default_currency(),
             "period": "1h",
             "open_time": datetime.datetime(2024, 8, 25),
             "close_time": datetime.datetime(2024, 8, 26),
