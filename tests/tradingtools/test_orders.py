@@ -41,7 +41,7 @@ def candle():
 def test_open_position(position):
     assert position.initial_investment == 50
     assert position.open_fees == 0.05
-    assert position.amount == 0.49950000000000006
+    assert position.amount == pytest.approx(0.4995, abs=1e-5)
     assert position.amount * position.open_price + position.open_fees == 50
 
 
