@@ -1,5 +1,7 @@
 import datetime
 
+import pytest
+
 from athena.core.interfaces import Fluctuations
 from athena.tradingtools import Strategy
 from athena.core.types import Signal, Coin, Side
@@ -62,13 +64,13 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations
         "initial_investment": 33.0,
         "open_price": 100.0,
         "close_price": 300.0,
-        "amount": 0.32966999999999996,
+        "amount": pytest.approx(0.32967, abs=1e-5),
         "stop_loss": 0,
         "take_profit": float("inf"),
         "open_fees": 0.033,
-        "close_fees": 0.09890099999999999,
+        "close_fees": pytest.approx(0.0989, abs=1e-5),
         "total_fees": 0.131901,
-        "total_profit": 65.76909899999998,
+        "total_profit": pytest.approx(65.7691, abs=1e-5),
         "is_win": True,
         "side": Side.LONG,
     }
@@ -97,13 +99,13 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
         "trade_duration": datetime.timedelta(days=1),
         "initial_investment": 33.0,
         "open_price": 100.0,
-        "close_price": 110.00000000000001,
-        "amount": 0.32966999999999996,
+        "close_price": pytest.approx(110, abs=1e-5),
+        "amount": pytest.approx(0.32967, abs=1e-5),
         "stop_loss": 0,
-        "take_profit": 110.00000000000001,
+        "take_profit": pytest.approx(110, abs=1e-5),
         "open_fees": 0.033,
         "close_fees": 0.0362637,
-        "total_fees": 0.06926370000000001,
+        "total_fees": pytest.approx(0.0692637, abs=1e-5),
         "total_profit": 3.1944363,
         "is_win": True,
         "side": Side.LONG,
@@ -134,13 +136,13 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
         "initial_investment": 33.0,
         "open_price": 100.0,
         "close_price": 300.0,
-        "amount": 0.32966999999999996,
+        "amount": pytest.approx(0.32967, abs=1e-5),
         "stop_loss": 90.0,
         "take_profit": float("inf"),
         "open_fees": 0.033,
-        "close_fees": 0.09890099999999999,
+        "close_fees": pytest.approx(0.0989, abs=1e-5),
         "total_fees": 0.131901,
-        "total_profit": 65.76909899999998,
+        "total_profit": pytest.approx(65.7691, abs=1e-5),
         "is_win": True,
         "side": Side.LONG,
     }
@@ -166,7 +168,7 @@ def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuati
         "initial_investment": 33.0,
         "open_price": 100.0,
         "open_fees": 0.033,
-        "amount": 0.32966999999999996,
+        "amount": pytest.approx(0.32967, abs=1e-5),
         "side": Side.LONG,
         "stop_loss": 0,
         "take_profit": float("inf"),

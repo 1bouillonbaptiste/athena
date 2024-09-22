@@ -40,8 +40,8 @@ class Position(BaseModel):
     """
 
     strategy_name: str = ""
-    coin: Coin
-    currency: Coin
+    coin: Coin = Coin.default_coin()
+    currency: Coin = Coin.default_currency()
     amount: float
     side: Side
 
@@ -71,12 +71,12 @@ class Position(BaseModel):
     @classmethod
     def open(
         cls,
-        strategy_name: str,
-        coin: Coin,
-        currency: Coin,
         open_date: datetime.datetime,
         open_price: float,
         money_to_invest: float,
+        strategy_name: str = "strategy",
+        coin: Coin = Coin.default_coin(),
+        currency: Coin = Coin.default_currency(),
         stop_loss: float = 0,
         take_profit: float = float("inf"),
         side: Side = Side.LONG,
