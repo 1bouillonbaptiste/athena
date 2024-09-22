@@ -6,7 +6,6 @@ from athena.tradingtools.performance_metrics import (
     get_cagr,
     trades_to_wealth,
 )
-from athena.core.types import Coin
 from athena.tradingtools.orders import Position
 
 import pytest
@@ -28,9 +27,6 @@ def trades():
         trades as list of closed positions
     """
     position1 = Position.open(
-        strategy_name="my_strategy",
-        coin=Coin.default_coin(),
-        currency=Coin.default_currency(),
         open_date=datetime.datetime(2024, 8, 20),
         open_price=100,
         money_to_invest=50,
@@ -38,9 +34,6 @@ def trades():
     (position1.close(close_date=datetime.datetime(2024, 8, 21), close_price=120),)
 
     position2 = Position.open(
-        strategy_name="my_strategy",
-        coin=Coin.default_coin(),
-        currency=Coin.default_currency(),
         open_date=datetime.datetime(2024, 8, 22),
         open_price=130,
         money_to_invest=50,
@@ -48,9 +41,6 @@ def trades():
     position2.close(close_date=datetime.datetime(2024, 8, 23), close_price=130)
 
     position3 = Position.open(
-        strategy_name="my_strategy",
-        coin=Coin.default_coin(),
-        currency=Coin.default_currency(),
         open_date=datetime.datetime(2024, 8, 24),
         open_price=130,
         money_to_invest=50,

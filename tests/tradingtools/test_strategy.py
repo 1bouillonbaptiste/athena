@@ -73,7 +73,6 @@ def test_strategy_get_signals_raises(fluctuations):
 
 def test_strategy_compute_signals(fluctuations):
     strategy = StrategyBuyWeekSellFriday()
-    print([candle.open_time for candle in fluctuations(timeframe="1d").candles])
     assert strategy.compute_signals(fluctuations=fluctuations(timeframe="1d")) == [
         Signal.BUY,
         Signal.BUY,
