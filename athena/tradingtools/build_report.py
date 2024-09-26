@@ -125,6 +125,7 @@ def _get_cagr(trades: list[Position]) -> float:
     Returns:
         the annualized average return
     """
+    # TODO: add cagr code
     _, _ = _trades_to_wealth(trades)
     return 0
 
@@ -140,6 +141,7 @@ def _get_sharpe(trades: list[Position]) -> float:
 
     Returns:
     """
+    # TODO: add sharpe code
     _, _ = _trades_to_wealth(trades)
     return 0
 
@@ -153,6 +155,7 @@ def _get_sortino(trades: list[Position]) -> float:
 
     Returns:
     """
+    # TODO: add sortino code
     _, _ = _trades_to_wealth(trades)
     return 0
 
@@ -168,6 +171,7 @@ def _get_calmar(trades: list[Position]) -> float:
 
     Returns:
     """
+    # TODO: add calmar code
     _, _ = _trades_to_wealth(trades)
     return 0
 
