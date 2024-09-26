@@ -1,4 +1,4 @@
-from athena.tradingtools.build_report import (
+from athena.tradingtools.performance_report import (
     _get_sharpe,
     _get_calmar,
     _get_sortino,
