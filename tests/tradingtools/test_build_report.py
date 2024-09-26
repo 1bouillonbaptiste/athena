@@ -1,10 +1,11 @@
-from athena.tradingtools.performance_metrics import (
-    get_sharpe,
-    get_calmar,
-    get_sortino,
-    get_max_drawdown,
-    get_cagr,
-    trades_to_wealth,
+from athena.tradingtools.build_report import (
+    _get_sharpe,
+    _get_calmar,
+    _get_sortino,
+    _get_max_drawdown,
+    _get_cagr,
+    _trades_to_wealth,
+    build_and_save_trading_report,
 )
 from athena.tradingtools.orders import Position
 
@@ -98,32 +99,40 @@ def trades():
         ),
     ],
 )
-def test_trades_to_wealth(start_time, end_time, expected_wealth, expected_time, trades):
-    wealth, time = trades_to_wealth(trades, start_time=start_time, end_time=end_time)
+def test__trades_to_wealth(
+    start_time, end_time, expected_wealth, expected_time, trades
+):
+    wealth, time = _trades_to_wealth(trades, start_time=start_time, end_time=end_time)
     assert np.allclose(wealth, expected_wealth, rtol=1e-3)
     assert time == expected_time
 
 
-def test_get_max_drawdown(trades):
+def test__get_max_drawdown(trades):
     # the wealth goes from 9.83 to -3.988
-    assert get_max_drawdown(trades) == pytest.approx(13.818, abs=1e-3)
+    assert _get_max_drawdown(trades) == pytest.approx(13.818, abs=1e-3)
 
 
-def test_get_cagr():
-    cagr = get_cagr([])  # noqa : F841 (unused)
+def test__get_cagr():
+    cagr = _get_cagr([])  # noqa : F841 (unused)
     pass
 
 
-def test_get_sharpe():
-    sharpe = get_sharpe([])  # noqa : F841 (unused)
+def test__get_sharpe():
+    sharpe = _get_sharpe([])  # noqa : F841 (unused)
     pass
 
 
-def test_get_calmar():
-    calmar = get_calmar([])  # noqa : F841 (unused)
+def test__get_calmar():
+    calmar = _get_calmar([])  # noqa : F841 (unused)
     pass
 
 
-def test_get_sortino():
-    sortino = get_sortino([])  # noqa : F841 (unused)
+def test__get_sortino():
+    sortino = _get_sortino([])  # noqa : F841 (unused)
     pass
+
+
+def test_build_and_save_trading_report(trades, tmp_path):
+    output_path = tmp_path / "report.pdf"
+    build_and_save_trading_report(trades=trades, output_path=output_path)
+    assert output_path.exists()

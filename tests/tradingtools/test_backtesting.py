@@ -71,6 +71,7 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations
         "close_fees": pytest.approx(0.0989, abs=1e-5),
         "total_fees": 0.131901,
         "total_profit": pytest.approx(65.7691, abs=1e-5),
+        "profit_pct": pytest.approx(65.7691 / 33, abs=1e-5),
         "is_win": True,
         "side": Side.LONG,
     }
@@ -107,6 +108,7 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
         "close_fees": 0.0362637,
         "total_fees": pytest.approx(0.0692637, abs=1e-5),
         "total_profit": 3.1944363,
+        "profit_pct": pytest.approx(3.1944363 / 33, abs=1e-5),
         "is_win": True,
         "side": Side.LONG,
     }
@@ -143,6 +145,7 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
         "close_fees": pytest.approx(0.0989, abs=1e-5),
         "total_fees": 0.131901,
         "total_profit": pytest.approx(65.7691, abs=1e-5),
+        "profit_pct": pytest.approx(65.7691 / 33, abs=1e-5),
         "is_win": True,
         "side": Side.LONG,
     }
@@ -178,5 +181,6 @@ def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuati
         "is_win": None,
         "total_fees": None,
         "total_profit": None,
+        "profit_pct": None,
         "trade_duration": None,
     }
