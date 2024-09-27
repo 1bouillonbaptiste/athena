@@ -1,3 +1,4 @@
+from athena.core.interfaces import Fluctuations
 from athena.tradingtools.performance_report import (
     _get_sharpe,
     _get_calmar,
@@ -132,7 +133,17 @@ def test__get_sortino():
     pass
 
 
-def test_build_and_save_trading_report(trades, tmp_path):
+def test_build_and_save_trading_report(trades, generate_candles, tmp_path):
     output_path = tmp_path / "report.pdf"
-    build_and_save_trading_report(trades=trades, output_path=output_path)
+    build_and_save_trading_report(
+        trades=trades,
+        fluctuations=Fluctuations.from_candles(
+            generate_candles(
+                timeframe="4h",
+                from_date=datetime.datetime(2024, 8, 18),
+                to_date=datetime.datetime(2024, 8, 26),
+            )
+        ),
+        output_path=output_path,
+    )
     assert output_path.exists()

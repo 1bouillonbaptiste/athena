@@ -4,6 +4,7 @@ from pathlib import Path
 from athena.core.types import Coin
 from athena.tradingtools.orders import Position, Portfolio
 from pydantic import BaseModel
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 import numpy as np
 
@@ -161,7 +162,7 @@ def _get_sortino(trades: list[Position]) -> float:
 
 
 def _get_calmar(trades: list[Position]) -> float:
-    """Calculate the.
+    """Calculate the Calmar ratio.
 
     The Calmar ratio measures an investment's return relative to its maximum drawdown,
     assessing performance by comparing annual returns to the worst peak-to-trough loss.
@@ -176,9 +177,7 @@ def _get_calmar(trades: list[Position]) -> float:
     return 0
 
 
-def save_trades_on_fluctuations(
-    trades: list[Position], fluctuations: Fluctuations, filename: str
-):
+def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuations):
     """Draw trades on fluctuations and save them along the wealth curve.
 
     Trades are drawn as a straight line between open and close times.
@@ -186,7 +185,9 @@ def save_trades_on_fluctuations(
     Args:
         trades: list of closed positions
         fluctuations: market data
-        filename: output filename
+
+    Returns:
+        trades over fluctuations as an HTML graph
     """
 
     fig = make_subplots(rows=2, cols=1)
@@ -249,7 +250,7 @@ def save_trades_on_fluctuations(
     )
 
     fig.update_layout(title="Trades and wealth over time")
-    fig.write_html(filename)
+    return fig.to_html(full_html=False, include_plotlyjs="cdn")
 
 
 def _build_metrics(trades: list[Position]) -> TradingMetrics:
@@ -281,16 +282,119 @@ def _build_statistics(trades: list[Position]) -> TradingStatistics:
     )
 
 
-def build_and_save_trading_report(
-    trades: list[Position], output_path: Path
-) -> TradingPerformance:
-    """Calculate trading statistics."""
-    trading_performance = TradingPerformance(
-        trading_statistics=_build_statistics(trades),
-        trading_metrics=_build_metrics(trades),
+def _performance_table(trading_performance: TradingPerformance):
+    """Convert TradingPerformance to an HTML table.
+
+    Each TradingMetrics and TradingStatistics are in a separated table.
+
+    Args:
+        trading_performance: trading performance
+
+    Returns:
+        performance as HTML table
+    """
+
+    headerColor = "grey"
+    rowEvenColor = "lightgrey"
+    rowOddColor = "white"
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        vertical_spacing=0.03,
+        specs=[[{"type": "table"}], [{"type": "table"}]],
     )
 
-    # TODO: build report as performance metrics and trades plot
+    metrics_names = list(trading_performance.trading_metrics.model_dump().keys())
+    metrics_values = list(trading_performance.trading_metrics.model_dump().values())
+
+    fig.add_trace(
+        go.Table(
+            header=dict(
+                values=["<b>Indicator</b>", "<b>Value</b>"],
+                line_color="darkslategray",
+                fill_color=headerColor,
+                align=["left", "center"],
+                font=dict(color="white", size=12),
+            ),
+            cells=dict(
+                values=[
+                    metrics_names,
+                    metrics_values,
+                ],
+                line={"color": "darkslategray"},
+                # 2-D list of colors for alternating rows
+                fill={
+                    "color": [rowOddColor, rowEvenColor] * (len(metrics_values) // 2)
+                    + [rowOddColor] * (len(metrics_values) % 2)
+                },
+                align=["left", "center"],
+                font=dict(color="darkslategray", size=11),
+            ),
+        ),
+        row=1,
+        col=1,
+    )
+
+    statistics_names = list(trading_performance.trading_statistics.model_dump().keys())
+    statistics_values = list(
+        trading_performance.trading_statistics.model_dump().values()
+    )
+    fig.add_trace(
+        go.Table(
+            header=dict(
+                values=["<b>Indicator</b>", "<b>Value</b>"],
+                line_color="darkslategray",
+                fill_color=headerColor,
+                align=["left", "center"],
+                font=dict(color="white", size=12),
+            ),
+            cells=dict(
+                values=[
+                    statistics_names,
+                    statistics_values,
+                ],
+                line={"color": "darkslategray"},
+                # 2-D list of colors for alternating rows
+                fill={
+                    "color": [rowOddColor, rowEvenColor] * (len(metrics_values) // 2)
+                    + [rowOddColor] * (len(metrics_values) % 2)
+                },
+                align=["left", "center"],
+                font=dict(color="darkslategray", size=11),
+            ),
+        ),
+        row=1,
+        col=1,
+    )
+
+    fig.update_layout(title="Trading Performance Indicators")
+    return fig.to_html(full_html=False, include_plotlyjs="cdn")
+
+
+def build_and_save_trading_report(
+    trades: list[Position], fluctuations: Fluctuations, output_path: Path
+):
+    """Create a report from trades and save it to disk.
+
+    Args:
+        trades: closed positions
+        fluctuations: market data
+        output_path: HMTL file location to save the report
+    """
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(trading_performance.model_dump_json())
+
+    env = Environment(loader=PackageLoader("athena"), autoescape=select_autoescape())
+    template = env.get_template("performance_report.html")
+    report = template.render(
+        metrics=_performance_table(
+            trading_performance=TradingPerformance(
+                trading_statistics=_build_statistics(trades),
+                trading_metrics=_build_metrics(trades),
+            )
+        ),
+        trades=_plot_trades_on_fluctuations(trades=trades, fluctuations=fluctuations),
+    )
+
+    Path(output_path).write_text(report)
