@@ -36,6 +36,13 @@ def get_trades_from_strategy_and_fluctuations(
                 close_price=close_price,
             )
             trades.append(position)
+            portfolio.update_coin_amount(
+                coin=currency,
+                amount_to_add=position.initial_investment + position.total_profit,
+            )
+            portfolio.update_coin_amount(
+                coin=traded_coin, amount_to_add=-position.amount
+            )
             position = None
 
         if signal == Signal.BUY and position is None:
