@@ -190,7 +190,7 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
         trades over fluctuations as an HTML graph
     """
 
-    fig = make_subplots(rows=2, cols=1)
+    fig = make_subplots(rows=3, cols=1)
 
     # plot the candlesticks
     fig.add_trace(
@@ -204,6 +204,7 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
         row=1,
         col=1,
     )
+    fig.update_yaxes(fixedrange=False)
 
     # overlay trades lifetime
     for trade in trades:
@@ -212,8 +213,18 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
             x0=trade.open_date,
             y0=trade.open_price,
             x1=trade.close_date,
-            y1=trade.close_price,
+            y1=trade.open_price,
             line=dict(color="black", width=1),
+            row=1,
+            col=1,
+        )
+        fig.add_shape(
+            type="line",
+            x0=trade.close_date,
+            y0=trade.open_price,
+            x1=trade.close_date,
+            y1=trade.close_price,
+            line=dict(color="forestgreen" if trade.is_win else "crimson", width=1),
             row=1,
             col=1,
         )
@@ -223,7 +234,7 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
         go.Scatter(
             name="buy",
             x=[trade.open_date for trade in trades],
-            y=[trade.close_price for trade in trades],
+            y=[trade.open_price for trade in trades],
             mode="markers",
             marker=dict(color="green"),
         ),
@@ -245,11 +256,15 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
             mode="lines",
             line=dict(color="deepskyblue"),
         ),
-        row=2,
+        row=3,
         col=1,
     )
 
-    fig.update_layout(title="Trades and wealth over time")
+    fig.update_layout(
+        title="Trades and wealth over time",
+        width=1000,
+        height=800,
+    )
     return fig.to_html(full_html=False, include_plotlyjs="cdn")
 
 
@@ -306,7 +321,10 @@ def _performance_table(trading_performance: TradingPerformance):
     )
 
     metrics_names = list(trading_performance.trading_metrics.model_dump().keys())
-    metrics_values = list(trading_performance.trading_metrics.model_dump().values())
+    metrics_values = [
+        round(value, 3)
+        for value in trading_performance.trading_metrics.model_dump().values()
+    ]
 
     fig.add_trace(
         go.Table(
@@ -337,9 +355,10 @@ def _performance_table(trading_performance: TradingPerformance):
     )
 
     statistics_names = list(trading_performance.trading_statistics.model_dump().keys())
-    statistics_values = list(
-        trading_performance.trading_statistics.model_dump().values()
-    )
+    statistics_values = [
+        round(value, 3)
+        for value in trading_performance.trading_statistics.model_dump().values()
+    ]
     fig.add_trace(
         go.Table(
             header=dict(
@@ -368,12 +387,18 @@ def _performance_table(trading_performance: TradingPerformance):
         col=1,
     )
 
-    fig.update_layout(title="Trading Performance Indicators")
+    fig.update_layout(
+        title="Performance Indicators",
+        width=400,
+    )
     return fig.to_html(full_html=False, include_plotlyjs="cdn")
 
 
 def build_and_save_trading_report(
-    trades: list[Position], fluctuations: Fluctuations, output_path: Path
+    trades: list[Position],
+    fluctuations: Fluctuations,
+    output_path: Path,
+    show_trades: bool = True,
 ):
     """Create a report from trades and save it to disk.
 
@@ -381,12 +406,20 @@ def build_and_save_trading_report(
         trades: closed positions
         fluctuations: market data
         output_path: HMTL file location to save the report
+        show_trades: plot the trades on candlesticks or not, could be long in case of many trades
     """
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    trades_html = (
+        _plot_trades_on_fluctuations(trades=trades, fluctuations=fluctuations)
+        if show_trades
+        else ""
+    )
+
     env = Environment(loader=PackageLoader("athena"), autoescape=select_autoescape())
     template = env.get_template("performance_report.html")
+
     report = template.render(
         metrics=_performance_table(
             trading_performance=TradingPerformance(
@@ -394,7 +427,7 @@ def build_and_save_trading_report(
                 trading_metrics=_build_metrics(trades),
             )
         ),
-        trades=_plot_trades_on_fluctuations(trades=trades, fluctuations=fluctuations),
+        trades=trades_html,
     )
 
     Path(output_path).write_text(report)
