@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena Performance Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* Hide all sections initially */
+        .section {
+            display: none;
+        }
+        /* Make the active section visible */
+        .active {
+            display: block;
+        }
+        /* Styling for buttons */
+        .nav-btn {
+            padding: 10px 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .nav-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation buttons -->
+    <div>
+        <button class="nav-btn" onclick="showSection('metrics')">Metrics</button>
+        <button class="nav-btn" onclick="showSection('trades')">Trades</button>
+    </div>
+
+    <!-- Section for Metrics -->
+    <div id="metrics" class="section active">
+        <h2>Metrics Section</h2>
+        {{ metrics|safe }}
+    </div>
+
+    <!-- Section for Trades -->
+    <div id="trades" class="section">
+        <h2>Trades Section</h2>
+        {{ trades|safe }}
+    </div>
+
+    <!-- JavaScript to toggle between sections -->
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show the selected section
+            document.getElementById(sectionId).classList.add('active');
+        }
+    </script>
+</body>
+</html>

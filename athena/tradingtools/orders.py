@@ -35,6 +35,7 @@ class Position(BaseModel):
 
         total_fees: sum of open and close fees
         total_profit: remaining money when we compare initial investment, return and fees
+        profit_pct: trade's return
         is_win: if we made money on this trade or not
         trade_duration: position total lifetime
     """
@@ -60,6 +61,7 @@ class Position(BaseModel):
 
     total_fees: float | None = None
     total_profit: float | None = None
+    profit_pct: float | None = None
     is_win: bool | None = None
     trade_duration: datetime.timedelta | None = None
 
@@ -112,6 +114,11 @@ class Position(BaseModel):
         self.total_fees = self.close_fees + self.open_fees
         self.total_profit = (
             (self.amount * self.close_price) - self.initial_investment - self.total_fees
+        )
+        self.profit_pct = (
+            (self.total_profit / self.initial_investment)
+            if self.initial_investment
+            else 0
         )
         self.trade_duration = self.close_date - self.open_date
 
@@ -171,6 +178,10 @@ class Portfolio(BaseModel):
 
     def get_available(self, coin: Coin) -> float:
         return self.assets.get(coin, 0)
+
+    @classmethod
+    def default(cls):
+        return cls.model_validate({"assets": {Coin.default_currency(): 100}})
 
     def update_coin_amount(self, coin: Coin, amount_to_add: float) -> None:
         """Update coin's available amount in portfolio.
