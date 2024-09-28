@@ -3,7 +3,7 @@ import datetime
 import pytest
 
 from athena.core.interfaces import Fluctuations
-from athena.tradingtools import Strategy
+from athena.tradingtools import Strategy, Portfolio
 from athena.core.types import Signal, Coin, Side
 from athena.tradingtools.backtesting import (
     get_trades_from_strategy_and_fluctuations,
@@ -79,7 +79,7 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations
 
 def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33, take_profit_pct=0.1)
-    trades, _ = get_trades_from_strategy_and_fluctuations(
+    trades, portfolio = get_trades_from_strategy_and_fluctuations(
         strategy=strategy,
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
@@ -112,6 +112,13 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
         "is_win": True,
         "side": Side.LONG,
     }
+    assert (
+        portfolio.get_available(Coin.USDT)
+        == Portfolio.model_validate({"assets": {Coin.USDT: 100}}).get_available(
+            Coin.USDT
+        )
+        + trades[0].total_profit
+    )
 
 
 def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
