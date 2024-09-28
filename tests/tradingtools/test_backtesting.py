@@ -52,8 +52,8 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations
     assert len(trades) == 1
     assert trades[0].model_dump() == {
         "strategy_name": "strategy_buy_monday_sell_friday",
-        "coin": Coin.BTC,
-        "currency": Coin.USDT,
+        "coin": Coin.default_coin(),
+        "currency": Coin.default_currency(),
         "open_date": datetime.datetime.fromisoformat(
             "2024-08-20 00:00:00"
         ),  # open next day = tuesday
@@ -89,8 +89,8 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
     assert len(trades) == 1
     assert trades[0].model_dump() == {
         "strategy_name": "strategy_buy_monday_sell_friday",
-        "coin": Coin.BTC,
-        "currency": Coin.USDT,
+        "coin": Coin.default_coin(),
+        "currency": Coin.default_currency(),
         "open_date": datetime.datetime.fromisoformat(
             "2024-08-20 00:00:00"
         ),  # open next day = tuesday
@@ -113,10 +113,8 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
         "side": Side.LONG,
     }
     assert (
-        portfolio.get_available(Coin.USDT)
-        == Portfolio.model_validate({"assets": {Coin.USDT: 100}}).get_available(
-            Coin.USDT
-        )
+        portfolio.get_available(Coin.default_currency())
+        == Portfolio.default().get_available(Coin.default_currency())
         + trades[0].total_profit
     )
 
@@ -133,8 +131,8 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
     assert len(trades) == 1
     assert trades[0].model_dump() == {
         "strategy_name": "strategy_buy_monday_sell_friday",
-        "coin": Coin.BTC,
-        "currency": Coin.USDT,
+        "coin": Coin.default_coin(),
+        "currency": Coin.default_currency(),
         "open_date": datetime.datetime.fromisoformat(
             "2024-08-20 00:00:00"
         ),  # open next day = tuesday
@@ -170,8 +168,8 @@ def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuati
     assert not trades[0].is_closed
     assert trades[0].model_dump() == {
         "strategy_name": "strategy_monday_dca",
-        "coin": Coin.BTC,
-        "currency": Coin.USDT,
+        "coin": Coin.default_coin(),
+        "currency": Coin.default_currency(),
         "open_date": datetime.datetime.fromisoformat(
             "2024-08-20 00:00:00"
         ),  # open next day = tuesday

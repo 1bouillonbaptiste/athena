@@ -15,11 +15,11 @@ def get_trades_from_strategy_and_fluctuations(
     Returns:
         market movement as a list of trades
     """
-    traded_coin = Coin.BTC
-    currency = Coin.USDT
-    position = None
-    portfolio = Portfolio.model_validate({"assets": {currency: 100}})
+    traded_coin = Coin.default_coin()
+    currency = Coin.default_currency()
+    portfolio = Portfolio.default()
 
+    position = None
     trades = []  # collection of closed positions
     for candle, signal in strategy.get_signals(fluctuations):
         if position is not None:
