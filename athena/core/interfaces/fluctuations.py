@@ -287,6 +287,7 @@ def sanitize_candles(candles: list[Candle]) -> list[Candle]:
     """Remove invalid candles.
 
     Invalid candles are :
+        - duplicated candles
         - candles with volume of 0.
 
     # TODO: improve this function to check over prices / highs / lows / closes
@@ -298,5 +299,6 @@ def sanitize_candles(candles: list[Candle]) -> list[Candle]:
         filtered candles as a list
     """
     # remove duplicated candles based on their `open_time`
-    candles = list({candle.open_time: candle for candle in candles}.values())
-    return [candle for candle in candles if candle.volume > 0]
+    sanitized_candles = list({candle.open_time: candle for candle in candles}.values())
+    sanitized_candles = [candle for candle in sanitized_candles if candle.volume > 0]
+    return sanitized_candles
