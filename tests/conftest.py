@@ -82,7 +82,7 @@ def generate_candles(generate_bars):
         size: int = 1000,
         coin="BTC",
         currency="USDT",
-        timeframe="4h",
+        timeframe="1m",
         from_date: datetime.datetime | None = None,
         to_date: datetime.datetime | None = None,
     ):

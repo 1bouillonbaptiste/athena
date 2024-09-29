@@ -3,7 +3,8 @@ from functools import cached_property
 
 import numpy as np
 from pydantic import BaseModel, model_validator
-from athena.core.interfaces import Candle
+from athena.core.interfaces.candle import Candle
+from athena.core.interfaces.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
 
 import pandas as pd
@@ -136,31 +137,14 @@ class Fluctuations(BaseModel):
         all_candles = []
         filenames = list(path.glob("*.csv")) if path.is_dir() else [path]
         for filename in filenames:
-            df = (
-                pd.read_csv(filename)
-                .sort_values(by="open_time", ascending=True)
-                .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
-                .reset_index(drop=True)
-                .astype(
-                    {
-                        "open_time": "datetime64[ns]",
-                        "high_time": "datetime64[ns]",
-                        "low_time": "datetime64[ns]",
-                        "close_time": "datetime64[ns]",
-                    }
-                )
+            candles = load_candles_from_file(
+                filename=filename, target_period=target_period
             )
-            candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
 
             if (candles[-1].open_time <= from_date) or (
                 candles[-1].open_time >= to_date
             ):
                 continue
-
-            if target_period is not None:
-                candles = convert_candles_to_period(
-                    candles, target_period=target_period
-                )
 
             all_candles.extend(candles)
         # remove duplicated candles based on their `open_time`
@@ -168,6 +152,86 @@ class Fluctuations(BaseModel):
             {candle.open_time: candle for candle in all_candles}.values()
         )
         return cls.from_candles(all_candles)
+
+    @classmethod
+    def load_from_dataset(
+        cls,
+        dataset: DatasetLayout,
+        coin: Coin,
+        currency: Coin,
+        target_period: Period = None,
+        from_date: datetime.datetime | None = None,
+        to_date: datetime.datetime | None = None,
+    ):
+        """Retrieve candles from a dataset interface.
+
+        Args:
+            dataset: dataset layout object
+            coin: coin to be loaded
+            currency: currency to base the coin
+            target_period: target period
+            from_date: keep candles after this date, defaults to 1900-01-01
+            to_date: keep candles before this date, defaults to today
+
+        Returns:
+            merged candles as a single fluctuations instance.
+        """
+        from_date = from_date or datetime.datetime(1900, 1, 1)
+        to_date = to_date or datetime.datetime.today()
+        dates = [
+            from_date + datetime.timedelta(days=ii)
+            for ii in range((to_date - from_date).days + 1)
+        ]
+
+        all_candles = []
+        for date in dates:
+            filename = dataset.localize_file(
+                coin=coin, currency=currency, date=date, period=Period(timeframe="1m")
+            )
+            if filename.is_file():
+                all_candles.extend(
+                    load_candles_from_file(
+                        filename=filename, target_period=target_period
+                    )
+                )
+
+        # remove duplicated candles based on their `open_time`
+        all_candles = list(
+            {candle.open_time: candle for candle in all_candles}.values()
+        )
+        return cls.from_candles(all_candles)
+
+
+def load_candles_from_file(
+    filename: Path, target_period: Period = None
+) -> list[Candle]:
+    """Build new candles from file data.
+
+    Args:
+        filename: path to file containing candles infos
+        target_period: aggregate candles to this period
+
+    Returns:
+        new candles as a list of candle
+    """
+    df = (
+        pd.read_csv(filename)
+        .sort_values(by="open_time", ascending=True)
+        .drop_duplicates(subset=["open_time", "coin", "currency", "period"])
+        .reset_index(drop=True)
+        .astype(
+            {
+                "open_time": "datetime64[ns]",
+                "high_time": "datetime64[ns]",
+                "low_time": "datetime64[ns]",
+                "close_time": "datetime64[ns]",
+            }
+        )
+    )
+    candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
+    if target_period is not None:
+        candles = convert_candles_to_period(candles, target_period=target_period)
+    return candles
 
 
 def merge_candles(candles: list[Candle]) -> Candle:

@@ -4,6 +4,7 @@ import datetime
 
 from athena.core.interfaces import Fluctuations
 from athena.core.types import Period, Coin
+from athena.core.interfaces.dataset_layout import DatasetLayout
 
 from pandas.testing import assert_frame_equal
 import numpy as np
@@ -111,6 +112,31 @@ def test_load_fluctuations_from_dir(tmp_path, sample_candles, sample_fluctuation
         Fluctuations.load(tmp_path).model_dump()
         == Fluctuations.from_candles(sample_candles()).model_dump()
     )
+
+
+def test_load_from_dataset(tmp_path, generate_candles):
+    start_date = datetime.datetime(2020, 1, 1)
+    for day_ii in range(2):
+        Fluctuations.from_candles(
+            generate_candles(
+                from_date=start_date + datetime.timedelta(days=day_ii),
+                to_date=start_date + datetime.timedelta(days=day_ii + 1),
+            )
+        ).save(
+            DatasetLayout(tmp_path).localize_file(
+                coin=Coin.BTC,
+                currency=Coin.USDT,
+                period=Period(timeframe="1m"),
+                date=start_date + datetime.timedelta(days=day_ii),
+            )
+        )
+    fluctuations = Fluctuations.load_from_dataset(
+        dataset=DatasetLayout(tmp_path),
+        coin=Coin.BTC,
+        currency=Coin.USDT,
+        target_period=Period(timeframe="4h"),
+    )
+    assert len(fluctuations.candles) == 2 * 6  # 2 days * 6 candles a day
 
 
 def test_load_fluctuations_convert_period(tmp_path, sample_candles, generate_candles):
