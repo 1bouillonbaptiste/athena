@@ -1,6 +1,8 @@
 from pathlib import Path
 import os
 
+DATA_DIR = Path("/data/athena")
+
 
 class ProjectContext:
     def __init__(self, root_dir: Path | None = None):
@@ -19,3 +21,7 @@ class ProjectContext:
     @property
     def credentials_file(self) -> Path:
         return self._root_dir / ".credentials"
+
+    @property
+    def raw_data_directory(self) -> Path:
+        return DATA_DIR / "raw_market_data"

@@ -1,6 +1,88 @@
+import datetime
+from typing import Any
+from pathlib import Path
+
+from athena.core.context import ProjectContext
 from athena.tradingtools import Strategy, Portfolio, Position
-from athena.core.types import Coin, Signal
-from athena.core.interfaces import Fluctuations
+from athena.core.types import Coin, Signal, Period
+from athena.core.interfaces import Fluctuations, DatasetLayout
+from athena.tradingtools.strategies import init_strategy
+from athena.tradingtools.performance_report import build_and_save_trading_report
+
+from pydantic import BaseModel, field_validator, ConfigDict
+
+
+class DataConfig(BaseModel):
+    """Model for dataset creation configuration.
+
+    Attributes:
+        coin: the coin to be traded
+        currency: the quote asset to trade the coin
+        period: the timeframe of the candles data
+        from_date: the lower bound date of the dataset.
+        to_date: the upper bound date of the dataset.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    coin: Coin
+    currency: Coin
+    period: Period
+    from_date: datetime.datetime | None = None
+    to_date: datetime.datetime | None = None
+
+    @field_validator("coin", mode="before")
+    @classmethod
+    def parse_coin(cls, value: Any) -> Coin:
+        return Coin[value] if isinstance(value, str) else value
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def parse_currency(cls, value: Any) -> Coin:
+        return Coin[value] if isinstance(value, str) else value
+
+    @field_validator("period", mode="before")
+    @classmethod
+    def parse_period(cls, value: Any) -> Period:
+        return Period(timeframe=value) if isinstance(value, str) else value
+
+    @field_validator("from_date", mode="before")
+    @classmethod
+    def parse_from_date(cls, value: Any) -> datetime.datetime:
+        return (
+            datetime.datetime.fromisoformat(value) if isinstance(value, str) else value
+        )
+
+    @field_validator("to_date", mode="before")
+    @classmethod
+    def parse_to_date(cls, value: Any) -> datetime.datetime:
+        return (
+            datetime.datetime.fromisoformat(value) if isinstance(value, str) else value
+        )
+
+
+class StrategyConfig(BaseModel):
+    """Model to instantiate a strategy and trading parameters.
+
+    Attributes:
+        name: the name of the strategy to evaluate
+        parameters: strategy parameters
+    """
+
+    name: str
+    parameters: dict[str, Any]
+
+
+class BacktestConfig(BaseModel):
+    """Model for backtesting configuration.
+
+    Attributes:
+        data: data configuration
+        strategy: strategy configuration
+    """
+
+    data: DataConfig
+    strategy: StrategyConfig
 
 
 def get_trades_from_strategy_and_fluctuations(
@@ -86,3 +168,38 @@ def get_trades_from_strategy_and_fluctuations(
     if position is not None:
         trades.append(position)
     return trades, portfolio
+
+
+def backtest(config: BacktestConfig, output_dir: Path, root_dir: Path | None = None):
+    """Run a trading algorithm on a dataset and save its performance results.
+
+    Args:
+        config: backtesting configuration
+        output_dir: directory to save the performance results
+        root_dir: raw market data location
+    """
+    dataset_layout = DatasetLayout(
+        root_dir=root_dir or ProjectContext().raw_data_directory
+    )
+    fluctuations = Fluctuations.load(
+        path=dataset_layout.get_dataset_path(
+            coin=config.data.coin,
+            currency=config.data.currency,
+            period=Period(timeframe="1m"),
+        ),
+        target_period=config.data.period,
+        from_date=config.data.from_date,
+        to_date=config.data.to_date,
+    )
+    strategy = init_strategy(
+        strategy_name=config.strategy.name, strategy_params=config.strategy.parameters
+    )
+
+    trades, _ = get_trades_from_strategy_and_fluctuations(
+        strategy=strategy, fluctuations=fluctuations
+    )
+    build_and_save_trading_report(
+        trades=trades,
+        fluctuations=fluctuations,
+        output_path=output_dir / "performance_report.html",
+    )
