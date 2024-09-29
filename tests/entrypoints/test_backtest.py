@@ -4,7 +4,8 @@ import json
 from click.testing import CliRunner
 import pytest
 
-from athena.core.interfaces import Fluctuations
+from athena.core.interfaces import Fluctuations, DatasetLayout
+from athena.core.types import Coin, Period
 
 from athena.entrypoints.cli import app
 
@@ -17,7 +18,7 @@ def config():
             "currency": "USDT",
             "period": "1h",
             "from_date": "2020-01-01",
-            "to_date": "2021-01-01",
+            "to_date": "2020-01-03",
         },
         "strategy": {
             "name": "strategy_dca",
@@ -38,13 +39,22 @@ def test_run_backtest(config, generate_candles, tmp_path):
     output_dir = tmp_path / "results"
 
     config_path.write_text(json.dumps(config))
-    Fluctuations.from_candles(
-        generate_candles(
-            from_date=datetime.datetime(2020, 1, 1),
-            to_date=datetime.datetime(2020, 1, 3),
-            timeframe="1m",
+
+    start_date = datetime.datetime(2020, 1, 1)
+    for day_ii in range(3):
+        Fluctuations.from_candles(
+            generate_candles(
+                from_date=start_date + datetime.timedelta(days=day_ii),
+                to_date=start_date + datetime.timedelta(days=day_ii + 1),
+            )
+        ).save(
+            DatasetLayout(root_dir).localize_file(
+                coin=Coin.BTC,
+                currency=Coin.USDT,
+                period=Period(timeframe="1m"),
+                date=start_date + datetime.timedelta(days=day_ii),
+            )
         )
-    ).save(root_dir / "BTC_USDT_1m")
 
     runner = CliRunner().invoke(
         app,

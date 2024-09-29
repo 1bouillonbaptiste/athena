@@ -7,7 +7,8 @@ from pathlib import Path
 
 
 from athena.hub.client import BinanceClient
-from athena.core.interfaces import Fluctuations, DatasetLayout
+from athena.core.interfaces import DatasetLayout
+from athena.core.interfaces.fluctuations import load_candles_from_file, Fluctuations
 from athena.core.types import Coin, Period
 from tqdm import tqdm
 
@@ -138,7 +139,10 @@ def download_daily_market_candles(
         if overwrite:
             filename.unlink(missing_ok=True)
         elif filename.exists():
-            if len(Fluctuations.load(filename).candles) >= candles_expected_number:
+            if (
+                len(Fluctuations.from_candles(load_candles_from_file(filename)).candles)
+                >= candles_expected_number
+            ):
                 continue
 
         fluctuations = fetch_historical_data(

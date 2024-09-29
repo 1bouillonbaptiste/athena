@@ -2,6 +2,7 @@ from athena.core.interfaces.fluctuations import (
     merge_candles,
     convert_candles_to_period,
     sanitize_candles,
+    load_candles_from_file,
 )
 from athena.core.types import Period, Coin
 from athena.core.interfaces import Candle
@@ -9,6 +10,11 @@ from athena.core.interfaces import Candle
 import datetime
 
 import pytest
+
+
+def test_load_candles_from_file(sample_candles, sample_fluctuations, tmp_path):
+    sample_fluctuations().to_csv(tmp_path / "fluctuations.csv", index=False)
+    assert load_candles_from_file(tmp_path / "fluctuations.csv") == sample_candles()
 
 
 def test_merge_candles(generate_candles):
@@ -105,12 +111,16 @@ def raw_candles():
     return _raw_candles
 
 
-def test_sanitize_candles(raw_candles):
+def test_sanitize_candles(generate_candles):
     """Remove invalid candles."""
 
-    sanitized_candles = sanitize_candles(raw_candles(volumes=[50, 60, 0, 100, 0]))
+    candles = generate_candles(size=5)
+    candles[2].volume = 0
+    candles[4].volume = 0
+    sanitized_candles = sanitize_candles(candles)
 
-    assert [candle.volume for candle in sanitized_candles] == [50, 60, 100]
+    assert len(sanitized_candles) == 3
+    assert all([candle.volume != 0 for candle in sanitized_candles])
 
 
 def test_sanitize_candles_empty():

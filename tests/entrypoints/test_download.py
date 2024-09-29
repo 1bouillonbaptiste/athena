@@ -9,8 +9,8 @@ from athena.core.interfaces import DatasetLayout, Fluctuations
 
 def test_download_market_candles(generate_bars, mocker, tmp_path):
     from_date = datetime.datetime(2020, 1, 1)
-    to_date = datetime.datetime(2020, 1, 15)
-    period = Period(timeframe="4h")
+    to_date = datetime.datetime(2020, 1, 2)
+    period = Period(timeframe="1m")
 
     mocker.patch(
         "athena.hub.client.BinanceClient.get_historical_klines",
@@ -51,8 +51,10 @@ def test_download_market_candles(generate_bars, mocker, tmp_path):
     assert dataset_filename.exists()
 
     # we cannot test each date because the mocker returns a bulk of 15 days
-    fluctuations_tmp = Fluctuations.load(dataset_filename.parent)
+    fluctuations_tmp = Fluctuations.load_from_dataset(
+        dataset=dataset_layout, coin=Coin.BTC, currency=Coin.USDT, target_period=period
+    )
 
-    assert len(fluctuations_tmp.candles) == 6 * 14  # 6 candles a day * 14 days
+    assert len(fluctuations_tmp.candles) == 60 * 24  # 1 candle each minute * 60m * 24h
     assert fluctuations_tmp.candles[0].open_time == from_date
     assert fluctuations_tmp.candles[-1].close_time == to_date
