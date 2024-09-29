@@ -178,15 +178,10 @@ def backtest(config: BacktestConfig, output_dir: Path, root_dir: Path | None = N
         output_dir: directory to save the performance results
         root_dir: raw market data location
     """
-    dataset_layout = DatasetLayout(
-        root_dir=root_dir or ProjectContext().raw_data_directory
-    )
-    fluctuations = Fluctuations.load(
-        path=dataset_layout.get_dataset_path(
-            coin=config.data.coin,
-            currency=config.data.currency,
-            period=Period(timeframe="1m"),
-        ),
+    fluctuations = Fluctuations.load_from_dataset(
+        dataset=DatasetLayout(root_dir=root_dir or ProjectContext().raw_data_directory),
+        coin=config.data.coin,
+        currency=config.data.currency,
         target_period=config.data.period,
         from_date=config.data.from_date,
         to_date=config.data.to_date,

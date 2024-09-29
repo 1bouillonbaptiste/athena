@@ -116,23 +116,16 @@ class Fluctuations(BaseModel):
         cls,
         path: Path,
         target_period: Period = None,
-        from_date: datetime.datetime | None = None,
-        to_date: datetime.datetime | None = None,
     ) -> Candle:
         """Load fluctuations from disk.
 
         Args:
             path: load file if file else load all csv files in dir
             target_period: target period
-            from_date: keep candles after this date, defaults to 1900-01-01
-            to_date: keep candles before this date, defaults to today
 
         Returns:
             merged candles as a single fluctuations instance.
         """
-
-        from_date = from_date or datetime.datetime(1900, 1, 1)
-        to_date = to_date or datetime.datetime.today()
 
         all_candles = []
         filenames = list(path.glob("*.csv")) if path.is_dir() else [path]
@@ -140,12 +133,6 @@ class Fluctuations(BaseModel):
             candles = load_candles_from_file(
                 filename=filename, target_period=target_period
             )
-
-            if (candles[-1].open_time <= from_date) or (
-                candles[-1].open_time >= to_date
-            ):
-                continue
-
             all_candles.extend(candles)
         # remove duplicated candles based on their `open_time`
         all_candles = list(
