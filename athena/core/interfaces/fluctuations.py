@@ -112,31 +112,6 @@ class Fluctuations(BaseModel):
         df.to_csv(path.as_posix(), index=False)
 
     @classmethod
-    def load(
-        cls,
-        path: Path,
-        target_period: Period = None,
-    ) -> "Fluctuations":
-        """Load fluctuations from disk.
-
-        Args:
-            path: load file if file else load all csv files in dir
-            target_period: target period
-
-        Returns:
-            merged candles as a single fluctuations instance.
-        """
-
-        all_candles = []
-        filenames = list(path.glob("*.csv")) if path.is_dir() else [path]
-        for filename in filenames:
-            candles = load_candles_from_file(
-                filename=filename, target_period=target_period
-            )
-            all_candles.extend(candles)
-        return cls.from_candles(all_candles)
-
-    @classmethod
     def load_from_dataset(
         cls,
         dataset: DatasetLayout,

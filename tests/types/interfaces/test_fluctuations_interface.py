@@ -121,14 +121,6 @@ def test_fluctuations_save_to_file(tmp_path, sample_candles, sample_fluctuations
     )
 
 
-def test_load_fluctuations_from_dir(tmp_path, sample_candles, sample_fluctuations):
-    sample_fluctuations().to_csv(tmp_path / "fluctuations.csv", index=False)
-    assert (
-        Fluctuations.load(tmp_path).model_dump()
-        == Fluctuations.from_candles(sample_candles()).model_dump()
-    )
-
-
 def test_load_from_dataset(tmp_path, generate_candles):
     start_date = datetime.datetime(2020, 1, 1)
     for day_ii in range(2):
@@ -152,17 +144,6 @@ def test_load_from_dataset(tmp_path, generate_candles):
         target_period=Period(timeframe="4h"),
     )
     assert len(fluctuations.candles) == 2 * 6  # 2 days * 6 candles a day
-
-
-def test_load_fluctuations_convert_period(tmp_path, sample_candles, generate_candles):
-    from_date = datetime.datetime(2020, 1, 1)
-    to_date = datetime.datetime(2020, 1, 1, hour=8)
-    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
-
-    Fluctuations.from_candles(candles=candles).save(tmp_path / "fluctuations.csv")
-
-    fluctuations = Fluctuations.load(tmp_path, target_period=Period(timeframe="4h"))
-    assert len(fluctuations.candles) == 2
 
 
 def test_load_fluctuations_get_series(tmp_path, sample_candles, generate_candles):
