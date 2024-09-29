@@ -1,4 +1,6 @@
+from athena.core.context import ProjectContext
 from athena.hub.fetch import download_daily_market_candles
+from athena.tradingtools.backtesting import backtest as backtest_main, BacktestConfig
 from pathlib import Path
 import datetime
 
@@ -61,6 +63,40 @@ def download(
         timeframe=timeframe,
         output_dir=output_dir,
         overwrite=overwrite,
+    )
+
+
+@app.command()
+@click.option(
+    "--config-path",
+    "-c",
+    required=True,
+    type=Path,
+    help="Path to the backtesting configuration file.",
+)
+@click.option(
+    "--output-dir",
+    "-o",
+    required=True,
+    type=Path,
+    help="Directory to save backtesting results.",
+)
+@click.option(
+    "--root-dir",
+    "-r",
+    default=ProjectContext().raw_data_directory,
+    type=Path,
+    help="Location of raw market data.",
+)
+def backtest(
+    config_path: Path,
+    output_dir: Path,
+    root_dir: Path,
+):
+    backtest_main(
+        config=BacktestConfig.model_validate_json(config_path.read_text()),
+        output_dir=output_dir,
+        root_dir=root_dir,
     )
 
 
