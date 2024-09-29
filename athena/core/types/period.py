@@ -25,6 +25,9 @@ class Period:
     def to_timedelta(self):
         return datetime.timedelta(**{self.unit_full: self.value})
 
+    def __eq__(self, other):
+        return self.timeframe == other.timeframe
+
 
 def fill_missing_attributes(
     timeframe: str | None = None,

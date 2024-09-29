@@ -54,7 +54,7 @@ def test_fluctuations_from_candles(sample_candles):
         ],
         "coin": Coin.BTC,
         "currency": Coin.USDT,
-        "period": Period(timeframe="4h").timeframe,
+        "period": Period(timeframe="4h"),
     }
 
 
