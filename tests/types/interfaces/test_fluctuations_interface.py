@@ -68,24 +68,39 @@ def test_fluctuations_get_candle(sample_candles):
     )
 
 
-def test_fluctuations_fails_on_coins(sample_candles):
+def test_fluctuations_fails_on_coins(generate_candles):
     with pytest.raises(ValueError, match="All candles must have the same coin"):
         Fluctuations.from_candles(
-            candles=sample_candles(coin="BTC") + sample_candles(coin="ETH")
+            candles=generate_candles(
+                coin="BTC", from_date=datetime.datetime(2020, 1, 1), size=5
+            )
+            + generate_candles(
+                coin="ETH", from_date=datetime.datetime(2020, 1, 2), size=5
+            )
         )
 
 
-def test_fluctuations_fails_on_currencies(sample_candles):
+def test_fluctuations_fails_on_currencies(generate_candles):
     with pytest.raises(ValueError, match="All candles must have the same currency"):
         Fluctuations.from_candles(
-            candles=sample_candles(currency="USDT") + sample_candles(currency="EUR")
+            candles=generate_candles(
+                currency="USDT", from_date=datetime.datetime(2020, 1, 1), size=5
+            )
+            + generate_candles(
+                currency="EUR", from_date=datetime.datetime(2020, 1, 2), size=5
+            )
         )
 
 
-def test_fluctuations_fails_on_periods(sample_candles):
+def test_fluctuations_fails_on_periods(generate_candles):
     with pytest.raises(ValueError, match="All candles must have the same period"):
         Fluctuations.from_candles(
-            candles=sample_candles(timeframe="4h") + sample_candles(timeframe="1h")
+            candles=generate_candles(
+                timeframe="1m", from_date=datetime.datetime(2020, 1, 1), size=5
+            )
+            + generate_candles(
+                timeframe="2m", from_date=datetime.datetime(2020, 1, 2), size=5
+            )
         )
 
 

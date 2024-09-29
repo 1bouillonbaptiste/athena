@@ -111,12 +111,16 @@ def raw_candles():
     return _raw_candles
 
 
-def test_sanitize_candles(raw_candles):
+def test_sanitize_candles(generate_candles):
     """Remove invalid candles."""
 
-    sanitized_candles = sanitize_candles(raw_candles(volumes=[50, 60, 0, 100, 0]))
+    candles = generate_candles(size=5)
+    candles[2].volume = 0
+    candles[4].volume = 0
+    sanitized_candles = sanitize_candles(candles)
 
-    assert [candle.volume for candle in sanitized_candles] == [50, 60, 100]
+    assert len(sanitized_candles) == 3
+    assert all([candle.volume != 0 for candle in sanitized_candles])
 
 
 def test_sanitize_candles_empty():

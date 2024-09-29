@@ -116,7 +116,7 @@ class Fluctuations(BaseModel):
         cls,
         path: Path,
         target_period: Period = None,
-    ) -> Candle:
+    ) -> "Fluctuations":
         """Load fluctuations from disk.
 
         Args:
@@ -134,10 +134,6 @@ class Fluctuations(BaseModel):
                 filename=filename, target_period=target_period
             )
             all_candles.extend(candles)
-        # remove duplicated candles based on their `open_time`
-        all_candles = list(
-            {candle.open_time: candle for candle in all_candles}.values()
-        )
         return cls.from_candles(all_candles)
 
     @classmethod
@@ -181,11 +177,6 @@ class Fluctuations(BaseModel):
                         filename=filename, target_period=target_period
                     )
                 )
-
-        # remove duplicated candles based on their `open_time`
-        all_candles = list(
-            {candle.open_time: candle for candle in all_candles}.values()
-        )
         return cls.from_candles(all_candles)
 
 
@@ -331,4 +322,6 @@ def sanitize_candles(candles: list[Candle]) -> list[Candle]:
     Returns:
         filtered candles as a list
     """
+    # remove duplicated candles based on their `open_time`
+    candles = list({candle.open_time: candle for candle in candles}.values())
     return [candle for candle in candles if candle.volume > 0]
