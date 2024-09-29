@@ -1,8 +1,9 @@
 import datetime
 from functools import cached_property
+from typing import Any
 
 import numpy as np
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, ConfigDict, field_validator
 from athena.core.interfaces.candle import Candle
 from athena.core.interfaces.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
@@ -25,10 +26,17 @@ class Fluctuations(BaseModel):
         period: candles time period (e.g. '1d' or '4h')
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     candles: list[Candle]
     coin: Coin
     currency: Coin
-    period: str  # TODO : fix type `Period` raises pydantic error when create Fluctuation schema
+    period: Period
+
+    @field_validator("period", mode="before")
+    @classmethod
+    def parse_period(cls, value: Any) -> Period:
+        return Period(timeframe=value) if isinstance(value, str) else value
 
     @cached_property
     def candles_mapping(self):
