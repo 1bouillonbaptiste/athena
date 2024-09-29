@@ -55,3 +55,14 @@ poetry run athena download \
     --output-dir /data/athena/market_data \
     --overwrite
 ```
+
+
+### backtest
+
+
+```bash
+poetry run athena backtest \
+    --config-path /path/to/my_config.yaml \
+    --root-dir /path/to/raw_market_data \
+    --output-dir /path/to/results
+```
