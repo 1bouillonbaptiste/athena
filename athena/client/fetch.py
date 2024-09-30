@@ -6,7 +6,7 @@ import datetime
 from pathlib import Path
 
 
-from athena.hub.client import BinanceClient
+from athena.client.binance import BinanceClient
 from athena.core.interfaces import DatasetLayout
 from athena.core.interfaces.fluctuations import load_candles_from_file, Fluctuations
 from athena.core.types import Coin, Period
