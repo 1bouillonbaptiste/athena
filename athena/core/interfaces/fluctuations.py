@@ -88,6 +88,8 @@ class Fluctuations(BaseModel):
         if len(self.candles) != len(set(self.candles_mapping.values())):
             raise ValueError("Inconsistent candles mapping.")
 
+        return self
+
     def get_candle(self, open_time: datetime.datetime) -> Candle:
         return self.candles[self.candles_mapping.get(open_time)]
 
