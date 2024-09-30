@@ -161,6 +161,4 @@ def get_trades_from_strategy_and_fluctuations(
             )
 
             position = None
-    if position is not None:
-        trades.append(position)
     return trades, portfolio

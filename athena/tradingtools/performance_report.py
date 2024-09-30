@@ -90,7 +90,7 @@ def _trades_to_wealth(
         wealth.append(wealth[-1] if wealth else 0)
         time.append(end_time)
 
-    return wealth, time
+    return np.cumsum(wealth), time
 
 
 def _get_max_drawdown(trades: list[Position]) -> float:
@@ -205,27 +205,31 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
     fig.update_yaxes(fixedrange=False)
 
     # overlay trades lifetime
+    shapes = []
     for trade in trades:
-        fig.add_shape(
-            type="line",
-            x0=trade.open_date,
-            y0=trade.open_price,
-            x1=trade.close_date,
-            y1=trade.open_price,
-            line=dict(color="black", width=1),
-            row=1,
-            col=1,
+        shapes.extend(
+            [
+                dict(
+                    type="line",
+                    x0=trade.open_date,
+                    y0=trade.open_price,
+                    x1=trade.close_date,
+                    y1=trade.open_price,
+                    line=dict(color="black", width=1),
+                ),
+                dict(
+                    type="line",
+                    x0=trade.close_date,
+                    y0=trade.open_price,
+                    x1=trade.close_date,
+                    y1=trade.close_price,
+                    line=dict(
+                        color="forestgreen" if trade.is_win else "crimson", width=1
+                    ),
+                ),
+            ]
         )
-        fig.add_shape(
-            type="line",
-            x0=trade.close_date,
-            y0=trade.open_price,
-            x1=trade.close_date,
-            y1=trade.close_price,
-            line=dict(color="forestgreen" if trade.is_win else "crimson", width=1),
-            row=1,
-            col=1,
-        )
+    fig.update_layout(shapes=shapes)
 
     # show trades open time with a green point
     fig.add_trace(
@@ -307,9 +311,9 @@ def _performance_table(trading_performance: TradingPerformance):
         performance as HTML table
     """
 
-    headerColor = "grey"
-    rowEvenColor = "lightgrey"
-    rowOddColor = "white"
+    header_color = "grey"
+    row_even_color = "lightgrey"
+    row_odd_color = "white"
 
     fig = make_subplots(
         rows=2,
@@ -329,7 +333,7 @@ def _performance_table(trading_performance: TradingPerformance):
             header=dict(
                 values=["<b>Indicator</b>", "<b>Value</b>"],
                 line_color="darkslategray",
-                fill_color=headerColor,
+                fill_color=header_color,
                 align=["left", "center"],
                 font=dict(color="white", size=12),
             ),
@@ -341,8 +345,9 @@ def _performance_table(trading_performance: TradingPerformance):
                 line={"color": "darkslategray"},
                 # 2-D list of colors for alternating rows
                 fill={
-                    "color": [rowOddColor, rowEvenColor] * (len(metrics_values) // 2)
-                    + [rowOddColor] * (len(metrics_values) % 2)
+                    "color": [row_odd_color, row_even_color]
+                    * (len(metrics_values) // 2)
+                    + [row_odd_color] * (len(metrics_values) % 2)
                 },
                 align=["left", "center"],
                 font=dict(color="darkslategray", size=11),
@@ -362,7 +367,7 @@ def _performance_table(trading_performance: TradingPerformance):
             header=dict(
                 values=["<b>Indicator</b>", "<b>Value</b>"],
                 line_color="darkslategray",
-                fill_color=headerColor,
+                fill_color=header_color,
                 align=["left", "center"],
                 font=dict(color="white", size=12),
             ),
@@ -374,8 +379,9 @@ def _performance_table(trading_performance: TradingPerformance):
                 line={"color": "darkslategray"},
                 # 2-D list of colors for alternating rows
                 fill={
-                    "color": [rowOddColor, rowEvenColor] * (len(metrics_values) // 2)
-                    + [rowOddColor] * (len(metrics_values) % 2)
+                    "color": [row_odd_color, row_even_color]
+                    * (len(metrics_values) // 2)
+                    + [row_odd_color] * (len(metrics_values) % 2)
                 },
                 align=["left", "center"],
                 font=dict(color="darkslategray", size=11),

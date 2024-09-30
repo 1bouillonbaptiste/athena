@@ -10,6 +10,7 @@ from athena.core.interfaces.fluctuations import (
     sanitize_candles,
 )
 from athena.core.types import Coin, Period
+import logging
 
 
 def test_load_candles_from_file(sample_candles, sample_fluctuations, tmp_path):
@@ -63,6 +64,8 @@ def test_convert_candles_to_period_missing_data(generate_candles, caplog):
 
     candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
     target_period = Period(timeframe="4h")
+
+    logging.getLogger().setLevel(logging.DEBUG)
 
     merged_candles = convert_candles_to_period(candles, target_period)
 

@@ -288,7 +288,7 @@ def convert_candles_to_period(
                 # we have reached the end of the loop, don't initiate a new candle
                 pass
     if new_candle_start_index != (len(sorted_candles) - 1):
-        logger.warning("Last candle could not be closed, won't be kept.")
+        logger.debug("Last candle could not be closed, won't be kept.")
     return new_candles
 
 
