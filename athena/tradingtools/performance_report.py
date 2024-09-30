@@ -311,9 +311,9 @@ def _performance_table(trading_performance: TradingPerformance):
         performance as HTML table
     """
 
-    headerColor = "grey"
-    rowEvenColor = "lightgrey"
-    rowOddColor = "white"
+    header_color = "grey"
+    row_even_color = "lightgrey"
+    row_odd_color = "white"
 
     fig = make_subplots(
         rows=2,
@@ -333,7 +333,7 @@ def _performance_table(trading_performance: TradingPerformance):
             header=dict(
                 values=["<b>Indicator</b>", "<b>Value</b>"],
                 line_color="darkslategray",
-                fill_color=headerColor,
+                fill_color=header_color,
                 align=["left", "center"],
                 font=dict(color="white", size=12),
             ),
@@ -345,8 +345,9 @@ def _performance_table(trading_performance: TradingPerformance):
                 line={"color": "darkslategray"},
                 # 2-D list of colors for alternating rows
                 fill={
-                    "color": [rowOddColor, rowEvenColor] * (len(metrics_values) // 2)
-                    + [rowOddColor] * (len(metrics_values) % 2)
+                    "color": [row_odd_color, row_even_color]
+                    * (len(metrics_values) // 2)
+                    + [row_odd_color] * (len(metrics_values) % 2)
                 },
                 align=["left", "center"],
                 font=dict(color="darkslategray", size=11),
@@ -366,7 +367,7 @@ def _performance_table(trading_performance: TradingPerformance):
             header=dict(
                 values=["<b>Indicator</b>", "<b>Value</b>"],
                 line_color="darkslategray",
-                fill_color=headerColor,
+                fill_color=header_color,
                 align=["left", "center"],
                 font=dict(color="white", size=12),
             ),
@@ -378,8 +379,9 @@ def _performance_table(trading_performance: TradingPerformance):
                 line={"color": "darkslategray"},
                 # 2-D list of colors for alternating rows
                 fill={
-                    "color": [rowOddColor, rowEvenColor] * (len(metrics_values) // 2)
-                    + [rowOddColor] * (len(metrics_values) % 2)
+                    "color": [row_odd_color, row_even_color]
+                    * (len(metrics_values) // 2)
+                    + [row_odd_color] * (len(metrics_values) % 2)
                 },
                 align=["left", "center"],
                 font=dict(color="darkslategray", size=11),
