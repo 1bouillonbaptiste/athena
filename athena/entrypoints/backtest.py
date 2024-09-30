@@ -5,6 +5,14 @@ from pathlib import Path
 
 import click
 
+import yaml
+
+
+def load_config(filename: Path):
+    """Load YAML file."""
+    with open(filename, "r") as f:
+        return yaml.safe_load(f)
+
 
 @click.command()
 @click.option(
@@ -34,7 +42,7 @@ def backtest(
     root_dir: Path,
 ):
     backtest_main(
-        config=BacktestConfig.model_validate_json(config_path.read_text()),
+        config=BacktestConfig.model_validate(load_config(config_path)),
         output_dir=output_dir,
         root_dir=root_dir,
     )
