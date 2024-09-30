@@ -2,7 +2,7 @@ import datetime
 
 from click.testing import CliRunner
 
-from athena.entrypoints.cli import app
+from athena.cli import app
 from athena.core.types import Period, Coin
 from athena.core.interfaces import DatasetLayout, Fluctuations
 

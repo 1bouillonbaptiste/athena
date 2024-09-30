@@ -7,7 +7,7 @@ import pytest
 from athena.core.interfaces import Fluctuations, DatasetLayout
 from athena.core.types import Coin, Period
 
-from athena.entrypoints.cli import app
+from athena.cli import app
 
 
 @pytest.fixture
