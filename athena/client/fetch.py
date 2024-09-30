@@ -1,16 +1,13 @@
-import logging
-
-from athena.core.interfaces import Candle
-
 import datetime
+import logging
 from pathlib import Path
 
+from tqdm import tqdm
 
 from athena.client.binance import BinanceClient
-from athena.core.interfaces import DatasetLayout
-from athena.core.interfaces.fluctuations import load_candles_from_file, Fluctuations
+from athena.core.interfaces import Candle, DatasetLayout
+from athena.core.interfaces.fluctuations import Fluctuations, load_candles_from_file
 from athena.core.types import Coin, Period
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

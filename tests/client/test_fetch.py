@@ -1,11 +1,9 @@
 from datetime import datetime
 
+from athena.client.binance import BinanceClient
 from athena.client.fetch import fetch_historical_data
-from athena.client.binance import (
-    BinanceClient,
-)
-from athena.core.types import Period
 from athena.core.interfaces import Fluctuations
+from athena.core.types import Period
 
 
 def test_fetch_historical_data(mocker, sample_bars, sample_candles):

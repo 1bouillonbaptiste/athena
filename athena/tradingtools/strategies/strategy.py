@@ -1,8 +1,8 @@
+import re
 from typing import Iterable
 
+from athena.core.interfaces import Candle, Fluctuations
 from athena.core.types import Signal
-from athena.core.interfaces import Fluctuations, Candle
-import re
 
 
 class Strategy:

@@ -1,5 +1,6 @@
-from binance.client import Client
 import os
+
+from binance.client import Client
 
 from athena.core.context import ProjectContext
 

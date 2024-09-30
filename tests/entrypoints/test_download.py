@@ -3,8 +3,8 @@ import datetime
 from click.testing import CliRunner
 
 from athena.cli import app
-from athena.core.types import Period, Coin
 from athena.core.interfaces import DatasetLayout, Fluctuations
+from athena.core.types import Coin, Period
 
 
 def test_download_market_candles(generate_bars, mocker, tmp_path):

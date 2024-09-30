@@ -1,15 +1,15 @@
-from athena.core.interfaces.fluctuations import (
-    merge_candles,
-    convert_candles_to_period,
-    sanitize_candles,
-    load_candles_from_file,
-)
-from athena.core.types import Period, Coin
-from athena.core.interfaces import Candle
-
 import datetime
 
 import pytest
+
+from athena.core.interfaces import Candle
+from athena.core.interfaces.fluctuations import (
+    convert_candles_to_period,
+    load_candles_from_file,
+    merge_candles,
+    sanitize_candles,
+)
+from athena.core.types import Coin, Period
 
 
 def test_load_candles_from_file(sample_candles, sample_fluctuations, tmp_path):

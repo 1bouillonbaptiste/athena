@@ -1,16 +1,16 @@
-from athena.tradingtools.backtesting import BacktestConfig
 from pathlib import Path
 
-from athena.tradingtools.strategies import init_strategy
-from athena.tradingtools.performance_report import build_and_save_trading_report
-from athena.core.interfaces import Fluctuations, DatasetLayout
-from athena.core.context import ProjectContext
-
-from athena.tradingtools.backtesting import get_trades_from_strategy_and_fluctuations
-
 import click
-
 import yaml
+
+from athena.core.context import ProjectContext
+from athena.core.interfaces import DatasetLayout, Fluctuations
+from athena.tradingtools.backtesting import (
+    BacktestConfig,
+    get_trades_from_strategy_and_fluctuations,
+)
+from athena.tradingtools.performance_report import build_and_save_trading_report
+from athena.tradingtools.strategies import init_strategy
 
 
 def load_config(filename: Path):

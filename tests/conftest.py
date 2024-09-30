@@ -1,11 +1,11 @@
-import pytest
 import datetime
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
-from athena.core.types import Period, Coin
 from athena.core.interfaces import Candle, Fluctuations
+from athena.core.types import Coin, Period
 
 
 @pytest.fixture(autouse=True)

@@ -1,10 +1,10 @@
 import datetime
 
+import pytest
+
 from athena.core.interfaces import Candle
 from athena.core.types import Coin
 from athena.tradingtools.orders import Position
-
-import pytest
 
 
 @pytest.fixture

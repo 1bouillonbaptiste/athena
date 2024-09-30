@@ -1,7 +1,7 @@
-from athena.entrypoints.download import download
-from athena.entrypoints.backtest import backtest
-
 import click
+
+from athena.entrypoints.backtest import backtest
+from athena.entrypoints.download import download
 
 
 @click.group("athena")

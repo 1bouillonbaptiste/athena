@@ -1,8 +1,9 @@
 import datetime
 
-from athena.core.types import Side, Coin
-from athena.core.interfaces import Candle
 from pydantic import BaseModel
+
+from athena.core.interfaces import Candle
+from athena.core.types import Coin, Side
 
 FEES_PCT = 0.001
 

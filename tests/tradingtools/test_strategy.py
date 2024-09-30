@@ -1,8 +1,8 @@
-from athena.tradingtools import Strategy
-from athena.core.types import Signal
-from athena.core.interfaces import Fluctuations
-
 import pytest
+
+from athena.core.interfaces import Fluctuations
+from athena.core.types import Signal
+from athena.tradingtools import Strategy
 
 
 class StrategyBuyWeekSellFriday(Strategy):

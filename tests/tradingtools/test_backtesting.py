@@ -3,11 +3,9 @@ import datetime
 import pytest
 
 from athena.core.interfaces import Fluctuations
-from athena.tradingtools import Strategy, Portfolio
-from athena.core.types import Signal, Coin, Side
-from athena.tradingtools.backtesting import (
-    get_trades_from_strategy_and_fluctuations,
-)
+from athena.core.types import Coin, Side, Signal
+from athena.tradingtools import Portfolio, Strategy
+from athena.tradingtools.backtesting import get_trades_from_strategy_and_fluctuations
 
 
 class StrategyBuyMondaySellFriday(Strategy):

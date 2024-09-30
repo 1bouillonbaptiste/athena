@@ -1,11 +1,11 @@
 import datetime
 from typing import Any
 
-from athena.tradingtools import Strategy, Portfolio, Position
-from athena.core.types import Coin, Signal, Period
-from athena.core.interfaces import Fluctuations
+from pydantic import BaseModel, ConfigDict, field_validator
 
-from pydantic import BaseModel, field_validator, ConfigDict
+from athena.core.interfaces import Fluctuations
+from athena.core.types import Coin, Period, Signal
+from athena.tradingtools import Portfolio, Position, Strategy
 
 
 class DataConfig(BaseModel):

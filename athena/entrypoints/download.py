@@ -1,8 +1,9 @@
+import datetime
 from pathlib import Path
 
-from athena.client.fetch import download_daily_market_candles
-import datetime
 import click
+
+from athena.client.fetch import download_daily_market_candles
 
 
 @click.command()
