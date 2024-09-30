@@ -205,27 +205,31 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
     fig.update_yaxes(fixedrange=False)
 
     # overlay trades lifetime
+    shapes = []
     for trade in trades:
-        fig.add_shape(
-            type="line",
-            x0=trade.open_date,
-            y0=trade.open_price,
-            x1=trade.close_date,
-            y1=trade.open_price,
-            line=dict(color="black", width=1),
-            row=1,
-            col=1,
+        shapes.extend(
+            [
+                dict(
+                    type="line",
+                    x0=trade.open_date,
+                    y0=trade.open_price,
+                    x1=trade.close_date,
+                    y1=trade.open_price,
+                    line=dict(color="black", width=1),
+                ),
+                dict(
+                    type="line",
+                    x0=trade.close_date,
+                    y0=trade.open_price,
+                    x1=trade.close_date,
+                    y1=trade.close_price,
+                    line=dict(
+                        color="forestgreen" if trade.is_win else "crimson", width=1
+                    ),
+                ),
+            ]
         )
-        fig.add_shape(
-            type="line",
-            x0=trade.close_date,
-            y0=trade.open_price,
-            x1=trade.close_date,
-            y1=trade.close_price,
-            line=dict(color="forestgreen" if trade.is_win else "crimson", width=1),
-            row=1,
-            col=1,
-        )
+    fig.update_layout(shapes=shapes)
 
     # show trades open time with a green point
     fig.add_trace(
