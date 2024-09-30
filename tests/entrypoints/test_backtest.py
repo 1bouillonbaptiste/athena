@@ -1,13 +1,12 @@
 import datetime
 import json
 
-from click.testing import CliRunner
 import pytest
-
-from athena.core.interfaces import Fluctuations, DatasetLayout
-from athena.core.types import Coin, Period
+from click.testing import CliRunner
 
 from athena.cli import app
+from athena.core.interfaces import DatasetLayout, Fluctuations
+from athena.core.types import Coin, Period
 
 
 @pytest.fixture

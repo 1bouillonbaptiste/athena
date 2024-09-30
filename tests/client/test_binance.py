@@ -1,8 +1,4 @@
-from athena.client.binance import (
-    BinanceClient,
-    get_assets_balances,
-    get_asset_balance,
-)
+from athena.client.binance import BinanceClient, get_asset_balance, get_assets_balances
 
 
 def test_get_assets_balances(mocker):

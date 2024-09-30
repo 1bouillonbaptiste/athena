@@ -1,13 +1,13 @@
-import pytest
-import pandas as pd
 import datetime
 
-from athena.core.interfaces import Fluctuations
-from athena.core.types import Period, Coin
-from athena.core.interfaces.dataset_layout import DatasetLayout
-
-from pandas.testing import assert_frame_equal
 import numpy as np
+import pandas as pd
+import pytest
+from pandas.testing import assert_frame_equal
+
+from athena.core.interfaces import Fluctuations
+from athena.core.interfaces.dataset_layout import DatasetLayout
+from athena.core.types import Coin, Period
 
 
 def test_fluctuations_from_candles(sample_candles):

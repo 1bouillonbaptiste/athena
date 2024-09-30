@@ -1,9 +1,22 @@
-from athena.core.context import ProjectContext
-
-from athena.tradingtools.backtesting import backtest as backtest_main, BacktestConfig
 from pathlib import Path
 
 import click
+import yaml
+
+from athena.core.context import ProjectContext
+from athena.core.interfaces import DatasetLayout, Fluctuations
+from athena.tradingtools.backtesting import (
+    BacktestConfig,
+    get_trades_from_strategy_and_fluctuations,
+)
+from athena.tradingtools.performance_report import build_and_save_trading_report
+from athena.tradingtools.strategies import init_strategy
+
+
+def load_config(filename: Path):
+    """Load YAML file."""
+    with open(filename, "r") as f:
+        return yaml.safe_load(f)
 
 
 @click.command()
@@ -33,8 +46,34 @@ def backtest(
     output_dir: Path,
     root_dir: Path,
 ):
-    backtest_main(
-        config=BacktestConfig.model_validate_json(config_path.read_text()),
-        output_dir=output_dir,
-        root_dir=root_dir,
+    """Run a trading algorithm on a dataset and save its performance results.
+
+    Args:
+        config_path: path to backtesting configuration
+        output_dir: directory to save the performance results
+        root_dir: raw market data location
+    """
+
+    output_dir.mkdir(exist_ok=True, parents=True)
+    config = BacktestConfig.model_validate(load_config(config_path))
+
+    fluctuations = Fluctuations.load_from_dataset(
+        dataset=DatasetLayout(root_dir=root_dir or ProjectContext().raw_data_directory),
+        coin=config.data.coin,
+        currency=config.data.currency,
+        target_period=config.data.period,
+        from_date=config.data.from_date,
+        to_date=config.data.to_date,
+    )
+    strategy = init_strategy(
+        strategy_name=config.strategy.name, strategy_params=config.strategy.parameters
+    )
+
+    trades, _ = get_trades_from_strategy_and_fluctuations(
+        strategy=strategy, fluctuations=fluctuations
+    )
+    build_and_save_trading_report(
+        trades=trades,
+        fluctuations=fluctuations,
+        output_path=output_dir / "performance_report.html",
     )

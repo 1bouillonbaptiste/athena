@@ -1,15 +1,11 @@
 import datetime
 from typing import Any
-from pathlib import Path
 
-from athena.core.context import ProjectContext
-from athena.tradingtools import Strategy, Portfolio, Position
-from athena.core.types import Coin, Signal, Period
-from athena.core.interfaces import Fluctuations, DatasetLayout
-from athena.tradingtools.strategies import init_strategy
-from athena.tradingtools.performance_report import build_and_save_trading_report
+from pydantic import BaseModel, ConfigDict, field_validator
 
-from pydantic import BaseModel, field_validator, ConfigDict
+from athena.core.interfaces import Fluctuations
+from athena.core.types import Coin, Period, Signal
+from athena.tradingtools import Portfolio, Position, Strategy
 
 
 class DataConfig(BaseModel):
@@ -168,33 +164,3 @@ def get_trades_from_strategy_and_fluctuations(
     if position is not None:
         trades.append(position)
     return trades, portfolio
-
-
-def backtest(config: BacktestConfig, output_dir: Path, root_dir: Path | None = None):
-    """Run a trading algorithm on a dataset and save its performance results.
-
-    Args:
-        config: backtesting configuration
-        output_dir: directory to save the performance results
-        root_dir: raw market data location
-    """
-    fluctuations = Fluctuations.load_from_dataset(
-        dataset=DatasetLayout(root_dir=root_dir or ProjectContext().raw_data_directory),
-        coin=config.data.coin,
-        currency=config.data.currency,
-        target_period=config.data.period,
-        from_date=config.data.from_date,
-        to_date=config.data.to_date,
-    )
-    strategy = init_strategy(
-        strategy_name=config.strategy.name, strategy_params=config.strategy.parameters
-    )
-
-    trades, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy, fluctuations=fluctuations
-    )
-    build_and_save_trading_report(
-        trades=trades,
-        fluctuations=fluctuations,
-        output_path=output_dir / "performance_report.html",
-    )

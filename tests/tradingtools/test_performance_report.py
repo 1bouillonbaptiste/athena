@@ -1,18 +1,19 @@
+import datetime
+
+import numpy as np
+import pytest
+
 from athena.core.interfaces import Fluctuations
+from athena.tradingtools.orders import Position
 from athena.tradingtools.performance_report import (
-    _get_sharpe,
-    _get_calmar,
-    _get_sortino,
-    _get_max_drawdown,
     _get_cagr,
+    _get_calmar,
+    _get_max_drawdown,
+    _get_sharpe,
+    _get_sortino,
     _trades_to_wealth,
     build_and_save_trading_report,
 )
-from athena.tradingtools.orders import Position
-
-import pytest
-import datetime
-import numpy as np
 
 
 @pytest.fixture

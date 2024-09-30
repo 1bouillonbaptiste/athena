@@ -1,17 +1,15 @@
 import datetime
 from pathlib import Path
 
-from athena.core.types import Coin
-from athena.tradingtools.orders import Position, Portfolio
-from pydantic import BaseModel
-from jinja2 import Environment, PackageLoader, select_autoescape
-
 import numpy as np
-
 import plotly.graph_objects as go
+from jinja2 import Environment, PackageLoader, select_autoescape
 from plotly.subplots import make_subplots
+from pydantic import BaseModel
 
 from athena.core.interfaces import Fluctuations
+from athena.core.types import Coin
+from athena.tradingtools.orders import Portfolio, Position
 
 
 class TradingMetrics(BaseModel):
