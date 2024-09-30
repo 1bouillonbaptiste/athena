@@ -58,7 +58,7 @@ def trades():
         (
             None,
             None,
-            [9.83, -0.15, -3.988],
+            [9.83006, 9.68011, 5.69169462],
             [
                 datetime.datetime(2024, 8, 21),
                 datetime.datetime(2024, 8, 23),
@@ -68,7 +68,7 @@ def trades():
         (
             datetime.datetime(2024, 8, 15),
             None,
-            [0, 9.83, -0.15, -3.988],
+            [0, 9.83006, 9.68011, 5.69169462],
             [
                 datetime.datetime(2024, 8, 15),
                 datetime.datetime(2024, 8, 21),
@@ -79,7 +79,7 @@ def trades():
         (
             None,
             datetime.datetime(2024, 8, 30),
-            [9.83, -0.15, -3.988, -3.988],
+            [9.83006, 9.68011, 5.69169462, 1.70327923],
             [
                 datetime.datetime(2024, 8, 21),
                 datetime.datetime(2024, 8, 23),
@@ -90,7 +90,7 @@ def trades():
         (
             datetime.datetime(2024, 8, 15),
             datetime.datetime(2024, 8, 30),
-            [0, 9.83, -0.15, -3.988, -3.988],
+            [0, 9.83006, 9.68011, 5.69169462, 1.70327923],
             [
                 datetime.datetime(2024, 8, 15),
                 datetime.datetime(2024, 8, 21),
@@ -110,8 +110,8 @@ def test__trades_to_wealth(
 
 
 def test__get_max_drawdown(trades):
-    # the wealth goes from 9.83 to -3.988
-    assert _get_max_drawdown(trades) == pytest.approx(13.818, abs=1e-3)
+    # the wealth goes from 9.83006 to 5.69169462
+    assert _get_max_drawdown(trades) == pytest.approx(4.138, abs=1e-3)
 
 
 def test__get_cagr():

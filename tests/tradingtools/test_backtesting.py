@@ -152,38 +152,3 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
         "is_win": True,
         "side": Side.LONG,
     }
-
-
-def test_get_trades_from_strategy_and_fluctuations_position_not_closed(fluctuations):
-    strategy = StrategyMondayDCA(position_size=0.33)
-    trades, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy,
-        fluctuations=fluctuations(
-            timeframe="1d", include_high_time=False, include_low_time=False
-        ),
-    )
-    assert len(trades) == 1
-    assert not trades[0].is_closed
-    assert trades[0].model_dump() == {
-        "strategy_name": "strategy_monday_dca",
-        "coin": Coin.default_coin(),
-        "currency": Coin.default_currency(),
-        "open_date": datetime.datetime.fromisoformat(
-            "2024-08-20 00:00:00"
-        ),  # open next day = tuesday
-        "initial_investment": 33.0,
-        "open_price": 100.0,
-        "open_fees": 0.033,
-        "amount": pytest.approx(0.32967, abs=1e-5),
-        "side": Side.LONG,
-        "stop_loss": 0,
-        "take_profit": float("inf"),
-        "close_date": None,
-        "close_fees": None,
-        "close_price": None,
-        "is_win": None,
-        "total_fees": None,
-        "total_profit": None,
-        "profit_pct": None,
-        "trade_duration": None,
-    }

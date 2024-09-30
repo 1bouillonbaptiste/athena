@@ -90,7 +90,7 @@ def _trades_to_wealth(
         wealth.append(wealth[-1] if wealth else 0)
         time.append(end_time)
 
-    return wealth, time
+    return np.cumsum(wealth), time
 
 
 def _get_max_drawdown(trades: list[Position]) -> float:
