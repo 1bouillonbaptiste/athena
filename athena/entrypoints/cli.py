@@ -1,5 +1,5 @@
 from athena.core.context import ProjectContext
-from athena.hub.fetch import download_daily_market_candles
+from athena.client.fetch import download_daily_market_candles
 from athena.tradingtools.backtesting import backtest as backtest_main, BacktestConfig
 from pathlib import Path
 import datetime

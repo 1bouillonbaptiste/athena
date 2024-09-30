@@ -1,4 +1,4 @@
-from athena.hub.client import (
+from athena.client.binance import (
     BinanceClient,
     get_assets_balances,
     get_asset_balance,
@@ -7,7 +7,7 @@ from athena.hub.client import (
 
 def test_get_assets_balances(mocker):
     mocker.patch(
-        "athena.hub.client.BinanceClient.get_account",
+        "athena.client.binance.BinanceClient.get_account",
         return_value={
             "balances": [
                 {"asset": "BTC", "free": "1.12"},
@@ -21,7 +21,7 @@ def test_get_assets_balances(mocker):
 
 def test_get_asset_balance(mocker):
     mocker.patch(
-        "athena.hub.client.BinanceClient.get_account",
+        "athena.client.binance.BinanceClient.get_account",
         return_value={
             "balances": [
                 {"asset": "BTC", "free": "1.12"},
