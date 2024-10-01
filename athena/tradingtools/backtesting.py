@@ -93,28 +93,23 @@ class TradingSession(BaseModel):
             self.trades.append(trade)
             self.portfolio.update_from_trade(trade=trade)
 
+    def get_trades_from_fluctuations(
+        self, fluctuations: Fluctuations
+    ) -> tuple[list[Position], Portfolio]:
+        """Apply the trading strategy on market data and get the trades that would have been made on live trading.
 
-def get_trades_from_strategy_and_fluctuations(
-    config: DataConfig, strategy: Strategy, fluctuations: Fluctuations
-) -> tuple[list[Position], Portfolio]:
-    """Apply the trading strategy on market data and get the trades that would have been made on live trading.
+        Args:
+            fluctuations: collection of candles, mocks a market
 
-    Args:
-        config: data parameters
-        strategy: the strategy to apply
-        fluctuations: collection of candles, mocks a market
+        Returns:
+            market movement as a list of trades
+        """
 
-    Returns:
-        market movement as a list of trades
-    """
+        for candle, signal in self.strategy.get_signals(fluctuations):
+            self.check_position_exit_signal(candle=candle)
+            if signal == Signal.BUY:
+                self.buy_signal(candle=candle)
+            elif signal == Signal.SELL:
+                self.sell_signal(candle=candle)
 
-    session = TradingSession.from_config_and_strategy(config=config, strategy=strategy)
-
-    for candle, signal in strategy.get_signals(fluctuations):
-        session.check_position_exit_signal(candle=candle)
-        if signal == Signal.BUY:
-            session.buy_signal(candle=candle)
-        elif signal == Signal.SELL:
-            session.sell_signal(candle=candle)
-
-    return session.trades, session.portfolio
+        return self.trades, self.portfolio
