@@ -5,7 +5,7 @@ import pytest
 from athena.core.interfaces import Candle
 from athena.core.types import Coin
 from athena.tradingtools import Portfolio
-from athena.tradingtools.orders import Position
+from athena.tradingtools.models import Position
 
 
 @pytest.fixture

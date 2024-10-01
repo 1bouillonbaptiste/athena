@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from athena.core.interfaces import Fluctuations
 from athena.core.types import Coin
-from athena.tradingtools.orders import Portfolio, Position
+from athena.tradingtools.models import Portfolio, Position
 
 
 class TradingMetrics(BaseModel):
@@ -81,6 +81,7 @@ def _trades_to_wealth(
         wealth as a list of float
         time values of the wealth over time
     """
+    initial_money = Portfolio.default().get_available(Coin.default_currency())
     wealth = [trade.total_profit for trade in trades]
     time = [trade.close_date for trade in trades]
     if start_time is not None:
@@ -90,7 +91,7 @@ def _trades_to_wealth(
         wealth.append(wealth[-1] if wealth else 0)
         time.append(end_time)
 
-    return np.cumsum(wealth), time
+    return np.cumsum(wealth) / initial_money, time
 
 
 def _get_max_drawdown(trades: list[Position]) -> float:
