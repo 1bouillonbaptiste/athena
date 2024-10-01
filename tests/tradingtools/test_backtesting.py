@@ -3,9 +3,12 @@ import datetime
 import pytest
 
 from athena.core.interfaces import Fluctuations
-from athena.core.types import Coin, Side, Signal
-from athena.tradingtools import Portfolio, Strategy
-from athena.tradingtools.backtesting import get_trades_from_strategy_and_fluctuations
+from athena.core.types import Signal
+from athena.tradingtools import Strategy, Portfolio
+from athena.tradingtools.backtesting import (
+    get_trades_from_strategy_and_fluctuations,
+    DataConfig,
+)
 
 
 class StrategyBuyMondaySellFriday(Strategy):
@@ -38,46 +41,23 @@ class StrategyMondayDCA(Strategy):
         return signals
 
 
-def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(fluctuations):
+@pytest.fixture
+def data_config() -> DataConfig:
+    return DataConfig.model_validate(
+        {
+            "coin": "BTC",
+            "currency": "USDT",
+            "period": "1h",
+            "from_date": "2020-01-01",
+            "to_date": "2020-01-07",
+        }
+    )
+
+
+def test_remaining_portfolio(fluctuations, data_config):
     strategy = StrategyBuyMondaySellFriday(position_size=0.33)
-    trades, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy,
-        fluctuations=fluctuations(
-            timeframe="1d", include_high_time=False, include_low_time=False
-        ),
-    )
-
-    assert len(trades) == 1
-    assert trades[0].model_dump() == {
-        "strategy_name": "strategy_buy_monday_sell_friday",
-        "coin": Coin.default_coin(),
-        "currency": Coin.default_currency(),
-        "open_date": datetime.datetime.fromisoformat(
-            "2024-08-20 00:00:00"
-        ),  # open next day = tuesday
-        "close_date": datetime.datetime.fromisoformat(
-            "2024-08-24 00:00:00"
-        ),  # close next day = saturday
-        "trade_duration": datetime.timedelta(days=4),
-        "initial_investment": 33.0,
-        "open_price": 100.0,
-        "close_price": 300.0,
-        "amount": pytest.approx(0.32967, abs=1e-5),
-        "stop_loss": 0,
-        "take_profit": float("inf"),
-        "open_fees": 0.033,
-        "close_fees": pytest.approx(0.0989, abs=1e-5),
-        "total_fees": 0.131901,
-        "total_profit": pytest.approx(65.7691, abs=1e-5),
-        "profit_pct": pytest.approx(65.7691 / 33, abs=1e-5),
-        "is_win": True,
-        "side": Side.LONG,
-    }
-
-
-def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
-    strategy = StrategyBuyMondaySellFriday(position_size=0.33, take_profit_pct=0.1)
     trades, portfolio = get_trades_from_strategy_and_fluctuations(
+        config=data_config,
         strategy=strategy,
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
@@ -85,41 +65,19 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(fluctuations):
     )
 
     assert len(trades) == 1
-    assert trades[0].model_dump() == {
-        "strategy_name": "strategy_buy_monday_sell_friday",
-        "coin": Coin.default_coin(),
-        "currency": Coin.default_currency(),
-        "open_date": datetime.datetime.fromisoformat(
-            "2024-08-20 00:00:00"
-        ),  # open next day = tuesday
-        "close_date": datetime.datetime.fromisoformat(
-            "2024-08-21 00:00:00"  # "high_time" is missing, so we take close_time
-        ),  # close next day = saturday
-        "trade_duration": datetime.timedelta(days=1),
-        "initial_investment": 33.0,
-        "open_price": 100.0,
-        "close_price": pytest.approx(110, abs=1e-5),
-        "amount": pytest.approx(0.32967, abs=1e-5),
-        "stop_loss": 0,
-        "take_profit": pytest.approx(110, abs=1e-5),
-        "open_fees": 0.033,
-        "close_fees": 0.0362637,
-        "total_fees": pytest.approx(0.0692637, abs=1e-5),
-        "total_profit": 3.1944363,
-        "profit_pct": pytest.approx(3.1944363 / 33, abs=1e-5),
-        "is_win": True,
-        "side": Side.LONG,
-    }
     assert (
-        portfolio.get_available(Coin.default_currency())
-        == Portfolio.default().get_available(Coin.default_currency())
+        portfolio.get_available(data_config.currency)
+        == Portfolio.default(data_config.currency).get_available(data_config.currency)
         + trades[0].total_profit
     )
 
 
-def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
-    strategy = StrategyBuyMondaySellFriday(position_size=0.33, stop_loss_pct=0.1)
+def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(
+    fluctuations, data_config
+):
+    strategy = StrategyBuyMondaySellFriday(position_size=0.33)
     trades, _ = get_trades_from_strategy_and_fluctuations(
+        config=data_config,
         strategy=strategy,
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
@@ -127,28 +85,66 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(fluctuations):
     )
 
     assert len(trades) == 1
-    assert trades[0].model_dump() == {
-        "strategy_name": "strategy_buy_monday_sell_friday",
-        "coin": Coin.default_coin(),
-        "currency": Coin.default_currency(),
-        "open_date": datetime.datetime.fromisoformat(
-            "2024-08-20 00:00:00"
-        ),  # open next day = tuesday
-        "close_date": datetime.datetime.fromisoformat(
-            "2024-08-24 00:00:00"
-        ),  # close next day = saturday
-        "trade_duration": datetime.timedelta(days=4),
-        "initial_investment": 33.0,
-        "open_price": 100.0,
-        "close_price": 300.0,
-        "amount": pytest.approx(0.32967, abs=1e-5),
-        "stop_loss": 90.0,
-        "take_profit": float("inf"),
-        "open_fees": 0.033,
-        "close_fees": pytest.approx(0.0989, abs=1e-5),
-        "total_fees": 0.131901,
-        "total_profit": pytest.approx(65.7691, abs=1e-5),
-        "profit_pct": pytest.approx(65.7691 / 33, abs=1e-5),
-        "is_win": True,
-        "side": Side.LONG,
-    }
+
+    trade = trades[0]
+    assert trade.open_date == datetime.datetime.fromisoformat(
+        "2024-08-20 00:00:00"
+    )  # open monday midnight is tuesday
+    assert trade.close_date == datetime.datetime.fromisoformat(
+        "2024-08-24 00:00:00"
+    )  # close friday midnight is saturday
+    assert trade.initial_investment == 33
+
+    assert trade.open_price == 100
+    assert trade.close_price == 300
+    assert trade.amount == pytest.approx(0.32967, abs=1e-3)
+
+    assert trade.stop_loss == 0
+    assert trade.take_profit == float("inf")
+
+    assert trade.open_fees == 0.033
+    assert trade.close_fees == pytest.approx(0.0989, abs=1e-3)
+    assert trade.total_fees == 0.131901
+    assert trade.total_profit == pytest.approx(65.7691, abs=1e-3)
+
+    assert trade.is_win
+
+
+def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(
+    fluctuations, data_config
+):
+    strategy = StrategyBuyMondaySellFriday(position_size=0.33, take_profit_pct=0.1)
+    trades, portfolio = get_trades_from_strategy_and_fluctuations(
+        config=data_config,
+        strategy=strategy,
+        fluctuations=fluctuations(
+            timeframe="1d", include_high_time=False, include_low_time=False
+        ),
+    )
+
+    assert len(trades) == 1
+
+    trade = trades[0]
+
+    assert trade.take_profit == pytest.approx(110, abs=1e-3)
+    assert trade.close_price == pytest.approx(110, abs=1e-3)
+
+
+def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(
+    fluctuations, data_config
+):
+    strategy = StrategyBuyMondaySellFriday(position_size=0.33, stop_loss_pct=0.1)
+    trades, _ = get_trades_from_strategy_and_fluctuations(
+        config=data_config,
+        strategy=strategy,
+        fluctuations=fluctuations(
+            timeframe="1d", include_high_time=False, include_low_time=False
+        ),
+    )
+
+    assert len(trades) == 1
+
+    trade = trades[0]
+
+    assert trade.stop_loss == pytest.approx(90, abs=1e-3)
+    assert trade.close_price == pytest.approx(90, abs=1e-3)

@@ -70,7 +70,7 @@ def backtest(
     )
 
     trades, _ = get_trades_from_strategy_and_fluctuations(
-        strategy=strategy, fluctuations=fluctuations
+        config=config.data, strategy=strategy, fluctuations=fluctuations
     )
     build_and_save_trading_report(
         trades=trades,

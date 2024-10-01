@@ -29,27 +29,24 @@ def trades():
     Returns:
         trades as list of closed positions
     """
-    position1 = Position.open(
+    trade1 = Position.open(
         open_date=datetime.datetime(2024, 8, 20),
         open_price=100,
         money_to_invest=50,
-    )
-    (position1.close(close_date=datetime.datetime(2024, 8, 21), close_price=120),)
+    ).close(close_date=datetime.datetime(2024, 8, 21), close_price=120)
 
-    position2 = Position.open(
+    trade2 = Position.open(
         open_date=datetime.datetime(2024, 8, 22),
         open_price=130,
         money_to_invest=50,
-    )
-    position2.close(close_date=datetime.datetime(2024, 8, 23), close_price=130)
+    ).close(close_date=datetime.datetime(2024, 8, 23), close_price=130)
 
-    position3 = Position.open(
+    trade3 = Position.open(
         open_date=datetime.datetime(2024, 8, 24),
         open_price=130,
         money_to_invest=50,
-    )
-    position3.close(close_date=datetime.datetime(2024, 8, 25), close_price=120)
-    return [position1, position2, position3]
+    ).close(close_date=datetime.datetime(2024, 8, 25), close_price=120)
+    return [trade1, trade2, trade3]
 
 
 @pytest.mark.parametrize(

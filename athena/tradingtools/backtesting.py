@@ -82,20 +82,19 @@ class BacktestConfig(BaseModel):
 
 
 def get_trades_from_strategy_and_fluctuations(
-    strategy: Strategy, fluctuations: Fluctuations
+    config: DataConfig, strategy: Strategy, fluctuations: Fluctuations
 ) -> tuple[list[Position], Portfolio]:
     """Apply the trading strategy on market data and get the trades that would have been made on live trading.
 
     Args:
+        config: data parameters
         strategy: the strategy to apply
         fluctuations: collection of candles, mocks a market
 
     Returns:
         market movement as a list of trades
     """
-    traded_coin = Coin.default_coin()
-    currency = Coin.default_currency()
-    portfolio = Portfolio.default()
+    portfolio = Portfolio.default(config.currency)
 
     position = None
     trades = []  # collection of closed positions
@@ -109,57 +108,43 @@ def get_trades_from_strategy_and_fluctuations(
             & (close_date is not None)
             & (position is not None)
         ):
-            position.close(
+            trade = position.close(
                 close_date=close_date,
                 close_price=close_price,
             )
-            trades.append(position)
-            portfolio.update_coin_amount(
-                coin=currency,
-                amount_to_add=position.initial_investment + position.total_profit,
-            )
-            portfolio.update_coin_amount(
-                coin=traded_coin, amount_to_add=-position.amount
-            )
+            trades.append(trade)
+            portfolio.update_from_trade(trade=trade)
             position = None
 
         if signal == Signal.BUY and position is None:
-            money_to_invest = portfolio.get_available(currency) * strategy.position_size
-            if portfolio.get_available(currency) > money_to_invest:
-                position = Position.open(
-                    strategy_name=strategy.name,
-                    coin=traded_coin,
-                    currency=currency,
-                    open_date=candle.close_time,
-                    open_price=candle.close,
-                    money_to_invest=money_to_invest,
-                    stop_loss=candle.close * (1 - strategy.stop_loss_pct)
-                    if strategy.stop_loss_pct is not None
-                    else 0,
-                    take_profit=candle.close * (1 + strategy.take_profit_pct)
-                    if strategy.take_profit_pct is not None
-                    else float("inf"),
-                )
-                portfolio.update_coin_amount(
-                    coin=currency, amount_to_add=-position.initial_investment
-                )
-                portfolio.update_coin_amount(
-                    coin=traded_coin, amount_to_add=position.amount
-                )
+            money_to_invest = (
+                portfolio.get_available(config.currency) * strategy.position_size
+            )
+            if portfolio.get_available(config.currency) < money_to_invest:
+                continue
+            position = Position.open(
+                strategy_name=strategy.name,
+                coin=config.coin,
+                currency=config.currency,
+                open_date=candle.close_time,
+                open_price=candle.close,
+                money_to_invest=money_to_invest,
+                stop_loss=candle.close * (1 - strategy.stop_loss_pct)
+                if strategy.stop_loss_pct is not None
+                else 0,
+                take_profit=candle.close * (1 + strategy.take_profit_pct)
+                if strategy.take_profit_pct is not None
+                else float("inf"),
+            )
+            portfolio.update_from_position(position=position)
         elif signal == Signal.SELL and position is not None:
-            position.close(
+            trade = position.close(
                 close_date=candle.close_time,
                 close_price=candle.close,
             )
-            trades.append(position)
+            trades.append(trade)
 
-            portfolio.update_coin_amount(
-                coin=currency,
-                amount_to_add=position.initial_investment + position.total_profit,
-            )
-            portfolio.update_coin_amount(
-                coin=traded_coin, amount_to_add=-position.amount
-            )
+            portfolio.update_from_trade(trade=trade)
 
             position = None
     return trades, portfolio
