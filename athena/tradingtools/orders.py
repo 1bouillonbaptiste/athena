@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -7,6 +8,43 @@ from athena.core.interfaces import Candle
 from athena.core.types import Coin, Side
 
 FEES_PCT = 0.001
+
+
+@dataclass
+class ExitSignal:
+    """How a Position needs to be closed.
+
+    The signal can be:
+    - take profit at high time
+    - take profit at undefined time (take close time)
+    - stop loss at low time
+    - stop loss at undefined time (take close time)
+    - close at close time
+    """
+
+    price_signal: Literal["take_profit", "stop_loss", "close"]
+    date_signal: Literal["high", "low", "close"]
+
+    def to_price_date(
+        self, position: "Position", candle: Candle
+    ) -> tuple[float, datetime.datetime]:
+        """Convert the signal to actual price and date."""
+        match self.price_signal:
+            case "take_profit":
+                price = position.take_profit
+            case "stop_loss":
+                price = position.stop_loss
+            case "close":
+                price = candle.close
+        match self.date_signal:
+            case "high":
+                date = candle.high_time
+            case "low":
+                date = candle.low_time
+            case "close":
+                date = candle.close_time
+
+        return price, date
 
 
 class Position(BaseModel):
@@ -130,9 +168,7 @@ class Position(BaseModel):
             trade_duration=close_date - self.open_date,
         )
 
-    def check_exit_signals(
-        self, candle: Candle
-    ) -> tuple[float | None, datetime.datetime | None]:
+    def get_exit_signal(self, candle: Candle) -> ExitSignal | None:
         """Check if a candle reaches position's take profit or stop loss.
 
         Args:
@@ -151,25 +187,23 @@ class Position(BaseModel):
         ):  # candle's price range is very wide, check which bound was reached first
             if (candle.high_time is not None) and (candle.low_time is not None):
                 if candle.high_time < candle.low_time:  # price reached high before low
-                    close_price = self.take_profit
-                    close_date = candle.high_time
+                    return ExitSignal(price_signal="take_profit", date_signal="high")
                 else:  # price reached low before high
-                    close_price = self.stop_loss
-                    close_date = candle.low_time
+                    return ExitSignal(price_signal="stop_loss", date_signal="low")
             else:  # we don't have granularity, assume close price is close enough to real sell price
-                close_price = candle.close
-                close_date = candle.close_time
+                return ExitSignal(price_signal="close", date_signal="close")
         elif price_reach_tp:
-            close_price = self.take_profit
-            close_date = candle.high_time or candle.close_time
+            return ExitSignal(
+                price_signal="take_profit",
+                date_signal="high" if candle.high_time else "close",
+            )
         elif price_reach_sl:
-            close_price = self.stop_loss
-            close_date = candle.low_time or candle.close_time
-        else:  # we don't close the position
-            close_price = None
-            close_date = None
+            return ExitSignal(
+                price_signal="stop_loss",
+                date_signal="low" if candle.low_time else "close",
+            )
 
-        return close_price, close_date
+        return None
 
 
 @dataclass
