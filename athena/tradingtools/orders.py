@@ -181,8 +181,11 @@ class Portfolio(BaseModel):
         return self.assets.get(coin, 0)
 
     @classmethod
-    def default(cls):
-        return cls.model_validate({"assets": {Coin.default_currency(): 100}})
+    def default(cls, currency: Coin | None = None):
+        """Initialize portfolio with a coin or the default one.."""
+        return cls.model_validate(
+            {"assets": {currency or Coin.default_currency(): 100}}
+        )
 
     def update_coin_amount(self, coin: Coin, amount_to_add: float) -> None:
         """Update coin's available amount in portfolio.

@@ -4,7 +4,7 @@ import pytest
 
 from athena.core.interfaces import Fluctuations
 from athena.core.types import Side, Signal
-from athena.tradingtools import Strategy
+from athena.tradingtools import Strategy, Portfolio
 from athena.tradingtools.backtesting import (
     get_trades_from_strategy_and_fluctuations,
     DataConfig,
@@ -132,7 +132,11 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(
         "is_win": True,
         "side": Side.LONG,
     }
-    assert portfolio.get_available(data_config.currency) == 100 + trades[0].total_profit
+    assert (
+        portfolio.get_available(data_config.currency)
+        == Portfolio.default(data_config.currency).get_available(data_config.currency)
+        + trades[0].total_profit
+    )
 
 
 def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(

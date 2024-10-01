@@ -94,7 +94,7 @@ def get_trades_from_strategy_and_fluctuations(
     Returns:
         market movement as a list of trades
     """
-    portfolio = Portfolio.model_validate({"assets": {config.currency: 100}})
+    portfolio = Portfolio.default(config.currency)
 
     position = None
     trades = []  # collection of closed positions
