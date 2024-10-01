@@ -108,12 +108,12 @@ def get_trades_from_strategy_and_fluctuations(
             & (close_date is not None)
             & (position is not None)
         ):
-            position.close(
+            trade = position.close(
                 close_date=close_date,
                 close_price=close_price,
             )
-            trades.append(position)
-            portfolio.update_from_trade(trade=position)
+            trades.append(trade)
+            portfolio.update_from_trade(trade=trade)
             position = None
 
         if signal == Signal.BUY and position is None:
@@ -138,13 +138,13 @@ def get_trades_from_strategy_and_fluctuations(
             )
             portfolio.update_from_position(position=position)
         elif signal == Signal.SELL and position is not None:
-            position.close(
+            trade = position.close(
                 close_date=candle.close_time,
                 close_price=candle.close,
             )
-            trades.append(position)
+            trades.append(trade)
 
-            portfolio.update_from_trade(trade=position)
+            portfolio.update_from_trade(trade=trade)
 
             position = None
     return trades, portfolio

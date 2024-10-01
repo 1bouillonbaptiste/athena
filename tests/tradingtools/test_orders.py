@@ -47,14 +47,15 @@ def test_open_position(position):
 
 
 def test_close_position(position):
-    position.close(close_date=datetime.datetime(2024, 8, 25), close_price=125)
-    assert position.close_fees == 125 * position.amount * 0.001
-    assert position.total_fees == 125 * position.amount * 0.001 + position.open_fees
+    trade = position.close(close_date=datetime.datetime(2024, 8, 25), close_price=125)
+
+    assert trade.close_fees == 125 * position.amount * 0.001
+    assert trade.total_fees == 125 * position.amount * 0.001 + position.open_fees
     assert (
-        pytest.approx(position.total_profit)
-        == position.amount * 125 - 50 - position.total_fees
+        pytest.approx(trade.total_profit)
+        == position.amount * 125 - 50 - trade.total_fees
     )
-    assert position.trade_duration == datetime.timedelta(days=5)
+    assert trade.trade_duration == datetime.timedelta(days=5)
 
 
 def test_check_exit_signals_take_profit(position, candle):
@@ -163,16 +164,16 @@ def test_portfolio_update_from_trade(position):
     initial_money = portfolio.get_available(position.currency)
     portfolio.update_from_position(position=position)
 
-    position.close(
+    trade = position.close(
         close_date=position.open_date + datetime.timedelta(days=1),
         close_price=position.open_price,
     )
 
-    portfolio.update_from_trade(trade=position)
+    portfolio.update_from_trade(trade=trade)
 
-    assert portfolio.get_available(position.coin) == 0
-    assert portfolio.get_available(position.currency) == pytest.approx(
-        initial_money + position.total_profit, abs=1e-5
+    assert portfolio.get_available(trade.coin) == 0
+    assert portfolio.get_available(trade.currency) == pytest.approx(
+        initial_money + trade.total_profit, abs=1e-5
     )
 
 
@@ -183,9 +184,9 @@ def test_portfolio_update_from_trade_fails(position):
         coin=position.coin, amount_to_add=-position.amount / 2
     )  # remove some coin for update to fail
 
-    position.close(
+    trade = position.close(
         close_date=position.open_date + datetime.timedelta(days=1),
         close_price=position.open_price,
     )
     with pytest.raises(ValueError, match="Trying to set a negative amount"):
-        portfolio.update_from_trade(trade=position)
+        portfolio.update_from_trade(trade=trade)
