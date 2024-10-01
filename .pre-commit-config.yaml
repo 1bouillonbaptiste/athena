@@ -47,7 +47,6 @@ repos:
       - id: pydoclint
         args:
           - --style=google
-          - --exclude=cli.py|libs/[A-Za-z0-9-]+/tests/|libs/research/archive/|libs/skynet/skynet/testing.py
           - --arg-type-hints-in-docstring=false
           - --check-return-types=false
           - --check-yield-types=false
