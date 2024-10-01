@@ -4,6 +4,7 @@ import pytest
 
 from athena.core.interfaces import Candle
 from athena.core.types import Coin
+from athena.tradingtools import Portfolio
 from athena.tradingtools.orders import Position
 
 
@@ -134,3 +135,57 @@ def test_check_exit_signals_undefined_winner(position, candle):
 
     assert close_price == candle.close
     assert close_date == candle.close_time
+
+
+def test_portfolio_update_from_position(position):
+    portfolio = Portfolio.default(position.currency)
+    initial_money = portfolio.get_available(position.currency)
+
+    portfolio.update_from_position(position=position)
+
+    assert (
+        portfolio.get_available(position.currency)
+        == initial_money - position.initial_investment
+    )
+    assert portfolio.get_available(position.coin) == position.amount
+
+
+def test_portfolio_update_from_position_fails(position):
+    portfolio = Portfolio.default(position.currency)
+    position.initial_investment = 150
+
+    with pytest.raises(ValueError, match="Trying to set a negative amount"):
+        portfolio.update_from_position(position=position)
+
+
+def test_portfolio_update_from_trade(position):
+    portfolio = Portfolio.default(position.currency)
+    initial_money = portfolio.get_available(position.currency)
+    portfolio.update_from_position(position=position)
+
+    position.close(
+        close_date=position.open_date + datetime.timedelta(days=1),
+        close_price=position.open_price,
+    )
+
+    portfolio.update_from_trade(trade=position)
+
+    assert portfolio.get_available(position.coin) == 0
+    assert portfolio.get_available(position.currency) == pytest.approx(
+        initial_money + position.total_profit, abs=1e-5
+    )
+
+
+def test_portfolio_update_from_trade_fails(position):
+    portfolio = Portfolio.default(position.currency)
+    portfolio.update_from_position(position=position)
+    portfolio.update_coin_amount(
+        coin=position.coin, amount_to_add=-position.amount / 2
+    )  # remove some coin for update to fail
+
+    position.close(
+        close_date=position.open_date + datetime.timedelta(days=1),
+        close_price=position.open_price,
+    )
+    with pytest.raises(ValueError, match="Trying to set a negative amount"):
+        portfolio.update_from_trade(trade=position)

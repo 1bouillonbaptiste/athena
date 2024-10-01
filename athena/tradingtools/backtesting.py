@@ -113,13 +113,7 @@ def get_trades_from_strategy_and_fluctuations(
                 close_price=close_price,
             )
             trades.append(position)
-            portfolio.update_coin_amount(
-                coin=config.currency,
-                amount_to_add=position.initial_investment + position.total_profit,
-            )
-            portfolio.update_coin_amount(
-                coin=config.coin, amount_to_add=-position.amount
-            )
+            portfolio.update_from_trade(trade=position)
             position = None
 
         if signal == Signal.BUY and position is None:
@@ -142,12 +136,7 @@ def get_trades_from_strategy_and_fluctuations(
                 if strategy.take_profit_pct is not None
                 else float("inf"),
             )
-            portfolio.update_coin_amount(
-                coin=config.currency, amount_to_add=-position.initial_investment
-            )
-            portfolio.update_coin_amount(
-                coin=config.coin, amount_to_add=position.amount
-            )
+            portfolio.update_from_position(position=position)
         elif signal == Signal.SELL and position is not None:
             position.close(
                 close_date=candle.close_time,
@@ -155,13 +144,7 @@ def get_trades_from_strategy_and_fluctuations(
             )
             trades.append(position)
 
-            portfolio.update_coin_amount(
-                coin=config.currency,
-                amount_to_add=position.initial_investment + position.total_profit,
-            )
-            portfolio.update_coin_amount(
-                coin=config.coin, amount_to_add=-position.amount
-            )
+            portfolio.update_from_trade(trade=position)
 
             position = None
     return trades, portfolio

@@ -187,6 +187,21 @@ class Portfolio(BaseModel):
             {"assets": {currency or Coin.default_currency(): 100}}
         )
 
+    def update_from_position(self, position: Position) -> None:
+        """Change coin and currency amounts after a position is opened."""
+        self.update_coin_amount(
+            coin=position.currency, amount_to_add=-position.initial_investment
+        )
+        self.update_coin_amount(coin=position.coin, amount_to_add=position.amount)
+
+    def update_from_trade(self, trade: Position) -> None:
+        """Change coin and currency amounts after a position is closed."""
+        self.update_coin_amount(
+            coin=trade.currency,
+            amount_to_add=trade.initial_investment + trade.total_profit,
+        )
+        self.update_coin_amount(coin=trade.coin, amount_to_add=-trade.amount)
+
     def update_coin_amount(self, coin: Coin, amount_to_add: float) -> None:
         """Update coin's available amount in portfolio.
 
