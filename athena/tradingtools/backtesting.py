@@ -1,8 +1,97 @@
-from athena.core.interfaces import Fluctuations
+from pydantic import BaseModel, ConfigDict
+
+from athena.core.interfaces import Fluctuations, Candle
 from athena.core.types import Signal
-from athena.tradingtools.orders import Portfolio, Position
+from athena.tradingtools.orders import Portfolio, Position, Trade
 from athena.tradingtools.strategies.strategy import Strategy
 from athena.performance.config import DataConfig
+
+
+class TradingSession(BaseModel):
+    """Manage position, trades and portfolio during a backtest.
+
+    # TODO: the strategy is useful only for position_size and strategy name. Use StrategyConfig instead ?
+
+    Attributes:
+        trades: list of closed positions
+        position: an open position or None
+        portfolio: available assets
+        strategy: a trading algorithm
+        config: data configuration
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    trades: list[Trade]
+    position: Position | None
+    portfolio: Portfolio
+    strategy: Strategy
+    config: DataConfig
+
+    @classmethod
+    def from_config_and_strategy(cls, config: DataConfig, strategy: Strategy):
+        return cls(
+            trades=[],
+            position=None,
+            portfolio=Portfolio.default(currency=config.currency),
+            strategy=strategy,
+            config=config,
+        )
+
+    def buy_signal(self, candle: Candle):
+        """Create a new buy order if the portfolio has enough currency."""
+
+        if self.position is not None:  # we are already positioned
+            return
+
+        money_to_invest = (
+            self.portfolio.get_available(self.config.currency)
+            * self.strategy.position_size
+        )
+        if self.portfolio.get_available(self.config.currency) > money_to_invest:
+            self.position = Position.open(
+                strategy_name=self.strategy.name,
+                coin=self.config.coin,
+                currency=self.config.currency,
+                open_date=candle.close_time,
+                open_price=candle.close,
+                money_to_invest=money_to_invest,
+                stop_loss=candle.close * (1 - self.strategy.stop_loss_pct)
+                if self.strategy.stop_loss_pct is not None
+                else 0,
+                take_profit=candle.close * (1 + self.strategy.take_profit_pct)
+                if self.strategy.take_profit_pct is not None
+                else float("inf"),
+            )
+            self.portfolio.update_from_position(position=self.position)
+
+    def sell_signal(self, candle: Candle):
+        """Create a new sell order to close any opened position."""
+        if self.position is not None:
+            trade = self.position.close(
+                close_date=candle.close_time,
+                close_price=candle.close,
+            )
+            self.position = None
+            self.trades.append(trade)
+            self.portfolio.update_from_trade(trade=trade)
+
+    def check_position_exit_signal(self, candle: Candle):
+        """Check if the position needs to be closed."""
+        if self.position is None:
+            return
+        signal = self.position.get_exit_signal(candle=candle)
+        if signal is not None:
+            close_price, close_date = signal.to_price_date(
+                position=self.position, candle=candle
+            )
+            trade = self.position.close(
+                close_date=close_date,
+                close_price=close_price,
+            )
+            self.position = None
+            self.trades.append(trade)
+            self.portfolio.update_from_trade(trade=trade)
 
 
 def get_trades_from_strategy_and_fluctuations(
@@ -18,52 +107,14 @@ def get_trades_from_strategy_and_fluctuations(
     Returns:
         market movement as a list of trades
     """
-    portfolio = Portfolio.default(config.currency)
 
-    position = None
-    trades = []  # collection of closed positions
+    session = TradingSession.from_config_and_strategy(config=config, strategy=strategy)
+
     for candle, signal in strategy.get_signals(fluctuations):
-        if position is not None:
-            exit_signal = position.get_exit_signal(candle=candle)
-            if exit_signal is not None:
-                close_price, close_date = exit_signal.to_price_date(
-                    position=position, candle=candle
-                )
-                trade = position.close(
-                    close_date=close_date,
-                    close_price=close_price,
-                )
-                position = None
-                trades.append(trade)
-                portfolio.update_from_trade(trade=trade)
+        session.check_position_exit_signal(candle=candle)
+        if signal == Signal.BUY:
+            session.buy_signal(candle=candle)
+        elif signal == Signal.SELL:
+            session.sell_signal(candle=candle)
 
-        if signal == Signal.BUY and position is None:
-            money_to_invest = (
-                portfolio.get_available(config.currency) * strategy.position_size
-            )
-            if portfolio.get_available(config.currency) < money_to_invest:
-                continue
-            position = Position.open(
-                strategy_name=strategy.name,
-                coin=config.coin,
-                currency=config.currency,
-                open_date=candle.close_time,
-                open_price=candle.close,
-                money_to_invest=money_to_invest,
-                stop_loss=candle.close * (1 - strategy.stop_loss_pct)
-                if strategy.stop_loss_pct is not None
-                else 0,
-                take_profit=candle.close * (1 + strategy.take_profit_pct)
-                if strategy.take_profit_pct is not None
-                else float("inf"),
-            )
-            portfolio.update_from_position(position=position)
-        elif signal == Signal.SELL and position is not None:
-            trade = position.close(
-                close_date=candle.close_time,
-                close_price=candle.close,
-            )
-            position = None
-            trades.append(trade)
-            portfolio.update_from_trade(trade=trade)
-    return trades, portfolio
+    return session.trades, session.portfolio
