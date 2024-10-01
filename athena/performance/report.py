@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from athena.core.interfaces import Fluctuations
 from athena.core.types import Coin
-from athena.tradingtools.orders import Portfolio, Position
+from athena.tradingtools.models import Portfolio, Position
 
 
 class TradingMetrics(BaseModel):

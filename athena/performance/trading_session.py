@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict
 
 from athena.core.interfaces import Fluctuations, Candle
 from athena.core.types import Signal
-from athena.tradingtools.orders import Portfolio, Position, Trade
+from athena.tradingtools.models import Portfolio, Position, Trade
 from athena.tradingtools.strategies.strategy import Strategy
 from athena.performance.config import DataConfig
 
