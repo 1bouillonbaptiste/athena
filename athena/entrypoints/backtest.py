@@ -6,10 +6,10 @@ import yaml
 from athena.core.context import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.tradingtools.backtesting import (
-    BacktestConfig,
     get_trades_from_strategy_and_fluctuations,
 )
-from athena.tradingtools.performance.report import build_and_save_trading_report
+from athena.performance.config import BacktestConfig
+from athena.performance.report import build_and_save_trading_report
 from athena.tradingtools.strategies import init_strategy
 
 

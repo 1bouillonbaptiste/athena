@@ -5,7 +5,7 @@ import pytest
 
 from athena.core.interfaces import Fluctuations
 from athena.tradingtools.orders import Position
-from athena.tradingtools.performance.report import (
+from athena.performance.report import (
     _get_cagr,
     _get_calmar,
     _get_max_drawdown,
