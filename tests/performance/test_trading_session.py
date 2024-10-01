@@ -5,10 +5,8 @@ import pytest
 from athena.core.interfaces import Fluctuations
 from athena.core.types import Signal
 from athena.tradingtools import Strategy, Portfolio
-from athena.tradingtools.backtesting import (
-    get_trades_from_strategy_and_fluctuations,
-    DataConfig,
-)
+from athena.performance.config import DataConfig
+from athena.performance.trading_session import TradingSession
 
 
 class StrategyBuyMondaySellFriday(Strategy):
@@ -28,19 +26,6 @@ class StrategyBuyMondaySellFriday(Strategy):
         return signals
 
 
-class StrategyMondayDCA(Strategy):
-    def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
-        """Return dummy signals."""
-        signals = []
-        for candle in fluctuations.candles:
-            match candle.open_time.isoweekday():
-                case 1:  # dca on monday
-                    signals.append(Signal.BUY)
-                case _:
-                    signals.append(Signal.WAIT)
-        return signals
-
-
 @pytest.fixture
 def data_config() -> DataConfig:
     return DataConfig.model_validate(
@@ -54,11 +39,18 @@ def data_config() -> DataConfig:
     )
 
 
+@pytest.fixture
+def trading_session() -> TradingSession:
+    return TradingSession.from_config_and_strategy(
+        config=data_config, strategy=StrategyBuyMondaySellFriday(position_size=0.33)
+    )
+
+
 def test_remaining_portfolio(fluctuations, data_config):
-    strategy = StrategyBuyMondaySellFriday(position_size=0.33)
-    trades, portfolio = get_trades_from_strategy_and_fluctuations(
-        config=data_config,
-        strategy=strategy,
+    trading_session = TradingSession.from_config_and_strategy(
+        config=data_config, strategy=StrategyBuyMondaySellFriday(position_size=0.33)
+    )
+    trades, portfolio = trading_session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -66,19 +58,19 @@ def test_remaining_portfolio(fluctuations, data_config):
 
     assert len(trades) == 1
     assert (
-        portfolio.get_available(data_config.currency)
-        == Portfolio.default(data_config.currency).get_available(data_config.currency)
+        portfolio.get_available(trading_session.config.currency)
+        == Portfolio.default(trading_session.config.currency).get_available(
+            trading_session.config.currency
+        )
         + trades[0].total_profit
     )
 
 
-def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(
-    fluctuations, data_config
-):
-    strategy = StrategyBuyMondaySellFriday(position_size=0.33)
-    trades, _ = get_trades_from_strategy_and_fluctuations(
-        config=data_config,
-        strategy=strategy,
+def test_get_trades_fluctuations_with_sell_signal(fluctuations, data_config):
+    trading_session = TradingSession.from_config_and_strategy(
+        config=data_config, strategy=StrategyBuyMondaySellFriday(position_size=0.33)
+    )
+    trades, _ = trading_session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -110,13 +102,12 @@ def test_get_trades_from_strategy_and_fluctuations_with_sell_signal(
     assert trade.is_win
 
 
-def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(
-    fluctuations, data_config
-):
-    strategy = StrategyBuyMondaySellFriday(position_size=0.33, take_profit_pct=0.1)
-    trades, portfolio = get_trades_from_strategy_and_fluctuations(
+def test_get_trades_from_fluctuations_price_reach_tp(fluctuations, data_config):
+    trading_session = TradingSession.from_config_and_strategy(
         config=data_config,
-        strategy=strategy,
+        strategy=StrategyBuyMondaySellFriday(position_size=0.33, take_profit_pct=0.1),
+    )
+    trades, portfolio = trading_session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -130,13 +121,12 @@ def test_get_trades_from_strategy_and_fluctuations_price_reach_tp(
     assert trade.close_price == pytest.approx(110, abs=1e-3)
 
 
-def test_get_trades_from_strategy_and_fluctuations_price_reach_sl(
-    fluctuations, data_config
-):
-    strategy = StrategyBuyMondaySellFriday(position_size=0.33, stop_loss_pct=0.1)
-    trades, _ = get_trades_from_strategy_and_fluctuations(
+def test_get_trades_from_fluctuations_price_reach_sl(fluctuations, data_config):
+    trading_session = TradingSession.from_config_and_strategy(
         config=data_config,
-        strategy=strategy,
+        strategy=StrategyBuyMondaySellFriday(position_size=0.33, stop_loss_pct=0.1),
+    )
+    trades, _ = trading_session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),

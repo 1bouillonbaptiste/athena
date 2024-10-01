@@ -5,7 +5,7 @@ import pytest
 from athena.core.interfaces import Candle
 from athena.core.types import Coin
 from athena.tradingtools import Portfolio
-from athena.tradingtools.orders import Position
+from athena.tradingtools.models import Position
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def test_close_position(position):
     assert trade.trade_duration == datetime.timedelta(days=5)
 
 
-def test_check_exit_signals_take_profit(position, candle):
+def test_get_exit_signal_take_profit(position, candle):
     """Price reached take_profit at high_time."""
 
     position.take_profit = 150
@@ -67,13 +67,15 @@ def test_check_exit_signals_take_profit(position, candle):
     candle.high = 151
     candle.high_time = datetime.datetime(2024, 8, 25, hour=12)
 
-    close_price, close_date = position.check_exit_signals(candle=candle)
+    exit_signal = position.get_exit_signal(candle=candle)
 
-    assert close_price == position.take_profit
-    assert close_date == candle.high_time
+    assert exit_signal is not None
+
+    assert exit_signal.price_signal == "take_profit"
+    assert exit_signal.date_signal == "high"
 
 
-def test_check_exit_signals_stop_loss(position, candle):
+def test_get_exit_signal_stop_loss(position, candle):
     """Price reached stop_loss, low_time is undefined, take close_time."""
 
     position.take_profit = 150
@@ -82,13 +84,15 @@ def test_check_exit_signals_stop_loss(position, candle):
     candle.high = 140
     candle.low = 40
 
-    close_price, close_date = position.check_exit_signals(candle=candle)
+    exit_signal = position.get_exit_signal(candle=candle)
 
-    assert close_price == position.stop_loss
-    assert close_date == candle.close_time
+    assert exit_signal is not None
+
+    assert exit_signal.price_signal == "stop_loss"
+    assert exit_signal.date_signal == "close"
 
 
-def test_check_exit_signals_low_before_high(position, candle):
+def test_get_exit_signal_low_before_high(position, candle):
     """Price reached stop_loss before take_profit."""
 
     position.take_profit = 150
@@ -100,13 +104,15 @@ def test_check_exit_signals_low_before_high(position, candle):
     candle.high_time = datetime.datetime(2024, 8, 25, hour=12)
     candle.low_time = datetime.datetime(2024, 8, 25, hour=3)
 
-    close_price, close_date = position.check_exit_signals(candle=candle)
+    exit_signal = position.get_exit_signal(candle=candle)
 
-    assert close_price == position.stop_loss
-    assert close_date == candle.low_time
+    assert exit_signal is not None
+
+    assert exit_signal.price_signal == "stop_loss"
+    assert exit_signal.date_signal == "low"
 
 
-def test_check_exit_signals_high_before_low(position, candle):
+def test_get_exit_signal_high_before_low(position, candle):
     """Price reached take_profit before stop_loss."""
 
     position.take_profit = 150
@@ -118,13 +124,15 @@ def test_check_exit_signals_high_before_low(position, candle):
     candle.high_time = datetime.datetime(2024, 8, 25, hour=1)
     candle.low_time = datetime.datetime(2024, 8, 25, hour=3)
 
-    close_price, close_date = position.check_exit_signals(candle=candle)
+    exit_signal = position.get_exit_signal(candle=candle)
 
-    assert close_price == position.take_profit
-    assert close_date == candle.high_time
+    assert exit_signal is not None
+
+    assert exit_signal.price_signal == "take_profit"
+    assert exit_signal.date_signal == "high"
 
 
-def test_check_exit_signals_undefined_winner(position, candle):
+def test_get_exit_signal_undefined_winner(position, candle):
     """Price reached take_profit and stop_loss, but high and low times are not known."""
     position.take_profit = 150
     position.stop_loss = 50
@@ -132,10 +140,12 @@ def test_check_exit_signals_undefined_winner(position, candle):
     candle.high = 160
     candle.low = 40
 
-    close_price, close_date = position.check_exit_signals(candle=candle)
+    exit_signal = position.get_exit_signal(candle=candle)
 
-    assert close_price == candle.close
-    assert close_date == candle.close_time
+    assert exit_signal is not None
+
+    assert exit_signal.price_signal == "close"
+    assert exit_signal.date_signal == "close"
 
 
 def test_portfolio_update_from_position(position):
