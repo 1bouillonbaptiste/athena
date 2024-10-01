@@ -6,7 +6,7 @@ from athena.core.interfaces import Fluctuations
 from athena.core.types import Signal
 from athena.tradingtools import Strategy, Portfolio
 from athena.performance.config import DataConfig
-from athena.tradingtools.backtesting import TradingSession
+from athena.performance.trading_session import TradingSession
 
 
 class StrategyBuyMondaySellFriday(Strategy):

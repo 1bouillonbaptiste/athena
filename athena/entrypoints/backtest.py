@@ -5,7 +5,7 @@ import yaml
 
 from athena.core.context import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
-from athena.tradingtools.backtesting import (
+from athena.performance.trading_session import (
     TradingSession,
 )
 from athena.performance.config import BacktestConfig
