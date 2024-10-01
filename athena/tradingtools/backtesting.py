@@ -30,9 +30,9 @@ def get_trades_from_strategy_and_fluctuations(
                     close_date=close_date,
                     close_price=close_price,
                 )
+                position = None
                 trades.append(trade)
                 portfolio.update_from_trade(trade=trade)
-                position = None
 
         if signal == Signal.BUY and position is None:
             money_to_invest = (
@@ -60,9 +60,7 @@ def get_trades_from_strategy_and_fluctuations(
                 close_date=candle.close_time,
                 close_price=candle.close,
             )
-            trades.append(trade)
-
-            portfolio.update_from_trade(trade=trade)
-
             position = None
+            trades.append(trade)
+            portfolio.update_from_trade(trade=trade)
     return trades, portfolio
