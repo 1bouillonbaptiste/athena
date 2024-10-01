@@ -1,7 +1,7 @@
 from athena.core.interfaces import Fluctuations
 from athena.core.types import Signal
 from athena.tradingtools.orders import Portfolio, Position
-from athena.tradingtools.strategies import Strategy
+from athena.tradingtools.strategies.strategy import Strategy
 from athena.performance.config import DataConfig
 
 
@@ -25,20 +25,14 @@ def get_trades_from_strategy_and_fluctuations(
     for candle, signal in strategy.get_signals(fluctuations):
         if position is not None:
             close_price, close_date = position.check_exit_signals(candle=candle)
-        else:
-            close_price = close_date = None
-        if (
-            (close_price is not None)
-            & (close_date is not None)
-            & (position is not None)
-        ):
-            trade = position.close(
-                close_date=close_date,
-                close_price=close_price,
-            )
-            trades.append(trade)
-            portfolio.update_from_trade(trade=trade)
-            position = None
+            if (close_price is not None) and (close_date is not None):
+                trade = position.close(
+                    close_date=close_date,
+                    close_price=close_price,
+                )
+                trades.append(trade)
+                portfolio.update_from_trade(trade=trade)
+                position = None
 
         if signal == Signal.BUY and position is None:
             money_to_invest = (
