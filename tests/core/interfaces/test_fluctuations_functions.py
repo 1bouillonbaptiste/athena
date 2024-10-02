@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 import pytest
 
@@ -10,7 +11,6 @@ from athena.core.interfaces.fluctuations import (
     sanitize_candles,
 )
 from athena.core.types import Coin, Period
-import logging
 
 
 def test_load_candles_from_file(sample_candles, sample_fluctuations, tmp_path):

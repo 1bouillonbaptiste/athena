@@ -7,13 +7,13 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from plotly.subplots import make_subplots
 
 from athena.core.interfaces import Fluctuations
+from athena.core.market_entities import Portfolio, Position
 from athena.core.types import Coin
 from athena.performance.models import (
     TradingMetrics,
-    TradingStatistics,
     TradingPerformance,
+    TradingStatistics,
 )
-from athena.core.market_entities import Portfolio, Position
 
 
 def _trades_to_wealth(
