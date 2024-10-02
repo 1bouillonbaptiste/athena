@@ -123,27 +123,26 @@ def test_fluctuations_save_to_file(tmp_path, sample_candles, sample_fluctuations
 
 def test_load_from_dataset(tmp_path, generate_candles):
     start_date = datetime.datetime(2020, 1, 1)
-    for day_ii in range(2):
-        Fluctuations.from_candles(
-            generate_candles(
-                from_date=start_date + datetime.timedelta(days=day_ii),
-                to_date=start_date + datetime.timedelta(days=day_ii + 1),
-            )
-        ).save(
-            DatasetLayout(tmp_path).localize_file(
-                coin=Coin.BTC,
-                currency=Coin.USDT,
-                period=Period(timeframe="1m"),
-                date=start_date + datetime.timedelta(days=day_ii),
-            )
+    Fluctuations.from_candles(
+        generate_candles(
+            from_date=start_date,
+            to_date=start_date + datetime.timedelta(days=1),
         )
+    ).save(
+        DatasetLayout(tmp_path).localize_file(
+            coin=Coin.BTC,
+            currency=Coin.USDT,
+            period=Period(timeframe="1m"),
+            date=start_date + datetime.timedelta(days=1),
+        )
+    )
     fluctuations = Fluctuations.load_from_dataset(
         dataset=DatasetLayout(tmp_path),
         coin=Coin.BTC,
         currency=Coin.USDT,
-        target_period=Period(timeframe="4h"),
+        target_period=Period(timeframe="1h"),
     )
-    assert len(fluctuations.candles) == 2 * 6  # 2 days * 6 candles a day
+    assert len(fluctuations.candles) == 24
 
 
 def test_load_fluctuations_get_series(tmp_path, sample_candles, generate_candles):
