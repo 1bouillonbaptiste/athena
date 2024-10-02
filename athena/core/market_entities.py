@@ -262,7 +262,7 @@ class Trade:
 
 
 class Portfolio(BaseModel):
-    """A mapping of an account's available coins.
+    """Account's available coins mapping.
 
     Attributes:
         assets: a dictionary where each key is a coin and the associated value is the available amount of that coin

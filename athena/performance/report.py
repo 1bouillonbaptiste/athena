@@ -13,7 +13,7 @@ from athena.performance.models import (
     TradingStatistics,
     TradingPerformance,
 )
-from athena.tradingtools.models import Portfolio, Position
+from athena.core.market_entities import Portfolio, Position
 
 
 def _trades_to_wealth(

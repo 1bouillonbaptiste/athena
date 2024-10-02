@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from athena.core.interfaces import Fluctuations
-from athena.tradingtools.models import Position
+from athena.core.market_entities import Position
 from athena.performance.report import (
     _get_cagr,
     _get_calmar,
