@@ -126,14 +126,14 @@ def test_load_from_dataset(tmp_path, generate_candles):
     Fluctuations.from_candles(
         generate_candles(
             from_date=start_date,
-            to_date=start_date + datetime.timedelta(days=1),
+            to_date=start_date + datetime.timedelta(hours=12),
         )
     ).save(
         DatasetLayout(tmp_path).localize_file(
             coin=Coin.BTC,
             currency=Coin.USDT,
             period=Period(timeframe="1m"),
-            date=start_date + datetime.timedelta(days=1),
+            date=start_date,
         )
     )
     fluctuations = Fluctuations.load_from_dataset(
@@ -142,7 +142,7 @@ def test_load_from_dataset(tmp_path, generate_candles):
         currency=Coin.USDT,
         target_period=Period(timeframe="1h"),
     )
-    assert len(fluctuations.candles) == 24
+    assert len(fluctuations.candles) == 12
 
 
 def test_load_fluctuations_get_series(tmp_path, sample_candles, generate_candles):
