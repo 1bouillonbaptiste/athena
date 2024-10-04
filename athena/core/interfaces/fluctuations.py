@@ -44,7 +44,7 @@ class Fluctuations(BaseModel):
 
     @classmethod
     def from_candles(cls, candles: list[Candle]):
-        sanitized_candles = sanitize_candles(candles)
+        sanitized_candles = _sanitize_candles(candles)
         sorted_candles = sorted(sanitized_candles, key=lambda candle: candle.open_time)
         return cls(
             candles=sorted_candles,
@@ -192,11 +192,11 @@ def load_candles_from_file(
     )
     candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
     if target_period is not None:
-        candles = convert_candles_to_period(candles, target_period=target_period)
+        candles = _convert_candles_to_period(candles, target_period=target_period)
     return candles
 
 
-def merge_candles(candles: list[Candle]) -> Candle:
+def _merge_candles(candles: list[Candle]) -> Candle:
     """Generate a new candle aggregating input candles information.
 
     This function assumes every candle have the same coin, currency and period.
@@ -236,7 +236,7 @@ def merge_candles(candles: list[Candle]) -> Candle:
     )
 
 
-def convert_candles_to_period(
+def _convert_candles_to_period(
     candles: list[Candle], target_period: Period
 ) -> list[Candle]:
     """Merge close candles into 'bigger' ones.
@@ -279,7 +279,7 @@ def convert_candles_to_period(
         )
         if theoretical_close_time_is_reached:
             new_candles.append(
-                merge_candles(sorted_candles[new_candle_start_index : ii + 1])
+                _merge_candles(sorted_candles[new_candle_start_index : ii + 1])
             )
             if ii < (len(sorted_candles) - 1):
                 new_candle_start_index = ii + 1
@@ -292,7 +292,7 @@ def convert_candles_to_period(
     return new_candles
 
 
-def sanitize_candles(candles: list[Candle]) -> list[Candle]:
+def _sanitize_candles(candles: list[Candle]) -> list[Candle]:
     """Remove invalid candles.
 
     Invalid candles are :

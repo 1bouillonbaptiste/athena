@@ -1,6 +1,6 @@
 import pytest
 
-from athena.core.types.period import fill_missing_attributes
+from athena.core.types.period import _fill_missing_attributes
 
 
 @pytest.mark.parametrize(
@@ -12,7 +12,7 @@ from athena.core.types.period import fill_missing_attributes
     ],
 )
 def test_fill_missing_attributes(timeframe, value, unit, expected_values):
-    assert fill_missing_attributes(timeframe, value, unit) == expected_values
+    assert _fill_missing_attributes(timeframe, value, unit) == expected_values
 
 
 @pytest.mark.parametrize(
@@ -29,4 +29,4 @@ def test_fill_missing_attributes(timeframe, value, unit, expected_values):
 )
 def test_fill_missing_attributes_fail(timeframe, value, unit):
     with pytest.raises(ValueError):
-        fill_missing_attributes(timeframe, value, unit)
+        _fill_missing_attributes(timeframe, value, unit)
