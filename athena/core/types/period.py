@@ -17,7 +17,7 @@ class Period:
         value: int | None = None,
         unit: str | None = None,
     ):
-        (self.timeframe, self.value, self.unit) = fill_missing_attributes(
+        (self.timeframe, self.value, self.unit) = _fill_missing_attributes(
             timeframe, value, unit
         )
         self.unit_full = UNITS[self.unit]
@@ -29,7 +29,7 @@ class Period:
         return self.timeframe == other.timeframe
 
 
-def fill_missing_attributes(
+def _fill_missing_attributes(
     timeframe: str | None = None,
     value: int | None = None,
     unit: Literal["m", "h"] | None = None,
