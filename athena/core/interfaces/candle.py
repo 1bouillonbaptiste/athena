@@ -1,6 +1,8 @@
 import datetime
 
-from pydantic import BaseModel
+from dataclasses import dataclass, asdict
+
+import pandas as pd
 
 AVAILABLE_ATTRIBUTES = (
     "open",
@@ -19,7 +21,8 @@ AVAILABLE_ATTRIBUTES = (
 )
 
 
-class Candle(BaseModel):
+@dataclass
+class Candle:
     """Indicators of a specific candle.
 
     coin: the base coin
@@ -41,8 +44,7 @@ class Candle(BaseModel):
     currency: str
     period: str
     open_time: datetime.datetime
-    high_time: datetime.datetime | None = None
-    low_time: datetime.datetime | None = None
+
     close_time: datetime.datetime
     open: float
     high: float
@@ -54,9 +56,18 @@ class Candle(BaseModel):
     taker_volume: float
     taker_quote_volume: float
 
+    high_time: datetime.datetime | None = None
+    low_time: datetime.datetime | None = None
+
     def __eq__(self, other):
-        return self.model_dump() == other.model_dump()
+        return asdict(self) == asdict(other)
 
     @classmethod
     def is_available_attribute(cls, attr: str) -> bool:
         return attr in AVAILABLE_ATTRIBUTES
+
+    def to_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {attribute: str(value) for attribute, value in asdict(self).items()},
+            index=[0],
+        )

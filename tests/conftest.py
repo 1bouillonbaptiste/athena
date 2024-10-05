@@ -244,29 +244,27 @@ def fluctuations():
         period = Period(timeframe=timeframe)
         return Fluctuations.from_candles(
             candles=[
-                Candle.model_validate(
-                    {
-                        "coin": coin,
-                        "currency": currency,
-                        "open_time": open_time,
-                        "period": period.timeframe,
-                        "close_time": open_time + period.to_timedelta(),
-                        "high_time": (open_time + datetime.timedelta(hours=12))
-                        if include_high_time
-                        else None,
-                        "low_time": (open_time + datetime.timedelta(hours=3))
-                        if include_low_time
-                        else None,
-                        "open": open,
-                        "high": high,
-                        "low": low,
-                        "close": close,
-                        "volume": 100,
-                        "quote_volume": (open + high) / 2 * 100,
-                        "nb_trades": 100,
-                        "taker_volume": 50,
-                        "taker_quote_volume": (open + high) / 2 * 100 / 2,
-                    }
+                Candle(
+                    coin=coin,
+                    currency=currency,
+                    open_time=open_time,
+                    period=period.timeframe,
+                    close_time=open_time + period.to_timedelta(),
+                    high_time=(open_time + datetime.timedelta(hours=12))
+                    if include_high_time
+                    else None,
+                    low_time=(open_time + datetime.timedelta(hours=3))
+                    if include_low_time
+                    else None,
+                    open=open,
+                    high=high,
+                    low=low,
+                    close=close,
+                    volume=100,
+                    quote_volume=(open + high) / 2 * 100,
+                    nb_trades=100,
+                    taker_volume=50,
+                    taker_quote_volume=(open + high) / 2 * 100 / 2,
                 )
                 for open_time, open, high, low, close in zip(
                     [

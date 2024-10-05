@@ -115,9 +115,7 @@ class Fluctuations(BaseModel):
             return
 
         path.parent.mkdir(parents=True, exist_ok=True)
-        df = pd.concat(
-            [pd.DataFrame(candle.model_dump(), index=[0]) for candle in self.candles]
-        )
+        df = pd.concat([candle.to_dataframe() for candle in self.candles])
         df.to_csv(path.as_posix(), index=False)
 
     @classmethod
@@ -190,7 +188,7 @@ def load_candles_from_file(
             }
         )
     )
-    candles = [Candle.model_validate(row.to_dict()) for _, row in df.iterrows()]
+    candles = [Candle(**row.to_dict()) for _, row in df.iterrows()]
     if target_period is not None:
         candles = _convert_candles_to_period(candles, target_period=target_period)
     return candles
