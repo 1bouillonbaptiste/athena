@@ -4,6 +4,8 @@ from dataclasses import dataclass, asdict
 
 import pandas as pd
 
+from athena.core.types import Coin, Period
+
 AVAILABLE_ATTRIBUTES = (
     "open",
     "high",
@@ -40,9 +42,9 @@ class Candle:
     taker_quote_volume: the volume of currency earned by selling orders that have been filled
     """
 
-    coin: str
-    currency: str
-    period: str
+    coin: Coin
+    currency: Coin
+    period: Period
     open_time: datetime.datetime
 
     close_time: datetime.datetime
