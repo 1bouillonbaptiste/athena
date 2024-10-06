@@ -3,12 +3,12 @@ import pandas as pd
 from pydantic import Field
 from ta.trend import IchimokuIndicator
 
-from athena.tradingtools.indicators.common import Price
+from athena.tradingtools.indicators.common import PriceCollection
 
 
 def ichimoky(
-    highs: Price,
-    lows: Price,
+    highs: PriceCollection,
+    lows: PriceCollection,
     window_a: int = Field(ge=1),
     window_b: int = Field(ge=1),
     window_c: int = Field(ge=1),

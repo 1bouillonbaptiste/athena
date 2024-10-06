@@ -3,11 +3,11 @@ import pandas as pd
 
 from ta.trend import MACD
 
-from athena.tradingtools.indicators.common import Price
+from athena.tradingtools.indicators.common import PriceCollection
 
 
 def macd(
-    prices: Price, window_slow: int, window_fast: int, window_signal: int
+    prices: PriceCollection, window_slow: int, window_fast: int, window_signal: int
 ) -> np.ndarray:
     """Calculate MACD (Moving Average Convergence Divergence) line.
 

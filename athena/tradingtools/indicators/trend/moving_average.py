@@ -3,10 +3,12 @@ import pandas as pd
 from pydantic import Field
 from ta.trend import EMAIndicator, SMAIndicator
 
-from athena.tradingtools.indicators.common import Price
+from athena.tradingtools.indicators.common import PriceCollection
 
 
-def simple_moving_average(array: Price, window_size: int = Field(ge=1)) -> np.ndarray:
+def simple_moving_average(
+    array: PriceCollection, window_size: int = Field(ge=1)
+) -> np.ndarray:
     """Calculate the Simple Moving Average of input array.
 
     Each element of the output array is the mean of the previous N elements.
