@@ -52,8 +52,8 @@ def test_fluctuations_from_candles(sample_candles):
                 "taker_volume": 1049.7,
             },
         ],
-        "coin": Coin.BTC,
-        "currency": Coin.USDT,
+        "coin": "BTC",
+        "currency": "USDT",
         "period": Period(timeframe="4h"),
     }
 

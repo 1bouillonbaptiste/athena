@@ -25,7 +25,7 @@ class Fluctuations(BaseModel):
         period: candles time period (e.g. '1d' or '4h')
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, use_enum_values=True)
 
     candles: list[Candle]
     coin: Coin
