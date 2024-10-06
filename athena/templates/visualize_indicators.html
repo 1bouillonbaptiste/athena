@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indicators Visualization</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* Hide all sections initially */
+        .section {
+            display: none;
+        }
+        /* Make the active section visible */
+        .active {
+            display: block;
+        }
+        /* Styling for buttons */
+        .nav-btn {
+            padding: 10px 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .nav-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Section for Indicators -->
+    <div id="chart">
+        <h2>Chart</h2>
+        {{ chart|safe }}
+    </div>
+</body>
+</html>
