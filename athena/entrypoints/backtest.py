@@ -1,29 +1,30 @@
 from pathlib import Path
 
 import click
-import yaml
 
+from athena.core.config import DataConfig, StrategyConfig
 from athena.core.context import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
-from athena.performance.config import BacktestConfig
+from athena.entrypoints.utils import load_config
 from athena.performance.report import build_and_save_trading_report
 from athena.performance.trading_session import TradingSession
 from athena.tradingtools.strategies import init_strategy
 
 
-def load_config(filename: Path):
-    """Load YAML file."""
-    with open(filename, "r") as f:
-        return yaml.safe_load(f)
-
-
 @click.command()
 @click.option(
-    "--config-path",
-    "-c",
+    "--data-config-path",
+    "-dc",
     required=True,
     type=Path,
-    help="Path to the backtesting configuration file.",
+    help="Path to the data configuration file.",
+)
+@click.option(
+    "--strategy-config-path",
+    "-sc",
+    required=True,
+    type=Path,
+    help="Path to the strategy configuration file.",
 )
 @click.option(
     "--output-dir",
@@ -40,35 +41,38 @@ def load_config(filename: Path):
     help="Location of raw market data.",
 )
 def backtest(
-    config_path: Path,
+    data_config_path: Path,
+    strategy_config_path: Path,
     output_dir: Path,
     root_dir: Path,
 ):
     """Run a trading algorithm on a dataset and save its performance results.
 
     Args:
-        config_path: path to backtesting configuration
+        data_config_path: path to data configuration
+        strategy_config_path: path to strategy configuration,
         output_dir: directory to save the performance results
         root_dir: raw market data location
     """
 
     output_dir.mkdir(exist_ok=True, parents=True)
-    config = BacktestConfig.model_validate(load_config(config_path))
+    data_config = DataConfig.model_validate(load_config(data_config_path))
+    strategy_config = StrategyConfig.model_validate(load_config(strategy_config_path))
 
     fluctuations = Fluctuations.load_from_dataset(
         dataset=DatasetLayout(root_dir=root_dir or ProjectContext().raw_data_directory),
-        coin=config.data.coin,
-        currency=config.data.currency,
-        target_period=config.data.period,
-        from_date=config.data.from_date,
-        to_date=config.data.to_date,
+        coin=data_config.coin,
+        currency=data_config.currency,
+        target_period=data_config.period,
+        from_date=data_config.from_date,
+        to_date=data_config.to_date,
     )
     strategy = init_strategy(
-        strategy_name=config.strategy.name, strategy_params=config.strategy.parameters
+        strategy_name=strategy_config.name, strategy_params=strategy_config.parameters
     )
 
     trades, _ = TradingSession.from_config_and_strategy(
-        config=config.data, strategy=strategy
+        config=data_config, strategy=strategy
     ).get_trades_from_fluctuations(fluctuations=fluctuations)
 
     build_and_save_trading_report(

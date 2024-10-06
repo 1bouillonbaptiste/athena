@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from ta.trend import MACD
 
 from athena.tradingtools.indicators.common import PriceCollection
