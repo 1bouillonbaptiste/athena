@@ -5,11 +5,11 @@ Only for educational purpose, don't sue me.
 
 :warning: The development of this repo is still in progress. As of today you can
  - [x] download market data
- - [ ] create a strategy based on
+ - [x] create a strategy based on
      - [x] custom code
-     - [ ] technical indicators
+     - [x] technical indicators
      - [ ] machine learning
- - [ ] backtest your strategy
+ - [x] backtest your strategy
 
 Future work, not contractual, not exhaustive.
 * create a new strategy from text-based input (👋 prompt engineers)
