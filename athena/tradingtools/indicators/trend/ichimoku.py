@@ -1,13 +1,14 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from pydantic import Field
-
 from ta.trend import IchimokuIndicator
+
+from athena.tradingtools.indicators.common import Price
 
 
 def ichimoky(
-    highs: list[float] | np.ndarray | pd.Series,
-    lows: list[float] | np.ndarray | pd.Series,
+    highs: Price,
+    lows: Price,
     window_a: int = Field(ge=1),
     window_b: int = Field(ge=1),
     window_c: int = Field(ge=1),

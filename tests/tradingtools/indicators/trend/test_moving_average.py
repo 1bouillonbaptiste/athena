@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 from athena.tradingtools.indicators.trend.moving_average import (
-    simple_moving_average,
     exponential_moving_average,
+    simple_moving_average,
 )
 
 

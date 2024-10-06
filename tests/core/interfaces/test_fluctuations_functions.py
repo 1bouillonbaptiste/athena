@@ -6,9 +6,9 @@ import pytest
 from athena.core.interfaces import Candle
 from athena.core.interfaces.fluctuations import (
     _convert_candles_to_period,
-    load_candles_from_file,
     _merge_candles,
     _sanitize_candles,
+    load_candles_from_file,
 )
 from athena.core.types import Coin, Period
 

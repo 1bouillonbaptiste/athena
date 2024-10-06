@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
-
 from ta.momentum import RSIIndicator, StochRSIIndicator
 
+from athena.tradingtools.indicators.common import Price
 
-def rsi(prices: list[float] | np.ndarray | pd.Series, window_size: int) -> np.ndarray:
+
+def rsi(prices: Price, window_size: int) -> np.ndarray:
     """Calculate the Relative Strength Index (RSI) of an array of prices.
 
     Args:
@@ -23,7 +24,7 @@ def rsi(prices: list[float] | np.ndarray | pd.Series, window_size: int) -> np.nd
 
 
 def stochastic_rsi(
-    prices: list[float], window_size: int, smooth_k: int, smooth_d: int
+    prices: Price, window_size: int, smooth_k: int, smooth_d: int
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the Stochastic Relative Strength Index of an array of prices.
 
