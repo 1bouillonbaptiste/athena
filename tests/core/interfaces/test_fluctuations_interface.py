@@ -109,15 +109,17 @@ def test_fluctuations_save_to_file(tmp_path, sample_candles, sample_fluctuations
         tmp_path / "fluctuations.csv"
     )
     assert_frame_equal(
-        pd.read_csv(tmp_path / "fluctuations.csv").astype(
+        pd.read_csv(tmp_path / "fluctuations.csv")
+        .astype(
             {
                 "open_time": "datetime64[ns]",
                 "high_time": "datetime64[ns]",
                 "low_time": "datetime64[ns]",
                 "close_time": "datetime64[ns]",
             }
-        ),
-        sample_fluctuations(),
+        )
+        .sort_index(axis=1),
+        sample_fluctuations().sort_index(axis=1),
     )
 
 

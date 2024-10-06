@@ -18,23 +18,21 @@ def position():
 
 @pytest.fixture
 def candle():
-    return Candle.model_validate(
-        {
-            "coin": Coin.default_coin(),
-            "currency": Coin.default_currency(),
-            "period": "1h",
-            "open_time": datetime.datetime(2024, 8, 25),
-            "close_time": datetime.datetime(2024, 8, 26),
-            "open": 130,
-            "high": 140,
-            "low": 120,
-            "close": 130,
-            "volume": 100,
-            "quote_volume": 140,
-            "nb_trades": 100,
-            "taker_volume": 50,
-            "taker_quote_volume": 70,
-        }
+    return Candle(
+        coin=Coin.default_coin(),
+        currency=Coin.default_currency(),
+        period="1h",
+        open_time=datetime.datetime(2024, 8, 25),
+        close_time=datetime.datetime(2024, 8, 26),
+        open=130,
+        high=140,
+        low=0,
+        close=130,
+        volume=100,
+        quote_volume=140,
+        nb_trades=100,
+        taker_volume=50,
+        taker_quote_volume=70,
     )
 
 
@@ -65,6 +63,7 @@ def test_get_exit_signal_take_profit(position, candle):
 
     candle.high = 151
     candle.high_time = datetime.datetime(2024, 8, 25, hour=12)
+    candle.low_time = datetime.datetime(2024, 8, 25, hour=13)
 
     exit_signal = position.get_exit_signal(candle=candle)
 
