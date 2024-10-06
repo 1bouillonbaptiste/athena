@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from ta.momentum import RSIIndicator, StochRSIIndicator
 
-from athena.tradingtools.indicators.common import PriceCollection
+from athena.tradingtools.indicators.common import PriceCollection, IndicatorLine
 
 
-def rsi(prices: PriceCollection, window_size: int) -> np.ndarray:
+def rsi(prices: PriceCollection, window_size: int) -> IndicatorLine:
     """Calculate the Relative Strength Index (RSI) of an array of prices.
 
     Args:
@@ -15,17 +15,18 @@ def rsi(prices: PriceCollection, window_size: int) -> np.ndarray:
     Returns:
         rsi line as a numpy array
     """
-    return (
-        RSIIndicator(close=pd.Series(prices), window=window_size)
+    return IndicatorLine(
+        name="rsi",
+        values=RSIIndicator(close=pd.Series(prices), window=window_size)
         .rsi()
         .bfill()
-        .to_numpy()
+        .to_numpy(),
     )
 
 
 def stochastic_rsi(
     prices: PriceCollection, window_size: int, smooth_k: int, smooth_d: int
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[IndicatorLine, IndicatorLine, IndicatorLine]:
     """Calculate the Stochastic Relative Strength Index of an array of prices.
 
     The RSI is calculated using the window_size.
@@ -47,7 +48,15 @@ def stochastic_rsi(
         close=pd.Series(prices), window=window_size, smooth1=smooth_k, smooth2=smooth_d
     )
     return (
-        rsi_indicator.stochrsi().bfill().to_numpy(),
-        rsi_indicator.stochrsi_k().bfill().to_numpy(),
-        rsi_indicator.stochrsi_d().bfill().to_numpy(),
+        IndicatorLine(
+            name="stochastic_rsi", values=rsi_indicator.stochrsi().bfill().to_numpy()
+        ),
+        IndicatorLine(
+            name="stochastic_rsi_k",
+            values=rsi_indicator.stochrsi_k().bfill().to_numpy(),
+        ),
+        IndicatorLine(
+            name="stochastic_rsi_d",
+            values=rsi_indicator.stochrsi_d().bfill().to_numpy(),
+        ),
     )

@@ -2,12 +2,12 @@ import numpy as np
 import pandas as pd
 from ta.trend import MACD
 
-from athena.tradingtools.indicators.common import PriceCollection
+from athena.tradingtools.indicators.common import PriceCollection, IndicatorLine
 
 
 def macd(
     prices: PriceCollection, window_slow: int, window_fast: int, window_signal: int
-) -> np.ndarray:
+) -> IndicatorLine:
     """Calculate MACD (Moving Average Convergence Divergence) line.
 
     We calculate the fast and slow moving average from prices.
@@ -24,8 +24,9 @@ def macd(
     Returns:
         MACD signal diff as a numpy array
     """
-    return (
-        MACD(
+    return IndicatorLine(
+        name="macd",
+        values=MACD(
             close=pd.Series(prices),
             window_slow=window_slow,
             window_fast=window_fast,
@@ -33,5 +34,5 @@ def macd(
         )
         .macd_diff()
         .bfill()
-        .to_numpy()
+        .to_numpy(),
     )
