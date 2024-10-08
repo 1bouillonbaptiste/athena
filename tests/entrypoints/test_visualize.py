@@ -5,14 +5,10 @@ import pytest
 from click.testing import CliRunner
 
 from athena.cli import app
-from athena.core.config import DataConfig, IndicatorsConfig
-from athena.core.context import ProjectContext
+from athena.core.config import IndicatorsConfig
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.core.types import Coin, Period
-from athena.entrypoints.utils import load_config
-from athena.entrypoints.visualize import visualize
-from athena.tradingtools.indicators import TECHNICAL_INDICATORS
-from athena.tradingtools.indicators.chart import build_and_save_indicators_figure
+from athena.entrypoints.visualize import _build_indicator_lines
 
 
 @pytest.fixture
@@ -33,13 +29,29 @@ def indicators_config():
             {
                 "name": "ichimoku",
                 "parameters": {
-                    "window_a": 10,
-                    "window_b": 20,
-                    "window_c": 5,
+                    "window_a": 2,
+                    "window_b": 2,
+                    "window_c": 2,
                 },
             },
         ],
     }
+
+
+def test_build_indicator_lines(indicators_config, generate_candles):
+    indicator_lines = _build_indicator_lines(
+        config=IndicatorsConfig.model_validate(indicators_config),
+        fluctuations=Fluctuations.from_candles(generate_candles(size=10)),
+    )
+
+    assert len(indicator_lines) == 4
+
+    assert [line.name for line in indicator_lines] == [
+        "span_a",
+        "span_b",
+        "base",
+        "conversion",
+    ]
 
 
 def test_run_visualize(
