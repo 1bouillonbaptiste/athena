@@ -2,14 +2,11 @@ from pathlib import Path
 from random import randint
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from athena.core.interfaces import Fluctuations
 from athena.tradingtools.indicators.common import IndicatorLine
-
-ALL_COLORS = px.colors.named_colorscales()
 
 
 def _generate_random_rgb():
@@ -18,9 +15,9 @@ def _generate_random_rgb():
     The color value starts at 50 to be light enough.
 
     Returns:
-        three random numbers between 50 and 256
+        three random numbers between 0 and 200
     """
-    return f"rgb({randint(a=50, b=256)},{randint(a=50, b=256)},{randint(a=50, b=256)})"
+    return f"rgb({randint(a=0, b=200)},{randint(a=0, b=200)},{randint(a=0, b=200)})"
 
 
 def build_and_save_indicators_figure(
@@ -63,5 +60,11 @@ def build_and_save_indicators_figure(
             row=1,
             col=1,
         )
+
+    fig.update_layout(
+        title="Trades and wealth over time",
+        width=1500,
+        height=1500,
+    )
 
     fig.write_html(output_path.as_posix())
