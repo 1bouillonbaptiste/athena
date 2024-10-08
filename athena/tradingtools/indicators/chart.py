@@ -1,13 +1,13 @@
-import pandas as pd
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 from pathlib import Path
 from random import randint
 
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 from athena.core.interfaces import Fluctuations
 from athena.tradingtools.indicators.common import IndicatorLine
-
-import plotly.express as px
 
 ALL_COLORS = px.colors.named_colorscales()
 

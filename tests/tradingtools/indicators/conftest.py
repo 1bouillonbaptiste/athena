@@ -1,7 +1,8 @@
-import pytest
 import datetime
 
-from athena.core.interfaces import Fluctuations, Candle
+import pytest
+
+from athena.core.interfaces import Candle, Fluctuations
 from athena.core.types import Coin, Period
 
 
