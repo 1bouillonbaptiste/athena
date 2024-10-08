@@ -5,14 +5,8 @@ import pytest
 from click.testing import CliRunner
 
 from athena.cli import app
-from athena.core.config import DataConfig, IndicatorsConfig
-from athena.core.context import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.core.types import Coin, Period
-from athena.entrypoints.utils import load_config
-from athena.entrypoints.visualize import visualize
-from athena.tradingtools.indicators import TECHNICAL_INDICATORS
-from athena.tradingtools.indicators.chart import build_and_save_indicators_figure
 
 
 @pytest.fixture
