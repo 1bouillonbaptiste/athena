@@ -1,14 +1,12 @@
-import numpy as np
-import pandas as pd
 from pydantic import Field
 from ta.trend import IchimokuIndicator
 
-from athena.tradingtools.indicators.common import PriceCollection, IndicatorLine
+from athena.core.interfaces import Fluctuations
+from athena.tradingtools.indicators.common import IndicatorLine
 
 
 def ichimoku(
-    highs: PriceCollection,
-    lows: PriceCollection,
+    fluctuations: Fluctuations,
     window_a: int = Field(ge=1),
     window_b: int = Field(ge=1),
     window_c: int = Field(ge=1),
@@ -22,8 +20,7 @@ def ichimoku(
     source : https://www.investopedia.com/terms/i/ichimoku-cloud.asp
 
     Args:
-        highs: high values of the price series
-        lows: low values of the price series
+        fluctuations: market data
         window_a: rolling parameter for the 'conversion' line
         window_b: rolling parameter for the 'base' line
         window_c: rolling parameter for the long term resistance line (span B)
@@ -36,8 +33,8 @@ def ichimoku(
     """
 
     ichimoku_indicator = IchimokuIndicator(
-        high=pd.Series(highs),
-        low=pd.Series(lows),
+        high=fluctuations.get_series("high"),
+        low=fluctuations.get_series("low"),
         window1=window_a,
         window2=window_b,
         window3=window_c,

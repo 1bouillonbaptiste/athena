@@ -1,15 +1,14 @@
-import numpy as np
-import pandas as pd
 from ta.momentum import RSIIndicator, StochRSIIndicator
 
-from athena.tradingtools.indicators.common import PriceCollection, IndicatorLine
+from athena.core.interfaces import Fluctuations
+from athena.tradingtools.indicators.common import IndicatorLine
 
 
-def rsi(prices: PriceCollection, window_size: int) -> IndicatorLine:
+def rsi(fluctuations: Fluctuations, window_size: int) -> IndicatorLine:
     """Calculate the Relative Strength Index (RSI) of an array of prices.
 
     Args:
-        prices: collection of prices
+        fluctuations: market data
         window_size: rolling parameter
 
     Returns:
@@ -17,7 +16,7 @@ def rsi(prices: PriceCollection, window_size: int) -> IndicatorLine:
     """
     return IndicatorLine(
         name="rsi",
-        values=RSIIndicator(close=pd.Series(prices), window=window_size)
+        values=RSIIndicator(close=fluctuations.get_series("close"), window=window_size)
         .rsi()
         .bfill()
         .to_numpy(),
@@ -25,7 +24,7 @@ def rsi(prices: PriceCollection, window_size: int) -> IndicatorLine:
 
 
 def stochastic_rsi(
-    prices: PriceCollection, window_size: int, smooth_k: int, smooth_d: int
+    fluctuations: Fluctuations, window_size: int, smooth_k: int, smooth_d: int
 ) -> tuple[IndicatorLine, IndicatorLine, IndicatorLine]:
     """Calculate the Stochastic Relative Strength Index of an array of prices.
 
@@ -36,7 +35,7 @@ def stochastic_rsi(
     The stochastic RSI %D is the average of RSI line in a range of smooth_d.
 
     Args:
-        prices: collection of prices
+        fluctuations: market data
         window_size: rolling parameter
         smooth_k: smoothing parameter
         smooth_d: smoothing parameter
@@ -45,7 +44,10 @@ def stochastic_rsi(
     """
 
     rsi_indicator = StochRSIIndicator(
-        close=pd.Series(prices), window=window_size, smooth1=smooth_k, smooth2=smooth_d
+        close=fluctuations.get_series("close"),
+        window=window_size,
+        smooth1=smooth_k,
+        smooth2=smooth_d,
     )
     return (
         IndicatorLine(

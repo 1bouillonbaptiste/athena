@@ -1,13 +1,12 @@
-import numpy as np
-import pandas as pd
 from pydantic import Field
 from ta.trend import EMAIndicator, SMAIndicator
 
-from athena.tradingtools.indicators.common import PriceCollection, IndicatorLine
+from athena.core.interfaces import Fluctuations
+from athena.tradingtools.indicators.common import IndicatorLine
 
 
 def simple_moving_average(
-    array: PriceCollection, window_size: int = Field(ge=1)
+    fluctuations: Fluctuations, window_size: int = Field(ge=1), column: str = "close"
 ) -> IndicatorLine:
     """Calculate the Simple Moving Average of input array.
 
@@ -15,15 +14,16 @@ def simple_moving_average(
     The first N elements cannot be computed, so they are fixed at the N-th value.
 
     Args:
-        array: 1D collection of price data
+        fluctuations: market data
         window_size: rolling parameter
+        column: which column to take for moving average
 
     Returns:
         SMA of input array as a numpy array
     """
     return IndicatorLine(
         name="simple_moving_average",
-        values=SMAIndicator(pd.Series(array), window_size)
+        values=SMAIndicator(fluctuations.get_series(attribute_name=column), window_size)
         .sma_indicator()
         .bfill()
         .to_numpy(),
@@ -31,22 +31,23 @@ def simple_moving_average(
 
 
 def exponential_moving_average(
-    array: list[float] | np.ndarray | pd.Series, window_size: int = Field(ge=1)
+    fluctuations: Fluctuations, window_size: int = Field(ge=1), column: str = "close"
 ) -> IndicatorLine:
     """Calculate the Exponential Moving Average of input array.
 
     In an EMA, y_t+1 = alpha * y_t + (1 - alpha) * y_t-1, with alpha = 2 / (window_size + 1).
 
     Args:
-        array: 1D collection of price data
+        fluctuations: market data
         window_size: rolling parameter
+        column: which column to take for moving average
 
     Returns:
         EMA of input array as a numpy array
     """
     return IndicatorLine(
         name="exponential_moving_average",
-        values=EMAIndicator(pd.Series(array), window_size)
+        values=EMAIndicator(fluctuations.get_series(attribute_name=column), window_size)
         .ema_indicator()
         .bfill()
         .to_numpy(),

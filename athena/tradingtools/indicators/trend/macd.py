@@ -1,12 +1,11 @@
-import numpy as np
-import pandas as pd
 from ta.trend import MACD
 
-from athena.tradingtools.indicators.common import PriceCollection, IndicatorLine
+from athena.core.interfaces import Fluctuations
+from athena.tradingtools.indicators.common import IndicatorLine
 
 
 def macd(
-    prices: PriceCollection, window_slow: int, window_fast: int, window_signal: int
+    fluctuations: Fluctuations, window_slow: int, window_fast: int, window_signal: int
 ) -> IndicatorLine:
     """Calculate MACD (Moving Average Convergence Divergence) line.
 
@@ -16,7 +15,7 @@ def macd(
     When MACD signal diff growths, the price is getting stronger and stronger.
 
     Args:
-        prices: collection of prices
+        fluctuations: market data
         window_slow: rolling parameter for slow MA
         window_fast: rolling parameter for fast MA
         window_signal: rolling parameter for MACD signal
@@ -27,7 +26,7 @@ def macd(
     return IndicatorLine(
         name="macd",
         values=MACD(
-            close=pd.Series(prices),
+            close=fluctuations.get_series("close"),
             window_slow=window_slow,
             window_fast=window_fast,
             window_sign=window_signal,
