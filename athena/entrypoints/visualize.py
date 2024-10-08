@@ -1,21 +1,17 @@
-import click
-
+from collections.abc import Iterable
 from pathlib import Path
 from random import randint
 from typing import Callable
 
-from collections.abc import Iterable
-
+import click
 import pandas as pd
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-from athena.core.config import DataConfig
+from athena.core.config import DataConfig, IndicatorsConfig
 from athena.core.context import ProjectContext
-from athena.core.interfaces import DatasetLayout
+from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.entrypoints.utils import load_config
-from athena.core.config import IndicatorsConfig
-from athena.core.interfaces import Fluctuations
 from athena.tradingtools.indicators import build_indicator
 from athena.tradingtools.indicators.common import IndicatorLine
 
