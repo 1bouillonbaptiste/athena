@@ -1,18 +1,16 @@
-import numpy as np
-import pandas as pd
 from pydantic import Field
 from ta.trend import IchimokuIndicator
 
-from athena.tradingtools.indicators.common import PriceCollection
+from athena.core.interfaces import Fluctuations
+from athena.tradingtools.indicators.common import IndicatorLine
 
 
-def ichimoky(
-    highs: PriceCollection,
-    lows: PriceCollection,
+def ichimoku(
+    fluctuations: Fluctuations,
     window_a: int = Field(ge=1),
     window_b: int = Field(ge=1),
     window_c: int = Field(ge=1),
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[IndicatorLine, IndicatorLine, IndicatorLine, IndicatorLine]:
     """Calculate ICHIMOKU cloud.
 
     The base and conversion lines are respectively long and short term momentum lines.
@@ -22,8 +20,7 @@ def ichimoky(
     source : https://www.investopedia.com/terms/i/ichimoku-cloud.asp
 
     Args:
-        highs: high values of the price series
-        lows: low values of the price series
+        fluctuations: market data
         window_a: rolling parameter for the 'conversion' line
         window_b: rolling parameter for the 'base' line
         window_c: rolling parameter for the long term resistance line (span B)
@@ -36,16 +33,26 @@ def ichimoky(
     """
 
     ichimoku_indicator = IchimokuIndicator(
-        high=pd.Series(highs),
-        low=pd.Series(lows),
+        high=fluctuations.get_series("high"),
+        low=fluctuations.get_series("low"),
         window1=window_a,
         window2=window_b,
         window3=window_c,
     )
 
     return (
-        ichimoku_indicator.ichimoku_a().bfill().to_numpy(),
-        ichimoku_indicator.ichimoku_b().bfill().to_numpy(),
-        ichimoku_indicator.ichimoku_base_line().bfill().to_numpy(),
-        ichimoku_indicator.ichimoku_conversion_line().bfill().to_numpy(),
+        IndicatorLine(
+            name="span_a", values=ichimoku_indicator.ichimoku_a().bfill().to_numpy()
+        ),
+        IndicatorLine(
+            name="span_b", values=ichimoku_indicator.ichimoku_b().bfill().to_numpy()
+        ),
+        IndicatorLine(
+            name="base",
+            values=ichimoku_indicator.ichimoku_base_line().bfill().to_numpy(),
+        ),
+        IndicatorLine(
+            name="conversion",
+            values=ichimoku_indicator.ichimoku_conversion_line().bfill().to_numpy(),
+        ),
     )

@@ -1,0 +1,6 @@
+indicators:
+  - name: "ichimoku"
+    parameters:
+      window_a: 26
+      window_b: 52
+      window_c: 13

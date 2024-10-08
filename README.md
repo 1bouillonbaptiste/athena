@@ -62,7 +62,20 @@ poetry run athena download \
 
 ```bash
 poetry run athena backtest \
-    --config-path /path/to/my_config.yaml \
+    --data-config-path /path/to/my_data_config.yaml \
+    --strategy-config-path /path/to/my_strategy_config.yaml \
     --root-dir /path/to/raw_market_data \
     --output-dir /path/to/results
+```
+
+
+### visualize
+
+
+```bash
+poetry run athena visualize \
+    --data-config-path /path/to/my_data_config.yaml \
+    --indicators-config-path /path/to/my_indicators_config.yaml \
+    --root-dir /path/to/raw_market_data \
+    --output-dir /path/to/figure.html
 ```

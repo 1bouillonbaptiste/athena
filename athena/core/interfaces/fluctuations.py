@@ -42,6 +42,9 @@ class Fluctuations(BaseModel):
         """Maps a date to a candle's index with the same `open_time`."""
         return {candle.open_time: ii for ii, candle in enumerate(self.candles)}
 
+    def __len__(self):
+        return len(self.candles)
+
     @classmethod
     def from_candles(cls, candles: list[Candle]):
         sanitized_candles = _sanitize_candles(candles)
@@ -92,11 +95,14 @@ class Fluctuations(BaseModel):
     def get_candle(self, open_time: datetime.datetime) -> Candle:
         return self.candles[self.candles_mapping.get(open_time)]
 
-    def get_series(self, attribute_name: str) -> np.ndarray:
+    def get_series(self, attribute_name: str) -> pd.Series:
         """Get the time series of attribute `name` from candles."""
         if not Candle.is_available_attribute(attribute_name):
             raise ValueError("Trying to access unavailable attribute.")
-        return np.array([getattr(candle, attribute_name) for candle in self.candles])
+        return pd.Series(
+            [getattr(candle, attribute_name) for candle in self.candles],
+            index=[candle.open_time for candle in self.candles],
+        )
 
     def save(self, path: Path) -> None:
         """Save fluctuations to disk.

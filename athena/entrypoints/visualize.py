@@ -2,13 +2,12 @@ from pathlib import Path
 
 import click
 
-from athena.core.config import DataConfig, StrategyConfig
+from athena.core.config import DataConfig, IndicatorsConfig
 from athena.core.context import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.entrypoints.utils import load_config
-from athena.performance.report import build_and_save_trading_report
-from athena.performance.trading_session import TradingSession
-from athena.tradingtools.strategies import init_strategy
+from athena.tradingtools.indicators import TECHNICAL_INDICATORS
+from athena.tradingtools.indicators.chart import build_and_save_indicators_figure
 
 
 @click.command()
@@ -20,14 +19,14 @@ from athena.tradingtools.strategies import init_strategy
     help="Path to the data configuration file.",
 )
 @click.option(
-    "--strategy-config-path",
-    "-sc",
+    "--indicators-config-path",
+    "-ic",
     required=True,
     type=Path,
     help="Path to the strategy configuration file.",
 )
 @click.option(
-    "--output-dir",
+    "--output-path",
     "-o",
     required=True,
     type=Path,
@@ -40,24 +39,26 @@ from athena.tradingtools.strategies import init_strategy
     type=Path,
     help="Location of raw market data.",
 )
-def backtest(
+def visualize(
     data_config_path: Path,
-    strategy_config_path: Path,
-    output_dir: Path,
+    indicators_config_path: Path,
+    output_path: Path,
     root_dir: Path,
 ):
-    """Run a trading algorithm on a dataset and save its performance results.
+    """Plot indicators on market data and save the resulting chart.
 
     Args:
         data_config_path: path to data configuration
-        strategy_config_path: path to strategy configuration,
-        output_dir: directory to save the performance results
+        indicators_config_path: path to indicators configuration,
+        output_path: directory to save the performance results
         root_dir: raw market data location
     """
 
-    output_dir.mkdir(exist_ok=True, parents=True)
+    output_path.parent.mkdir(exist_ok=True, parents=True)
     data_config = DataConfig.model_validate(load_config(data_config_path))
-    strategy_config = StrategyConfig.model_validate(load_config(strategy_config_path))
+    indicators_config = IndicatorsConfig.model_validate(
+        load_config(indicators_config_path)
+    )
 
     fluctuations = Fluctuations.load_from_dataset(
         dataset=DatasetLayout(root_dir=root_dir or ProjectContext().raw_data_directory),
@@ -67,16 +68,19 @@ def backtest(
         from_date=data_config.from_date,
         to_date=data_config.to_date,
     )
-    strategy = init_strategy(
-        strategy_name=strategy_config.name, strategy_params=strategy_config.parameters
-    )
 
-    trades, _ = TradingSession.from_config_and_strategy(
-        config=data_config, strategy=strategy
-    ).get_trades_from_fluctuations(fluctuations=fluctuations)
+    indicators_lines = []
+    for indicator_config in indicators_config.indicators:
+        new_indicators_lines = TECHNICAL_INDICATORS.get(indicator_config.name)(
+            fluctuations=fluctuations, **indicator_config.parameters
+        )
+        if isinstance(new_indicators_lines, tuple):
+            indicators_lines.extend(new_indicators_lines)
+        else:
+            indicators_lines.append(new_indicators_lines)
 
-    build_and_save_trading_report(
-        trades=trades,
+    build_and_save_indicators_figure(
         fluctuations=fluctuations,
-        output_path=output_dir / "performance_report.html",
+        indicators_lines=indicators_lines,
+        output_path=output_path,
     )

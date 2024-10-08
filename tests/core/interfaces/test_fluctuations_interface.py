@@ -155,7 +155,8 @@ def test_load_fluctuations_get_series(tmp_path, sample_candles, generate_candles
     fluctuations = Fluctuations.from_candles(candles=candles)
 
     assert np.allclose(
-        fluctuations.get_series("open"), np.array([candle.open for candle in candles])
+        fluctuations.get_series("open").to_numpy(),
+        np.array([candle.open for candle in candles]),
     )
 
     with pytest.raises(ValueError, match="Trying to access unavailable attribute"):
