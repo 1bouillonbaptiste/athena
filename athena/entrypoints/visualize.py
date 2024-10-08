@@ -6,7 +6,7 @@ from athena.core.config import DataConfig, IndicatorsConfig
 from athena.core.context import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.entrypoints.utils import load_config
-from athena.tradingtools.indicators import TECHNICAL_INDICATORS
+from athena.tradingtools.indicators.build import build_indicator_lines
 from athena.tradingtools.indicators.chart import build_and_save_indicators_figure
 
 
@@ -69,15 +69,9 @@ def visualize(
         to_date=data_config.to_date,
     )
 
-    indicators_lines = []
-    for indicator_config in indicators_config.indicators:
-        new_indicators_lines = TECHNICAL_INDICATORS.get(indicator_config.name)(
-            fluctuations=fluctuations, **indicator_config.parameters
-        )
-        if isinstance(new_indicators_lines, tuple):
-            indicators_lines.extend(new_indicators_lines)
-        else:
-            indicators_lines.append(new_indicators_lines)
+    indicators_lines = build_indicator_lines(
+        config=indicators_config, fluctuations=fluctuations
+    )
 
     build_and_save_indicators_figure(
         fluctuations=fluctuations,
