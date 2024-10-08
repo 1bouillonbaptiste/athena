@@ -1,6 +1,6 @@
-from athena.tradingtools.indicators import build_indicator, TECHNICAL_INDICATORS
-
 import pytest
+
+from athena.tradingtools.indicators import build_indicator, TECHNICAL_INDICATORS
 
 
 def dummy_indicator(x: int, parameter_a: int, parameter_b: int):
