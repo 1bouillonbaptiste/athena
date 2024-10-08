@@ -22,7 +22,13 @@ def _generate_random_rgb():
     Returns:
         three random numbers between 0 and 200
     """
-    return f"rgb({randint(a=0, b=200)},{randint(a=0, b=200)},{randint(a=0, b=200)})"
+    min_color = 0
+    max_color = 200
+
+    def _random_number():
+        return randint(a=min_color, b=max_color)
+
+    return f"rgb({_random_number()},{_random_number()},{_random_number()})"
 
 
 def build_and_save_indicators_figure(
@@ -36,7 +42,7 @@ def build_and_save_indicators_figure(
         output_path: path to save figure
     """
 
-    fig = make_subplots(rows=3, cols=1)
+    fig = make_subplots(rows=1, cols=1)
 
     # plot the candlesticks
     fig.add_trace(
@@ -67,7 +73,7 @@ def build_and_save_indicators_figure(
         )
 
     fig.update_layout(
-        title="Trades and wealth over time",
+        title="Augmented fluctuations",
         width=1500,
         height=1500,
     )
