@@ -1,24 +1,17 @@
 from pathlib import Path
 
-import numpy as np
 import plotly.graph_objects as go
 from jinja2 import Environment, PackageLoader, select_autoescape
 from plotly.subplots import make_subplots
 
 from athena.core.fluctuations import Fluctuations
-from athena.core.market_entities import Portfolio, Position
-from athena.core.types import Coin
+from athena.core.market_entities import Position
 from athena.performance.models import (
     TradingMetrics,
     TradingPerformance,
     TradingStatistics,
 )
 from athena.tradingtools.metrics.metrics import (
-    max_drawdown,
-    cagr,
-    calmar,
-    sharpe,
-    sortino,
     trades_to_wealth,
 )
 
@@ -116,35 +109,6 @@ def _plot_trades_on_fluctuations(trades: list[Position], fluctuations: Fluctuati
         height=800,
     )
     return fig.to_html(full_html=False, include_plotlyjs="cdn")
-
-
-def _build_metrics(trades: list[Position]) -> TradingMetrics:
-    """Calculate raw metrics."""
-    nb_trades = len(trades)
-    nb_wins = len([trade for trade in trades if trade.is_win])
-    return TradingMetrics(
-        nb_trades=len(trades),
-        nb_wins=nb_wins,
-        nb_losses=nb_trades - nb_wins,
-        total_return=round(
-            np.sum([trade.total_profit for trade in trades])
-            / Portfolio.default().get_available(Coin.default_currency()),
-            3,
-        ),
-        best_trade=np.max([trade.profit_pct for trade in trades]),
-        worst_trade=np.min([trade.profit_pct for trade in trades]),
-    )
-
-
-def _build_statistics(trades: list[Position]) -> TradingStatistics:
-    """Calculate trading statistics."""
-    return TradingStatistics(
-        max_drawdown=max_drawdown(trades=trades),
-        cagr=cagr(trades=trades),
-        sortino_ratio=sortino(trades=trades),
-        sharpe_ratio=sharpe(trades=trades),
-        calmar_ratio=calmar(trades=trades),
-    )
 
 
 def _performance_table(trading_performance: TradingPerformance):
@@ -275,8 +239,8 @@ def build_and_save_trading_report(
     report = template.render(
         metrics=_performance_table(
             trading_performance=TradingPerformance(
-                trading_statistics=_build_statistics(trades),
-                trading_metrics=_build_metrics(trades),
+                trading_statistics=TradingStatistics.from_trades(trades),
+                trading_metrics=TradingMetrics.from_trades(trades),
             )
         ),
         trades=trades_html,

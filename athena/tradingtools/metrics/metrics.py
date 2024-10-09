@@ -3,7 +3,7 @@ import datetime
 
 import numpy as np
 
-from athena.core.market_entities import Position, Portfolio
+from athena.core.market_entities import Position, Portfolio, Trade
 from athena.core.types import Coin
 
 
@@ -30,6 +30,23 @@ class TradingMetrics:
     def model_dump(self):
         return asdict(self)
 
+    @classmethod
+    def from_trades(cls, trades: list[Trade]):
+        nb_trades = len(trades)
+        nb_wins = len([trade for trade in trades if trade.is_win])
+        return cls(
+            nb_trades=len(trades),
+            nb_wins=nb_wins,
+            nb_losses=nb_trades - nb_wins,
+            total_return=round(
+                np.sum([trade.total_profit for trade in trades])
+                / Portfolio.default().get_available(Coin.default_currency()),
+                3,
+            ),
+            best_trade=np.max([trade.profit_pct for trade in trades]),
+            worst_trade=np.min([trade.profit_pct for trade in trades]),
+        )
+
 
 @dataclass
 class TradingStatistics:
@@ -51,6 +68,16 @@ class TradingStatistics:
 
     def model_dump(self):
         return asdict(self)
+
+    @classmethod
+    def from_trades(cls, trades: list[Trade]):
+        return cls(
+            max_drawdown=max_drawdown(trades=trades),
+            cagr=cagr(trades=trades),
+            sortino_ratio=sortino(trades=trades),
+            sharpe_ratio=sharpe(trades=trades),
+            calmar_ratio=calmar(trades=trades),
+        )
 
 
 def trades_to_wealth(
