@@ -129,6 +129,34 @@ def _performance_table(trading_performance: TradingPerformance):
         """Alternate even and odd colors."""
         return [odd_color, even_color] * (size // 2) + [odd_color] * (size % 2)
 
+    def _build_table(dictionary: dict):
+        return go.Table(
+            header=dict(
+                values=["<b>Indicator</b>", "<b>Value</b>"],
+                line_color="darkslategray",
+                fill_color=header_color,
+                align=["left", "center"],
+                font=dict(color="white", size=12),
+            ),
+            cells=dict(
+                values=[
+                    list(dictionary.keys()),
+                    list(dictionary.values()),
+                ],
+                line={"color": "darkslategray"},
+                # 2-D list of colors for alternating rows
+                fill={
+                    "color": _fill_color(
+                        size=len(dictionary.values()),
+                        even_color=row_even_color,
+                        odd_color=row_odd_color,
+                    )
+                },
+                align=["left", "center"],
+                font=dict(color="darkslategray", size=11),
+            ),
+        )
+
     header_color = "grey"
     row_even_color = "lightgrey"
     row_odd_color = "white"
@@ -141,68 +169,14 @@ def _performance_table(trading_performance: TradingPerformance):
     )
 
     fig.add_trace(
-        go.Table(
-            header=dict(
-                values=["<b>Indicator</b>", "<b>Value</b>"],
-                line_color="darkslategray",
-                fill_color=header_color,
-                align=["left", "center"],
-                font=dict(color="white", size=12),
-            ),
-            cells=dict(
-                values=[
-                    list(trading_performance.trading_metrics.model_dump().keys()),
-                    list(trading_performance.trading_metrics.model_dump().values()),
-                ],
-                line={"color": "darkslategray"},
-                # 2-D list of colors for alternating rows
-                fill={
-                    "color": _fill_color(
-                        size=len(
-                            trading_performance.trading_metrics.model_dump().values()
-                        ),
-                        even_color=row_even_color,
-                        odd_color=row_odd_color,
-                    )
-                },
-                align=["left", "center"],
-                font=dict(color="darkslategray", size=11),
-            ),
-        ),
+        _build_table(dictionary=trading_performance.trading_metrics.model_dump()),
         row=1,
         col=1,
     )
 
     fig.add_trace(
-        go.Table(
-            header=dict(
-                values=["<b>Indicator</b>", "<b>Value</b>"],
-                line_color="darkslategray",
-                fill_color=header_color,
-                align=["left", "center"],
-                font=dict(color="white", size=12),
-            ),
-            cells=dict(
-                values=[
-                    list(trading_performance.trading_statistics.model_dump().keys()),
-                    list(trading_performance.trading_statistics.model_dump().values()),
-                ],
-                line={"color": "darkslategray"},
-                # 2-D list of colors for alternating rows
-                fill={
-                    "color": _fill_color(
-                        size=len(
-                            trading_performance.trading_statistics.model_dump().values()
-                        ),
-                        even_color=row_even_color,
-                        odd_color=row_odd_color,
-                    )
-                },
-                align=["left", "center"],
-                font=dict(color="darkslategray", size=11),
-            ),
-        ),
-        row=1,
+        _build_table(dictionary=trading_performance.trading_statistics.model_dump()),
+        row=2,
         col=1,
     )
 
