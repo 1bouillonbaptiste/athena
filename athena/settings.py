@@ -4,7 +4,7 @@ from pathlib import Path
 DATA_DIR = Path("/data/athena")
 
 
-class ProjectContext:
+class Settings:
     def __init__(self, root_dir: Path | None = None):
         if root_dir is None:
             try:  # works when running the code

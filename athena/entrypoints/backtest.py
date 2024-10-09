@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from athena.core.config import DataConfig, StrategyConfig
-from athena.settings import ProjectContext
+from athena.settings import Settings
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.entrypoints.utils import load_config
 from athena.performance.report import build_and_save_trading_report
@@ -36,7 +36,7 @@ from athena.tradingtools.strategies import init_strategy
 @click.option(
     "--root-dir",
     "-r",
-    default=ProjectContext().raw_data_directory,
+    default=Settings().raw_data_directory,
     type=Path,
     help="Location of raw market data.",
 )
@@ -60,7 +60,7 @@ def backtest(
     strategy_config = StrategyConfig.model_validate(load_config(strategy_config_path))
 
     fluctuations = Fluctuations.load_from_dataset(
-        dataset=DatasetLayout(root_dir=root_dir or ProjectContext().raw_data_directory),
+        dataset=DatasetLayout(root_dir=root_dir or Settings().raw_data_directory),
         coin=data_config.coin,
         currency=data_config.currency,
         target_period=data_config.period,

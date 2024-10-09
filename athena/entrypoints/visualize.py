@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from athena.core.config import DataConfig, IndicatorsConfig
-from athena.settings import ProjectContext
+from athena.settings import Settings
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.entrypoints.utils import load_config
 from athena.tradingtools.indicators import build_indicator
@@ -134,7 +134,7 @@ def _build_indicator_lines(
 @click.option(
     "--root-dir",
     "-r",
-    default=ProjectContext().raw_data_directory,
+    default=Settings().raw_data_directory,
     type=Path,
     help="Location of raw market data.",
 )
@@ -160,7 +160,7 @@ def visualize(
     )
 
     fluctuations = Fluctuations.load_from_dataset(
-        dataset=DatasetLayout(root_dir=root_dir or ProjectContext().raw_data_directory),
+        dataset=DatasetLayout(root_dir=root_dir or Settings().raw_data_directory),
         coin=data_config.coin,
         currency=data_config.currency,
         target_period=data_config.period,
