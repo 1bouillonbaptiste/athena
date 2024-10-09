@@ -6,7 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from athena.core.interfaces import Fluctuations
-from athena.core.interfaces.dataset_layout import DatasetLayout
+from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
 
 
