@@ -1,11 +1,12 @@
 import os
 
 from binance.client import Client
+from pydantic import Field
 
-from athena.core.context import ProjectContext
+from athena.settings import Settings
 
 
-def get_credentials(context: ProjectContext = ProjectContext()):
+def get_credentials(context: Settings = Field(default_factory=Settings())):
     """Retrieve binance credentials from creds file."""
     if context.credentials_file.exists():
         for line in context.credentials_file.open("r"):
