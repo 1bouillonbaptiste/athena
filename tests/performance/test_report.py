@@ -6,13 +6,10 @@ import pytest
 from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Position
 from athena.performance.report import (
-    _get_cagr,
-    _get_calmar,
-    _get_max_drawdown,
-    _get_sharpe,
-    _get_sortino,
-    _trades_to_wealth,
     build_and_save_trading_report,
+)
+from athena.tradingtools.metrics.metrics import (
+    trades_to_wealth,
 )
 
 
@@ -101,34 +98,9 @@ def trades():
 def test__trades_to_wealth(
     start_time, end_time, expected_wealth, expected_time, trades
 ):
-    wealth, time = _trades_to_wealth(trades, start_time=start_time, end_time=end_time)
+    wealth, time = trades_to_wealth(trades, start_time=start_time, end_time=end_time)
     assert np.allclose(wealth, expected_wealth, rtol=1e-3)
     assert time == expected_time
-
-
-def test__get_max_drawdown(trades):
-    # the wealth goes from 9.83006 to 5.69169462
-    assert _get_max_drawdown(trades) == pytest.approx(0.04138, abs=1e-3)
-
-
-def test__get_cagr():
-    cagr = _get_cagr([])  # noqa : F841 (unused)
-    pass
-
-
-def test__get_sharpe():
-    sharpe = _get_sharpe([])  # noqa : F841 (unused)
-    pass
-
-
-def test__get_calmar():
-    calmar = _get_calmar([])  # noqa : F841 (unused)
-    pass
-
-
-def test__get_sortino():
-    sortino = _get_sortino([])  # noqa : F841 (unused)
-    pass
 
 
 def test_build_and_save_trading_report(trades, generate_candles, tmp_path):
