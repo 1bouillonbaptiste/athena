@@ -16,16 +16,16 @@ class TradingMetrics:
         nb_wins: number of winning trades
         nb_losses: number of losing trades
         total_return: the return at trading session's end
-        best_trade: the return of the best trade
-        worst_trade: the return of the worst trade
+        best_trade_return: the return of the best trade
+        worst_trade_return: the return of the worst trade
     """
 
     nb_trades: int
     nb_wins: int
     nb_losses: int
     total_return: float
-    best_trade: float
-    worst_trade: float
+    best_trade_return: float
+    worst_trade_return: float
 
     def model_dump(self):
         return asdict(self)
@@ -43,8 +43,8 @@ class TradingMetrics:
                 / Portfolio.default().get_available(Coin.default_currency()),
                 3,
             ),
-            best_trade=np.max([trade.profit_pct for trade in trades]),
-            worst_trade=np.min([trade.profit_pct for trade in trades]),
+            best_trade_return=round(np.max([trade.profit_pct for trade in trades]), 5),
+            worst_trade_return=round(np.min([trade.profit_pct for trade in trades]), 5),
         )
 
 
@@ -72,11 +72,11 @@ class TradingStatistics:
     @classmethod
     def from_trades(cls, trades: list[Trade]):
         return cls(
-            max_drawdown=max_drawdown(trades=trades),
-            cagr=cagr(trades=trades),
-            sortino_ratio=sortino(trades=trades),
-            sharpe_ratio=sharpe(trades=trades),
-            calmar_ratio=calmar(trades=trades),
+            max_drawdown=calculate_max_drawdown(trades=trades),
+            cagr=calculate_cagr(trades=trades),
+            sortino_ratio=calculate_sortino(trades=trades),
+            sharpe_ratio=calculate_sharpe(trades=trades),
+            calmar_ratio=calculate_calmar(trades=trades),
         )
 
 
@@ -111,7 +111,7 @@ def trades_to_wealth(
     return np.cumsum(wealth) / initial_money, time
 
 
-def max_drawdown(trades: list[Position]) -> float:
+def calculate_max_drawdown(trades: list[Position]) -> float:
     """Calculate the biggest loss of a portofolio during its lifetime.
 
     A drawdown is peak-to-trough decline in the value of an investment during a specific period.
@@ -127,10 +127,10 @@ def max_drawdown(trades: list[Position]) -> float:
         return 0
     wealth, _ = trades_to_wealth(trades)
     drawdown = [np.max(wealth[: ii + 1]) - wealth[ii] for ii in range(1, len(wealth))]
-    return np.max(drawdown)
+    return round(np.max(drawdown), 3)
 
 
-def cagr(trades: list[Position]) -> float:
+def calculate_cagr(trades: list[Position]) -> float:
     """Calculate the CAGR (annualized average return) of the portfolio.
 
     The CAGR (Compound Annual Growth Rate) is the average annual growth rate of an investment over a specified period,
@@ -147,7 +147,7 @@ def cagr(trades: list[Position]) -> float:
     return 0
 
 
-def sharpe(trades: list[Position]) -> float:
+def calculate_sharpe(trades: list[Position]) -> float:
     """Calculate the risk-reward of a portfolio.
 
     The Sharpe ratio measures an investment's return relative to its total risk (volatility),
@@ -163,7 +163,7 @@ def sharpe(trades: list[Position]) -> float:
     return 0
 
 
-def sortino(trades: list[Position]) -> float:
+def calculate_sortino(trades: list[Position]) -> float:
     """The Sortino ratio measures an investment's return relative to its downside risk, focusing only on negative
     volatility, rather than total volatility like the Sharpe ratio.
 
@@ -177,7 +177,7 @@ def sortino(trades: list[Position]) -> float:
     return 0
 
 
-def calmar(trades: list[Position]) -> float:
+def calculate_calmar(trades: list[Position]) -> float:
     """Calculate the Calmar ratio.
 
     The Calmar ratio measures an investment's return relative to its maximum drawdown,
