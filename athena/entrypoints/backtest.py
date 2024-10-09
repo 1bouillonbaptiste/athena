@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from athena.core.config import DataConfig, StrategyConfig
-from athena.core.context import ProjectContext
+from athena.settings import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.entrypoints.utils import load_config
 from athena.performance.report import build_and_save_trading_report

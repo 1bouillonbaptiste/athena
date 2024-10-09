@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from athena.core.config import DataConfig, IndicatorsConfig
-from athena.core.context import ProjectContext
+from athena.settings import ProjectContext
 from athena.core.interfaces import DatasetLayout, Fluctuations
 from athena.entrypoints.utils import load_config
 from athena.tradingtools.indicators import build_indicator

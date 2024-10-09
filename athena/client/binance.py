@@ -2,7 +2,7 @@ import os
 
 from binance.client import Client
 
-from athena.core.context import ProjectContext
+from athena.settings import ProjectContext
 
 
 def get_credentials(context: ProjectContext = ProjectContext()):
