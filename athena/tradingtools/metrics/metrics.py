@@ -1,9 +1,56 @@
+from dataclasses import dataclass, asdict
 import datetime
 
 import numpy as np
 
 from athena.core.market_entities import Position, Portfolio
 from athena.core.types import Coin
+
+
+@dataclass
+class TradingMetrics:
+    """Raw statistics.
+
+    Attributes:
+        nb_trades: total number of trades
+        nb_wins: number of winning trades
+        nb_losses: number of losing trades
+        total_return: the return at trading session's end
+        best_trade: the return of the best trade
+        worst_trade: the return of the worst trade
+    """
+
+    nb_trades: int
+    nb_wins: int
+    nb_losses: int
+    total_return: float
+    best_trade: float
+    worst_trade: float
+
+    def model_dump(self):
+        return asdict(self)
+
+
+@dataclass
+class TradingStatistics:
+    """Financial metrics representing trading performances.
+
+    Attributes:
+        max_drawdown: the biggest loss of a portfolio over time
+        cagr: average annual growth rate
+        sharpe_ratio: investment's return relative to its total risk
+        sortino_ratio: investment's return relative to its downside risk
+        calmar_ratio: investment's return relative to its maximum drawdown
+    """
+
+    max_drawdown: float
+    cagr: float
+    sharpe_ratio: float
+    sortino_ratio: float
+    calmar_ratio: float
+
+    def model_dump(self):
+        return asdict(self)
 
 
 def trades_to_wealth(
