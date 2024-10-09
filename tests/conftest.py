@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from athena.core.interfaces import Candle, Fluctuations
+from athena.core.interfaces import Fluctuations
+from athena.core.market_entities import Candle
 from athena.core.types import Coin, Period
 
 

@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
-from athena.core.interfaces.candle import Candle
+from athena.core.market_entities import Candle
 from athena.core.interfaces.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
 
