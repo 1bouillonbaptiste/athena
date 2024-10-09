@@ -3,7 +3,7 @@ import datetime
 import numpy as np
 import pytest
 
-from athena.core.interfaces import Fluctuations
+from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Position
 from athena.performance.report import (
     _get_cagr,

@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from athena.core.interfaces import Candle
+from athena.core.market_entities import Candle
 from athena.core.market_entities import Portfolio, Position
 from athena.core.types import Coin
 

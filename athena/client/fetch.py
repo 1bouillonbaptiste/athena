@@ -5,8 +5,9 @@ from pathlib import Path
 from tqdm import tqdm
 
 from athena.client.binance import BinanceClient
-from athena.core.interfaces import Candle, DatasetLayout
-from athena.core.interfaces.fluctuations import Fluctuations, load_candles_from_file
+from athena.core.dataset_layout import DatasetLayout
+from athena.core.fluctuations import Fluctuations, load_candles_from_file
+from athena.core.market_entities import Candle
 from athena.core.types import Coin, Period
 
 logger = logging.getLogger(__name__)

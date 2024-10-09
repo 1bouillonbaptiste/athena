@@ -5,8 +5,9 @@ import pytest
 from click.testing import CliRunner
 
 from athena.cli import app
-from athena.core.config import IndicatorsConfig
-from athena.core.interfaces import DatasetLayout, Fluctuations
+from athena.configs import IndicatorsConfig
+from athena.core.fluctuations import Fluctuations
+from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
 from athena.entrypoints.visualize import _build_indicator_lines
 

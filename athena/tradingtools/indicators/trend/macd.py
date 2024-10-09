@@ -1,6 +1,6 @@
 from ta.trend import MACD
 
-from athena.core.interfaces import Fluctuations
+from athena.core.fluctuations import Fluctuations
 from athena.tradingtools.indicators.common import IndicatorLine
 
 

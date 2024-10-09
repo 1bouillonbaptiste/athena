@@ -2,7 +2,7 @@ from datetime import datetime
 
 from athena.client.binance import BinanceClient
 from athena.client.fetch import fetch_historical_data
-from athena.core.interfaces import Fluctuations
+from athena.core.fluctuations import Fluctuations
 from athena.core.types import Period
 
 
