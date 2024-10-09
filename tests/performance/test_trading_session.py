@@ -2,8 +2,8 @@ import datetime
 
 import pytest
 
-from athena.core.config import DataConfig
-from athena.core.interfaces import Fluctuations
+from athena.configs import DataConfig
+from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Portfolio
 from athena.core.types import Signal
 from athena.performance.trading_session import TradingSession

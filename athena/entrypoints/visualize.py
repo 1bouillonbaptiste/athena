@@ -8,9 +8,10 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from athena.core.config import DataConfig, IndicatorsConfig
+from athena.configs import DataConfig, IndicatorsConfig
 from athena.settings import Settings
-from athena.core.interfaces import DatasetLayout, Fluctuations
+from athena.core.fluctuations import Fluctuations
+from athena.core.dataset_layout import DatasetLayout
 from athena.entrypoints.utils import load_config
 from athena.tradingtools.indicators import build_indicator
 from athena.tradingtools.indicators.common import IndicatorLine

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from athena.core.interfaces import Fluctuations
+from athena.core.fluctuations import Fluctuations
 from athena.core.types import Signal
 from athena.tradingtools.strategies.strategy import Strategy
 

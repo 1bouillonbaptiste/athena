@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from athena.core.interfaces.fluctuations import Fluctuations
+from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Candle
 from athena.core.types import Coin, Period
 
