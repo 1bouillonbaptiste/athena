@@ -1,0 +1,5 @@
+coin: "BTC"
+currency: "USDT"
+period: "1h"
+from_date: "2020-01-01"
+to_date: "2021-01-01"

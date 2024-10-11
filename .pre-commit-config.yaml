@@ -15,31 +15,14 @@ repos:
       -   id: check-merge-conflict
       -   id: trailing-whitespace
       -   id: end-of-file-fixer
-      -   id: check-symlinks
-      -   id: check-shebang-scripts-are-executable
-      -   id: check-executables-have-shebangs
-  # Will run a bunch of standard pre-commit hook for jupyter notebook
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.6.4
-    hooks:
-      - id: nbqa-ruff
-        args: [--ignore=D, --fix, --line-length=120]
-  # Will autoformat the doc
-  - repo: https://github.com/myint/docformatter
-    rev: v1.5.0
-    hooks:
-      - id: docformatter
-        args:
-          - --in-place
-          - --wrap-summaries=120
   # Ruff: black, isort, flake8, pycodestyle and bandit rules
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.1.3'
+    rev: 'v0.6.9'
     hooks:
-      - id: ruff-format
       - id: ruff
-        args: [--fix]
+        args: [ --fix ]
+      - id: ruff-format
   # Check if the docstring respect google format. Might be added in ruff
   - repo: https://github.com/jsh9/pydoclint
     rev: 0.4.1

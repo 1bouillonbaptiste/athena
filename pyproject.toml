@@ -20,6 +20,7 @@ click = "^8.1.7"
 plotly = "^5.24.1"
 jinja2 = "^3.1.4"
 pyyaml = "^6.0.2"
+ta = "^0.11.0"
 
 [tool.poetry.scripts]
 athena = "athena.cli:app"

@@ -55,6 +55,24 @@ class DataConfig(BaseModel):
         )
 
 
+class IndicatorConfig(BaseModel):
+    """Model that stores technical indicator parameters.
+
+    Attributes:
+        name: the name of the indicator
+        parameters: the parameters of the indicator
+    """
+
+    name: str
+    parameters: dict[str, Any]
+
+
+class IndicatorsConfig(BaseModel):
+    """Model that stores technical indicator configs."""
+
+    indicators: list[IndicatorConfig]
+
+
 class StrategyConfig(BaseModel):
     """Model to instantiate a strategy and trading parameters.
 
@@ -65,15 +83,3 @@ class StrategyConfig(BaseModel):
 
     name: str
     parameters: dict[str, Any]
-
-
-class BacktestConfig(BaseModel):
-    """Model for backtesting configuration.
-
-    Attributes:
-        data: data configuration
-        strategy: strategy configuration
-    """
-
-    data: DataConfig
-    strategy: StrategyConfig

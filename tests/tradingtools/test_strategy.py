@@ -1,6 +1,6 @@
 import pytest
 
-from athena.core.interfaces import Fluctuations
+from athena.core.fluctuations import Fluctuations
 from athena.core.types import Signal
 from athena.tradingtools import Strategy
 

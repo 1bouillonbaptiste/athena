@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from athena.core.interfaces import Candle, Fluctuations
+from athena.core.fluctuations import Fluctuations
+from athena.core.market_entities import Candle, Position
 from athena.core.types import Coin, Period
 
 
@@ -280,3 +281,36 @@ def fluctuations():
         )
 
     return _fluctuations
+
+
+@pytest.fixture
+def sample_trades():
+    """Returns 3 closed positions.
+
+    trade 1 : sell at higher price, it's a win
+    trade 2 : sell at same price, it's a loss due to fees
+    trade 3 : sell at lower price, it's a loss
+
+    Overall we should make money
+
+    Returns:
+        trades as list of closed positions
+    """
+    trade1 = Position.open(
+        open_date=datetime.datetime(2024, 8, 20),
+        open_price=100,
+        money_to_invest=50,
+    ).close(close_date=datetime.datetime(2024, 8, 21), close_price=120)
+
+    trade2 = Position.open(
+        open_date=datetime.datetime(2024, 8, 22),
+        open_price=130,
+        money_to_invest=50,
+    ).close(close_date=datetime.datetime(2024, 8, 23), close_price=130)
+
+    trade3 = Position.open(
+        open_date=datetime.datetime(2024, 8, 24),
+        open_price=130,
+        money_to_invest=50,
+    ).close(close_date=datetime.datetime(2024, 8, 25), close_price=120)
+    return [trade1, trade2, trade3]

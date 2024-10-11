@@ -5,9 +5,11 @@ import pytest
 from click.testing import CliRunner
 
 from athena.cli import app
+from athena.configs import IndicatorsConfig
 from athena.core.fluctuations import Fluctuations
 from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
+from athena.entrypoints.visualize import _build_indicator_lines
 
 
 @pytest.fixture
@@ -22,32 +24,47 @@ def data_config():
 
 
 @pytest.fixture
-def strategy_config():
+def indicators_config():
     return {
-        "name": "strategy_dca",
-        "parameters": {
-            "weekday": "every_day",
-            "hour": 12,
-            "stop_loss_pct": 0.01,
-            "take_profit_pct": 0.01,
-            "position_size": 0.01,
-        },
+        "indicators": [
+            {
+                "name": "ichimoku",
+                "parameters": {
+                    "window_a": 2,
+                    "window_b": 2,
+                    "window_c": 2,
+                },
+            },
+        ],
     }
 
 
-def test_run_backtest(data_config, strategy_config, generate_candles, tmp_path, mocker):
+def test_build_indicator_lines(indicators_config, generate_candles):
+    indicator_lines = _build_indicator_lines(
+        config=IndicatorsConfig.model_validate(indicators_config),
+        fluctuations=Fluctuations.from_candles(generate_candles(size=10)),
+    )
+
+    assert len(indicator_lines) == 4
+
+    assert [line.name for line in indicator_lines] == [
+        "span_a",
+        "span_b",
+        "base",
+        "conversion",
+    ]
+
+
+def test_run_visualize(
+    data_config, indicators_config, generate_candles, tmp_path, mocker
+):
     data_config_path = tmp_path / "data_config.yaml"
-    strategy_config_path = tmp_path / "strategy_config.yaml"
+    indicators_config_path = tmp_path / "indicators_config.yaml"
     root_dir = tmp_path / "raw_market_data"
-    output_dir = tmp_path / "results"
+    output_path = tmp_path / "figure.html"
 
     data_config_path.write_text(json.dumps(data_config))
-    strategy_config_path.write_text(json.dumps(strategy_config))
-
-    mocker.patch(
-        "athena.performance.report._plot_trades_on_fluctuations",
-        return_value="",
-    )
+    indicators_config_path.write_text(json.dumps(indicators_config))
 
     start_date = datetime.datetime(2020, 1, 1)
     for day_ii in range(2):
@@ -68,18 +85,18 @@ def test_run_backtest(data_config, strategy_config, generate_candles, tmp_path, 
     runner = CliRunner().invoke(
         app,
         [
-            "backtest",
+            "visualize",
             "--data-config-path",
             data_config_path.as_posix(),
-            "--strategy-config-path",
-            strategy_config_path.as_posix(),
+            "--indicators-config-path",
+            indicators_config_path.as_posix(),
             "--root-dir",
             root_dir.as_posix(),
-            "--output-dir",
-            output_dir.as_posix(),
+            "--output-path",
+            output_path.as_posix(),
         ],
     )
 
     assert runner.exit_code == 0
 
-    assert (output_dir / "performance_report.html").exists()
+    assert output_path.exists()

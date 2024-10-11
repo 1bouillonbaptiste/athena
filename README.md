@@ -5,11 +5,11 @@ Only for educational purpose, don't sue me.
 
 :warning: The development of this repo is still in progress. As of today you can
  - [x] download market data
- - [ ] create a strategy based on
+ - [x] create a strategy based on
      - [x] custom code
-     - [ ] technical indicators
+     - [x] technical indicators
      - [ ] machine learning
- - [ ] backtest your strategy
+ - [x] backtest your strategy
 
 Future work, not contractual, not exhaustive.
 * create a new strategy from text-based input (👋 prompt engineers)
@@ -62,7 +62,20 @@ poetry run athena download \
 
 ```bash
 poetry run athena backtest \
-    --config-path /path/to/my_config.yaml \
+    --data-config-path /path/to/my_data_config.yaml \
+    --strategy-config-path /path/to/my_strategy_config.yaml \
     --root-dir /path/to/raw_market_data \
     --output-dir /path/to/results
+```
+
+
+### visualize
+
+
+```bash
+poetry run athena visualize \
+    --data-config-path /path/to/my_data_config.yaml \
+    --indicators-config-path /path/to/my_indicators_config.yaml \
+    --root-dir /path/to/raw_market_data \
+    --output-dir /path/to/figure.html
 ```

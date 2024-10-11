@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from athena.core.interfaces import Fluctuations
-from athena.core.interfaces.dataset_layout import DatasetLayout
+from athena.core.fluctuations import Fluctuations
+from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
 
 
@@ -52,8 +52,8 @@ def test_fluctuations_from_candles(sample_candles):
                 "taker_volume": 1049.7,
             },
         ],
-        "coin": Coin.BTC,
-        "currency": Coin.USDT,
+        "coin": "BTC",
+        "currency": "USDT",
         "period": Period(timeframe="4h"),
     }
 
@@ -155,7 +155,8 @@ def test_load_fluctuations_get_series(tmp_path, sample_candles, generate_candles
     fluctuations = Fluctuations.from_candles(candles=candles)
 
     assert np.allclose(
-        fluctuations.get_series("open"), np.array([candle.open for candle in candles])
+        fluctuations.get_series("open").to_numpy(),
+        np.array([candle.open for candle in candles]),
     )
 
     with pytest.raises(ValueError, match="Trying to access unavailable attribute"):
