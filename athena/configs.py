@@ -1,7 +1,7 @@
 import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 
 from athena.core.types import Coin, Period
 
@@ -83,3 +83,35 @@ class StrategyConfig(BaseModel):
 
     name: str
     parameters: dict[str, Any]
+
+
+class TradingSessionConfig(BaseModel):
+    """Parameters to manage market movements during a trading session.
+
+    Stop loss default value (None or 1) mean never sell.
+    Other value mean, e.g. stop_loss_pct is 0.2 and open price is 100, sell if price goes under 80.
+
+    Take profit default value (None or inf) mean never sell.
+    Other value mean, e.g. take_profit_pct is 0.2 and open price is 100, sell if price goes above 120.
+    For now, we sell when price doubles, could be increased to infinity.
+
+    Attributes:
+        position_size: available money percentage to gamble when opening a position
+        stop_loss_pct: close a position if loss (in percentage) exceeds this value
+        take_profit_pct: close a position if profit (in percentage) exceeds this value
+
+    """
+
+    position_size: float = Field(gt=0, lt=1)
+    stop_loss_pct: float = Field(gt=0, le=1)
+    take_profit_pct: float = Field(gt=0)
+
+    @field_validator("stop_loss_pct", mode="before")
+    @classmethod
+    def parse_stop_loss_pct(cls, value: Any) -> float:
+        return 1 if value is None else value
+
+    @field_validator("take_profit_pct", mode="before")
+    @classmethod
+    def parse_take_profit_pct(cls, value: Any) -> float:
+        return 1 if value is None else value

@@ -35,14 +35,37 @@ def strategy_config():
     }
 
 
-def test_run_backtest(data_config, strategy_config, generate_candles, tmp_path, mocker):
-    data_config_path = tmp_path / "data_config.yaml"
-    strategy_config_path = tmp_path / "strategy_config.yaml"
+@pytest.fixture
+def config():
+    return {
+        "data": {
+            "coin": "BTC",
+            "currency": "USDT",
+            "period": "1h",
+            "from_date": "2020-01-01",
+            "to_date": "2020-01-02",
+        },
+        "strategy": {
+            "name": "strategy_dca",
+            "parameters": {
+                "weekday": "every_day",
+                "hour": 12,
+            },
+        },
+        "session": {
+            "stop_loss_pct": 0.01,
+            "take_profit_pct": 0.01,
+            "position_size": 0.01,
+        },
+    }
+
+
+def test_run_backtest(config, generate_candles, tmp_path, mocker):
+    config_path = tmp_path / "config.yaml"
     root_dir = tmp_path / "raw_market_data"
     output_dir = tmp_path / "results"
 
-    data_config_path.write_text(json.dumps(data_config))
-    strategy_config_path.write_text(json.dumps(strategy_config))
+    config_path.write_text(json.dumps(config))
 
     mocker.patch(
         "athena.performance.report._plot_trades_on_fluctuations",
@@ -69,10 +92,8 @@ def test_run_backtest(data_config, strategy_config, generate_candles, tmp_path, 
         app,
         [
             "backtest",
-            "--data-config-path",
-            data_config_path.as_posix(),
-            "--strategy-config-path",
-            strategy_config_path.as_posix(),
+            "--config-path",
+            config_path.as_posix(),
             "--root-dir",
             root_dir.as_posix(),
             "--output-dir",

@@ -1,42 +1,34 @@
-from pydantic import BaseModel, ConfigDict
-
-from athena.configs import DataConfig
+from athena.configs import TradingSessionConfig
 from athena.core.fluctuations import Fluctuations
-from athena.core.market_entities import Portfolio, Position, Trade, Candle
-from athena.core.types import Signal
+from athena.core.market_entities import Portfolio, Position, Candle
+from athena.core.types import Signal, Coin
 from athena.tradingtools.strategies.strategy import Strategy
 
 
-class TradingSession(BaseModel):
+class TradingSession:
     """Manage position, trades and portfolio during a backtest.
 
-    # TODO: the strategy is useful only for position_size and strategy name. Use StrategyConfig instead ?
-
-    Attributes:
-        trades: list of closed positions
-        position: an open position or None
-        portfolio: available assets
-        strategy: a trading algorithm
-        config: data configuration
+    Args:
+        coin: traded coin
+        currency: traded currency
+        strategy: strategy to generate signals
+        config: session configuration
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    trades: list[Trade]
-    position: Position | None
-    portfolio: Portfolio
-    strategy: Strategy
-    config: DataConfig
-
-    @classmethod
-    def from_config_and_strategy(cls, config: DataConfig, strategy: Strategy):
-        return cls(
-            trades=[],
-            position=None,
-            portfolio=Portfolio.default(currency=config.currency),
-            strategy=strategy,
-            config=config,
-        )
+    def __init__(
+        self,
+        coin: Coin,
+        currency: Coin,
+        strategy: Strategy,
+        config: TradingSessionConfig,
+    ):
+        self.coin = coin
+        self.currency = currency
+        self.strategy = strategy
+        self.config = config
+        self.portfolio = Portfolio.default(currency=self.currency)
+        self.position = None
+        self.trades = []
 
     def buy_signal(self, candle: Candle):
         """Create a new buy order if the portfolio has enough currency."""
@@ -45,22 +37,21 @@ class TradingSession(BaseModel):
             return
 
         money_to_invest = (
-            self.portfolio.get_available(self.config.currency)
-            * self.strategy.position_size
+            self.portfolio.get_available(self.currency) * self.config.position_size
         )
-        if self.portfolio.get_available(self.config.currency) > money_to_invest:
+        if self.portfolio.get_available(self.currency) > money_to_invest:
             self.position = Position.open(
                 strategy_name=self.strategy.name,
-                coin=self.config.coin,
-                currency=self.config.currency,
+                coin=self.coin,
+                currency=self.currency,
                 open_date=candle.close_time,
                 open_price=candle.close,
                 money_to_invest=money_to_invest,
-                stop_loss=candle.close * (1 - self.strategy.stop_loss_pct)
-                if self.strategy.stop_loss_pct is not None
+                stop_loss=candle.close * (1 - self.config.stop_loss_pct)
+                if self.config.stop_loss_pct is not None
                 else 0,
-                take_profit=candle.close * (1 + self.strategy.take_profit_pct)
-                if self.strategy.take_profit_pct is not None
+                take_profit=candle.close * (1 + self.config.take_profit_pct)
+                if self.config.take_profit_pct is not None
                 else float("inf"),
             )
             self.portfolio.update_from_position(position=self.position)
