@@ -1,0 +1,15 @@
+data:
+  coin: "BTC"
+  currency: "USDT"
+  period: "1h"
+  from_date: "2020-01-01"
+  to_date: "2021-01-01"
+strategy:
+  name: "strategy_dca"
+  parameters:
+    weekday: "every_day"
+    hour: 12
+session:
+  position_size: 0.05
+  stop_loss_pct: 0.01
+  take_profit_pct: 0.01
