@@ -110,9 +110,9 @@ def _division_to_split(division: list[int], total_size: int, purge_size: int):
 
 def create_ccpv_splits(
     fluctuations: Fluctuations,
-    test_size: float,
-    test_samples: int,
-    purge_factor: float = 0.01,
+    test_size: float = 0.2,
+    test_samples: int = 1,
+    purge_factor: float = 0,
 ) -> SplitManager:
     """Create the Combinatorial Purged Cross Validation Splits of the fluctuations.
 
