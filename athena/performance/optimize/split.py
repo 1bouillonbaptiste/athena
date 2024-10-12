@@ -20,8 +20,25 @@ class SplitManager:
         self.fluctuations = fluctuations
         self.splits = splits
 
+    def get_split(self, index: int):
+        """Retrieve train and test fluctuations."""
+        return (
+            Fluctuations.from_candles(
+                [
+                    self.fluctuations.candles[ii]
+                    for ii in self.splits[index].train_indexes
+                ]
+            ),
+            Fluctuations.from_candles(
+                [
+                    self.fluctuations.candles[ii]
+                    for ii in self.splits[index].test_indexes
+                ]
+            ),
+        )
 
-def create_cross_validation_divisions(
+
+def _create_cross_validation_divisions(
     nb_divisions: int, nb_test: int
 ) -> list[list[int]]:
     """Generate the different combinations of cross validation splits.
@@ -52,7 +69,7 @@ def create_cross_validation_divisions(
         all_splits = []
         for ii in range(nb_divisions - nb_test + 1):
             base_split = [0] * ii + [1]
-            tail_splits = create_cross_validation_divisions(
+            tail_splits = _create_cross_validation_divisions(
                 nb_divisions - len(base_split), nb_test - 1
             )
             new_splits = [base_split + new for new in tail_splits]
@@ -60,7 +77,7 @@ def create_cross_validation_divisions(
         return all_splits
 
 
-def division_to_split(division: list[int], total_size: int, purge_size: int):
+def _division_to_split(division: list[int], total_size: int, purge_size: int):
     """Convert a cross-validation division to a cross-validation split.
 
     The division is a list of samples indexes to put in test, [0, 0, 0, 0, 1] -> last 20% are reserved for test
@@ -113,10 +130,10 @@ def create_ccpv_splits(
     purge_size = round(len(fluctuations) * purge_factor)
 
     all_splits = [
-        division_to_split(
+        _division_to_split(
             division=division, total_size=len(fluctuations), purge_size=purge_size
         )
-        for division in create_cross_validation_divisions(
+        for division in _create_cross_validation_divisions(
             nb_divisions=nb_divisions, nb_test=test_samples
         )
     ]
