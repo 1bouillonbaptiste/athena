@@ -7,26 +7,14 @@ from athena.core.types import Signal
 
 
 class Strategy:
+    """Abstract class for trading strategies."""
+
     name: str
-    position_size: float
-    stop_loss_pct: float | None = None
-    take_profit_pct: float | None = None
 
     def __init__(
         self,
-        name: str = None,
-        position_size: float = 1,
-        stop_loss_pct: float = None,
-        take_profit_pct: float = None,
     ):
-        self.name = (
-            name
-            if name is not None
-            else "_".join(split_uppercase_words(self.__class__.__name__)).lower()
-        )
-        self.position_size = position_size
-        self.stop_loss_pct = stop_loss_pct
-        self.take_profit_pct = take_profit_pct
+        self.name = "_".join(_split_uppercase_words(self.__class__.__name__)).lower()
 
     def get_signals(
         self, fluctuations: Fluctuations
@@ -76,5 +64,17 @@ class Strategy:
         raise NotImplementedError
 
 
-def split_uppercase_words(string: str) -> list[str]:
+def _split_uppercase_words(string: str) -> list[str]:
+    """Split the string from words beginning with a capital letter.
+
+    Examples:
+        ThisName -> ["This", "Name"]
+        ThisIsIMPORTANT -> ["This", "Is", "IMPORTANT"]
+
+    Args:
+        string: input sequence to split
+
+    Returns:
+        split sequence
+    """
     return re.sub(r"([A-Z]+)", r" \1", string).split()

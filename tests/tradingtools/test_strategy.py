@@ -20,29 +20,17 @@ class StrategyBuyWeekSellFriday(Strategy):
         return signals
 
 
-class InvalidStrategy(Strategy):
+class InvalidStrategy(StrategyBuyWeekSellFriday):
     """This strategy returns too many signals."""
 
     def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
         """Return dummy signals."""
-        signals = []
-        for candle in fluctuations.candles:
-            match candle.open_time.isoweekday():
-                case 6 | 7:  # weekend
-                    signals.append(Signal.WAIT)
-                case 1 | 2 | 3 | 4:  # buy from monday to thursday
-                    signals.append(Signal.BUY)
-                case 5:  # panic sell on friday
-                    signals.append(Signal.SELL)
+        signals = super().compute_signals(fluctuations)
         return signals + [Signal.WAIT]
 
 
 def test_strategy_name():
-    strategy = StrategyBuyWeekSellFriday(
-        position_size=0.33,
-        take_profit_pct=0.01,
-        stop_loss_pct=0.01,
-    )
+    strategy = StrategyBuyWeekSellFriday()
     assert strategy.name == "strategy_buy_week_sell_friday"
 
 

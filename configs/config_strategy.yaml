@@ -1,8 +1,0 @@
-
-name: "strategy_dca"
-parameters:
-  weekday: "every_day"
-  hour: 12
-  stop_loss_pct: 0.01
-  take_profit_pct: 0.01
-  position_size: 0.05
