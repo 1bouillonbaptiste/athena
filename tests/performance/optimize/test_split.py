@@ -45,7 +45,7 @@ class DivisionToSplitCases:
 
     """
 
-    def case_no_purge(self):
+    def case_simple_split(self):
         return (
             [0, 0, 0, 0, 1],
             100,
@@ -53,6 +53,51 @@ class DivisionToSplitCases:
             Split(
                 train_indexes=list(range(0, 80)),
                 test_indexes=list(range(80, 100)),
+            ),
+        )
+
+    def case_test_in_middle(self):
+        return (
+            [0, 0, 1, 0, 0],
+            100,
+            0,
+            Split(
+                train_indexes=list(range(0, 40)) + list(range(60, 100)),
+                test_indexes=list(range(40, 60)),
+            ),
+        )
+
+    def case_multiple_tests(self):
+        return (
+            [0, 0, 1, 0, 1],
+            100,
+            0,
+            Split(
+                train_indexes=list(range(0, 40)) + list(range(60, 80)),
+                test_indexes=list(range(40, 60)) + list(range(80, 100)),
+            ),
+        )
+
+    def case_purge(self):
+        return (
+            [0, 0, 1, 0, 1],
+            100,
+            5,
+            Split(
+                train_indexes=list(range(0, 35)) + list(range(65, 75)),
+                test_indexes=list(range(40, 60)) + list(range(80, 100)),
+            ),
+        )
+
+    def case_total_size_not_even(self):
+        return (
+            [0, 0, 1, 0, 1],
+            256,
+            5,
+            Split(
+                train_indexes=list(range(0, 51 * 2 - 5))
+                + list(range(51 * 3 + 5, 51 * 4 - 5)),
+                test_indexes=list(range(51 * 2, 51 * 3)) + list(range(51 * 4, 51 * 5)),
             ),
         )
 

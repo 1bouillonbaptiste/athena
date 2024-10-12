@@ -77,12 +77,12 @@ def division_to_split(division: list[int], total_size: int, purge_size: int):
     division_size = total_size // len(division)
     purged_indexes = []
     test_indexes = []
-    for sample_index in np.argwhere(division)[0]:
-        sample_from = division_size * sample_index
-        sample_to = sample_from + division_size
-        purge_from = sample_from - purge_size
-        purge_to = sample_to + purge_size
-        test_indexes.extend(list(range(sample_from, sample_to)))
+    for division_index in np.argwhere(division):
+        division_from = division_size * division_index[0]
+        division_to = division_from + division_size
+        purge_from = round(division_from - purge_size)
+        purge_to = round(division_to + purge_size)
+        test_indexes.extend(list(range(division_from, division_to)))
         purged_indexes.extend(list(range(purge_from, purge_to)))
 
     return Split(
