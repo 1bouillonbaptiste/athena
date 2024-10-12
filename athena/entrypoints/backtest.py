@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from athena.configs import DataConfig, StrategyConfig
+from athena.configs import DataConfig, StrategyConfig, TradingSessionConfig
 from athena.settings import Settings
 from athena.core.fluctuations import Fluctuations
 from athena.core.dataset_layout import DatasetLayout
@@ -14,18 +14,11 @@ from athena.tradingtools.strategies import init_strategy
 
 @click.command()
 @click.option(
-    "--data-config-path",
-    "-dc",
+    "--config-path",
+    "-c",
     required=True,
     type=Path,
-    help="Path to the data configuration file.",
-)
-@click.option(
-    "--strategy-config-path",
-    "-sc",
-    required=True,
-    type=Path,
-    help="Path to the strategy configuration file.",
+    help="Path to the main configuration file.",
 )
 @click.option(
     "--output-dir",
@@ -42,23 +35,24 @@ from athena.tradingtools.strategies import init_strategy
     help="Location of raw market data.",
 )
 def backtest(
-    data_config_path: Path,
-    strategy_config_path: Path,
+    config_path: Path,
     output_dir: Path,
     root_dir: Path,
 ):
     """Run a trading algorithm on a dataset and save its performance results.
 
     Args:
-        data_config_path: path to data configuration
-        strategy_config_path: path to strategy configuration,
+        config_path: path to configuration
         output_dir: directory to save the performance results
         root_dir: raw market data location
     """
 
     output_dir.mkdir(exist_ok=True, parents=True)
-    data_config = DataConfig.model_validate(load_config(data_config_path))
-    strategy_config = StrategyConfig.model_validate(load_config(strategy_config_path))
+    config = load_config(config_path)
+
+    data_config = DataConfig.model_validate(config.get("data"))
+    strategy_config = StrategyConfig.model_validate(config.get("strategy"))
+    session_config = TradingSessionConfig.model_validate(config.get("session"))
 
     fluctuations = Fluctuations.load_from_dataset(
         dataset=DatasetLayout(root_dir=root_dir or Settings().raw_data_directory),
@@ -72,9 +66,14 @@ def backtest(
         strategy_name=strategy_config.name, strategy_params=strategy_config.parameters
     )
 
-    trades, _ = TradingSession.from_config_and_strategy(
-        config=data_config, strategy=strategy
-    ).get_trades_from_fluctuations(fluctuations=fluctuations)
+    trading_session = TradingSession(
+        coin=data_config.coin,
+        currency=data_config.currency,
+        strategy=strategy,
+        config=session_config,
+    )
+
+    trades, _ = trading_session.get_trades_from_fluctuations(fluctuations=fluctuations)
 
     build_and_save_trading_report(
         trades=trades,
