@@ -11,31 +11,6 @@ from athena.core.types import Coin, Period
 
 
 @pytest.fixture
-def data_config():
-    return {
-        "coin": "BTC",
-        "currency": "USDT",
-        "period": "1h",
-        "from_date": "2020-01-01",
-        "to_date": "2020-01-02",
-    }
-
-
-@pytest.fixture
-def strategy_config():
-    return {
-        "name": "strategy_dca",
-        "parameters": {
-            "weekday": "every_day",
-            "hour": 12,
-            "stop_loss_pct": 0.01,
-            "take_profit_pct": 0.01,
-            "position_size": 0.01,
-        },
-    }
-
-
-@pytest.fixture
 def config():
     return {
         "data": {
