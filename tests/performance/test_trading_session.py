@@ -2,26 +2,48 @@ import datetime
 
 import pytest
 
+from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Portfolio
+from athena.core.types import Signal
+from athena.tradingtools import Strategy
+
+
+class StrategyBuyMondaySellFriday(Strategy):
+    def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
+        """Return dummy signals."""
+        signals = []
+        for candle in fluctuations.candles:
+            match candle.open_time.isoweekday():
+                case 6 | 7:  # weekend
+                    signals.append(Signal.WAIT)
+                case 1:  # all-in on monday, typical crypto player
+                    signals.append(Signal.BUY)
+                case 2 | 3 | 4:  # no money left
+                    signals.append(Signal.WAIT)
+                case 5:  # panic sell on friday, typical crypto player
+                    signals.append(Signal.SELL)
+        return signals
 
 
 def test_reset_state(trading_session):
-    assert trading_session.trades == []
+    session = trading_session(StrategyBuyMondaySellFriday())
+    assert session.trades == []
 
-    trading_session.trades.append("foo")
-    trading_session.position = "bar"
+    session.trades.append("foo")
+    session.position = "bar"
 
-    assert trading_session.trades == ["foo"]
-    assert trading_session.position == "bar"
+    assert session.trades == ["foo"]
+    assert session.position == "bar"
 
-    trading_session._reset_state()
+    session._reset_state()
 
-    assert trading_session.trades == []
-    assert trading_session.position is None
+    assert session.trades == []
+    assert session.position is None
 
 
 def test_remaining_portfolio(fluctuations, trading_session):
-    trades, portfolio = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    trades, portfolio = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -29,16 +51,15 @@ def test_remaining_portfolio(fluctuations, trading_session):
 
     assert len(trades) == 1
     assert (
-        portfolio.get_available(trading_session.currency)
-        == Portfolio.default(trading_session.currency).get_available(
-            trading_session.currency
-        )
+        portfolio.get_available(session.currency)
+        == Portfolio.default(session.currency).get_available(session.currency)
         + trades[0].total_profit
     )
 
 
 def test_get_trades_fluctuations_with_sell_signal(fluctuations, trading_session):
-    trades, _ = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    trades, _ = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -71,8 +92,9 @@ def test_get_trades_fluctuations_with_sell_signal(fluctuations, trading_session)
 
 
 def test_get_trades_from_fluctuations_price_reach_tp(fluctuations, trading_session):
-    trading_session.config.take_profit_pct = 0.1
-    trades, portfolio = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    session.config.take_profit_pct = 0.1
+    trades, portfolio = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -87,8 +109,9 @@ def test_get_trades_from_fluctuations_price_reach_tp(fluctuations, trading_sessi
 
 
 def test_get_trades_from_fluctuations_price_reach_sl(fluctuations, trading_session):
-    trading_session.config.stop_loss_pct = 0.1
-    trades, _ = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    session.config.stop_loss_pct = 0.1
+    trades, _ = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
