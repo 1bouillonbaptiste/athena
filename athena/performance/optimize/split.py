@@ -13,7 +13,7 @@ class Split:
     test_indexes: list[int]
 
 
-class SplitManager:
+class SplitGenerator:
     """Stores a collection of `Split` associated to an instance of `Fluctuations`.`"""
 
     def __init__(self, fluctuations: Fluctuations, splits: list[Split]):
@@ -113,7 +113,7 @@ def create_ccpv_splits(
     test_size: float = 0.2,
     test_samples: int = 1,
     purge_factor: float = 0,
-) -> SplitManager:
+) -> SplitGenerator:
     """Create the Combinatorial Purged Cross Validation Splits of the fluctuations.
 
     Args:
@@ -123,7 +123,7 @@ def create_ccpv_splits(
         purge_factor: the ratio of purged indexes before and after test split to avoid leakage between train and test
 
     Returns:
-        an instance of SplitManager
+        an instance of SplitGenerator
     """
 
     nb_divisions = round(test_samples / test_size)
@@ -138,4 +138,4 @@ def create_ccpv_splits(
         )
     ]
 
-    return SplitManager(fluctuations=fluctuations, splits=all_splits)
+    return SplitGenerator(fluctuations=fluctuations, splits=all_splits)

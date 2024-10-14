@@ -116,7 +116,7 @@ def test_division_to_split(division, total_size, purge_size, expected_split):
 
 
 def test_create_ccpv_splits(generate_candles):
-    split_manager = create_ccpv_splits(
+    split_generator = create_ccpv_splits(
         fluctuations=Fluctuations.from_candles(
             generate_candles(
                 size=1000,
@@ -127,12 +127,12 @@ def test_create_ccpv_splits(generate_candles):
         test_samples=3,
         purge_factor=0.01,
     )
-    assert len(split_manager.splits) == 455
+    assert len(split_generator.splits) == 455
     assert (
-        len(split_manager.splits[0].test_indexes) == 0.2 * 1000 - 2
+        len(split_generator.splits[0].test_indexes) == 0.2 * 1000 - 2
     )  # should theoretically be 200, but 198 is fine
 
-    train_fluctuations, test_fluctuations = split_manager.get_split(0)
+    train_fluctuations, test_fluctuations = split_generator.get_split(0)
     assert (
         len(train_fluctuations.candles) == 1000 - 198 - 0.01 * 1000
     )  # size - test_size - purge_size
