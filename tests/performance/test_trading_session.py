@@ -2,11 +2,9 @@ import datetime
 
 import pytest
 
-from athena.configs import TradingSessionConfig
 from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Portfolio
-from athena.core.types import Signal, Coin
-from athena.performance.trading_session import TradingSession
+from athena.core.types import Signal
 from athena.tradingtools import Strategy
 
 
@@ -27,20 +25,25 @@ class StrategyBuyMondaySellFriday(Strategy):
         return signals
 
 
-@pytest.fixture
-def trading_session() -> TradingSession:
-    return TradingSession(
-        coin=Coin.default_coin(),
-        currency=Coin.default_currency(),
-        strategy=StrategyBuyMondaySellFriday(),
-        config=TradingSessionConfig.model_validate(
-            {"position_size": 0.33, "stop_loss_pct": 1, "take_profit_pct": float("inf")}
-        ),
-    )
+def test_reset_state(trading_session):
+    session = trading_session(StrategyBuyMondaySellFriday())
+    assert session.trades == []
+
+    session.trades.append("foo")
+    session.position = "bar"
+
+    assert session.trades == ["foo"]
+    assert session.position == "bar"
+
+    session._reset_state()
+
+    assert session.trades == []
+    assert session.position is None
 
 
 def test_remaining_portfolio(fluctuations, trading_session):
-    trades, portfolio = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    trades, portfolio = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -48,16 +51,15 @@ def test_remaining_portfolio(fluctuations, trading_session):
 
     assert len(trades) == 1
     assert (
-        portfolio.get_available(trading_session.currency)
-        == Portfolio.default(trading_session.currency).get_available(
-            trading_session.currency
-        )
+        portfolio.get_available(session.currency)
+        == Portfolio.default(session.currency).get_available(session.currency)
         + trades[0].total_profit
     )
 
 
 def test_get_trades_fluctuations_with_sell_signal(fluctuations, trading_session):
-    trades, _ = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    trades, _ = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -90,8 +92,9 @@ def test_get_trades_fluctuations_with_sell_signal(fluctuations, trading_session)
 
 
 def test_get_trades_from_fluctuations_price_reach_tp(fluctuations, trading_session):
-    trading_session.config.take_profit_pct = 0.1
-    trades, portfolio = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    session.config.take_profit_pct = 0.1
+    trades, portfolio = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
@@ -106,8 +109,9 @@ def test_get_trades_from_fluctuations_price_reach_tp(fluctuations, trading_sessi
 
 
 def test_get_trades_from_fluctuations_price_reach_sl(fluctuations, trading_session):
-    trading_session.config.stop_loss_pct = 0.1
-    trades, _ = trading_session.get_trades_from_fluctuations(
+    session = trading_session(StrategyBuyMondaySellFriday())
+    session.config.stop_loss_pct = 0.1
+    trades, _ = session.get_trades_from_fluctuations(
         fluctuations=fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
