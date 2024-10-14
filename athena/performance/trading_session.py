@@ -1,6 +1,6 @@
 from athena.configs import TradingSessionConfig
 from athena.core.fluctuations import Fluctuations
-from athena.core.market_entities import Portfolio, Position, Candle
+from athena.core.market_entities import Portfolio, Position, Candle, Trade
 from athena.core.types import Signal, Coin
 from athena.tradingtools.strategies.strategy import Strategy
 
@@ -91,7 +91,7 @@ class TradingSession:
 
     def get_trades_from_fluctuations(
         self, fluctuations: Fluctuations
-    ) -> tuple[list[Position], Portfolio]:
+    ) -> tuple[list[Trade], Portfolio]:
         """Apply the trading strategy on market data and get the trades that would have been made on live trading.
 
         Args:
