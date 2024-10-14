@@ -1,4 +1,7 @@
+from typing import Any
+
 import annotated_types
+from optuna import Trial
 from pydantic import BaseModel
 from dataclasses import dataclass
 
@@ -40,3 +43,31 @@ def pydantic_model_to_constraints(model: BaseModel) -> list[Constraint]:
                     )
         constraints.append(new_constraint)
     return constraints
+
+
+def constraints_to_parameters(
+    trial: Trial, constraints: list[Constraint]
+) -> dict[str:Any]:
+    strategy_parameters = {}
+    for constraint in constraints:
+        if constraint.type is int:
+            strategy_parameters.update(
+                {
+                    constraint.name: trial.suggest_int(
+                        name=constraint.name,
+                        low=constraint.min or 0,
+                        high=constraint.max or float("inf"),
+                    )
+                }
+            )
+        elif constraint.type is float:
+            strategy_parameters.update(
+                {
+                    constraint.name: trial.suggest_float(
+                        name=constraint.name,
+                        low=constraint.min or 0,
+                        high=constraint.max or float("inf"),
+                    )
+                }
+            )
+    return strategy_parameters
