@@ -39,6 +39,21 @@ def trading_session() -> TradingSession:
     )
 
 
+def test_reset_state(trading_session):
+    assert trading_session.trades == []
+
+    trading_session.trades.append("foo")
+    trading_session.position = "bar"
+
+    assert trading_session.trades == ["foo"]
+    assert trading_session.position == "bar"
+
+    trading_session._reset_state()
+
+    assert trading_session.trades == []
+    assert trading_session.position is None
+
+
 def test_remaining_portfolio(fluctuations, trading_session):
     trades, portfolio = trading_session.get_trades_from_fluctuations(
         fluctuations=fluctuations(

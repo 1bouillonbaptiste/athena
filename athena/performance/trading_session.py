@@ -30,7 +30,12 @@ class TradingSession:
         self.position = None
         self.trades = []
 
-    def buy_signal(self, candle: Candle):
+    def _reset_state(self):
+        self.portfolio = Portfolio.default(currency=self.currency)
+        self.position = None
+        self.trades = []
+
+    def _buy_signal(self, candle: Candle):
         """Create a new buy order if the portfolio has enough currency."""
 
         if self.position is not None:  # we are already positioned
@@ -56,7 +61,7 @@ class TradingSession:
             )
             self.portfolio.update_from_position(position=self.position)
 
-    def sell_signal(self, candle: Candle):
+    def _sell_signal(self, candle: Candle):
         """Create a new sell order to close any opened position."""
         if self.position is not None:
             trade = self.position.close(
@@ -67,7 +72,7 @@ class TradingSession:
             self.trades.append(trade)
             self.portfolio.update_from_trade(trade=trade)
 
-    def check_position_exit_signal(self, candle: Candle):
+    def _check_position_exit_signal(self, candle: Candle):
         """Check if the position needs to be closed."""
         if self.position is None:
             return
@@ -96,11 +101,13 @@ class TradingSession:
             market movement as a list of trades
         """
 
+        self._reset_state()
+
         for candle, signal in self.strategy.get_signals(fluctuations):
-            self.check_position_exit_signal(candle=candle)
+            self._check_position_exit_signal(candle=candle)
             if signal == Signal.BUY:
-                self.buy_signal(candle=candle)
+                self._buy_signal(candle=candle)
             elif signal == Signal.SELL:
-                self.sell_signal(candle=candle)
+                self._sell_signal(candle=candle)
 
         return self.trades, self.portfolio
