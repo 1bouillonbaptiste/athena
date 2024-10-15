@@ -80,6 +80,12 @@ class Candle:
             self.open_time = self.open_time.to_pydatetime()
         if isinstance(self.close_time, pd.Timestamp):
             self.close_time = self.close_time.to_pydatetime()
+
+        if pd.isna(self.high_time):
+            self.high_time = None
+        if pd.isna(self.low_time):
+            self.low_time = None
+
         if isinstance(self.high_time, pd.Timestamp):
             self.high_time = self.high_time.to_pydatetime()
         if isinstance(self.low_time, pd.Timestamp):

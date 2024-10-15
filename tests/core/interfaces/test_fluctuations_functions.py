@@ -9,14 +9,20 @@ from athena.core.fluctuations import (
     _merge_candles,
     _sanitize_candles,
     load_candles_from_file,
+    Fluctuations,
 )
 from athena.core.types import Coin, Period
+from athena.testing.equality import assert_candles_equal
 from athena.testing.generate import generate_candles
 
 
-def test_load_candles_from_file(sample_candles, sample_fluctuations, tmp_path):
-    sample_fluctuations().to_csv(tmp_path / "fluctuations.csv", index=False)
-    assert load_candles_from_file(tmp_path / "fluctuations.csv") == sample_candles()
+def test_load_candles_from_file(tmp_path):
+    candles = generate_candles(size=10)
+    Fluctuations.from_candles(candles).save(tmp_path / "fluctuations.csv")
+    for candle, expected_candle in zip(
+        load_candles_from_file(tmp_path / "fluctuations.csv"), candles
+    ):
+        assert_candles_equal(candle, expected_candle)
 
 
 def test_merge_candles():
