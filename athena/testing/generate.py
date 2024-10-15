@@ -2,6 +2,7 @@ import datetime
 
 import numpy as np
 
+from athena.core.fluctuations import _convert_candles_to_period, Fluctuations
 from athena.core.market_entities import Candle
 from athena.core.types import Period, Coin
 
@@ -124,3 +125,27 @@ def generate_candles(
         )
         for bar in bars
     ]
+
+
+def generate_fluctuations(
+    size: int = 1000,
+    period: Period = Period(timeframe="1m"),
+    include_high_time: bool = False,
+    include_low_time: bool = False,
+    from_date: datetime.datetime | None = None,
+    to_date: datetime.datetime | None = None,
+):
+    candles = generate_candles(
+        size=int(size * period.to_timedelta() / Period(timeframe="1m").to_timedelta()),
+        period=Period(timeframe="1m"),
+        from_date=from_date,
+        to_date=to_date,
+    )
+    if period.timeframe != "1m":
+        candles = _convert_candles_to_period(candles, target_period=period)
+        for candle in candles:
+            if not include_high_time:
+                candle.high_time = None
+            if not include_low_time:
+                candle.low_time = None
+    return Fluctuations.from_candles(candles)

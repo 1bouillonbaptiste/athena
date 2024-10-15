@@ -13,8 +13,8 @@ def patch_client(mocker):
 
 
 @pytest.fixture
-def fluctuations():
-    def _fluctuations(
+def sample_fluctuations():
+    def _sample_fluctuations(
         coin=Coin.BTC,
         currency=Coin.USDT,
         timeframe="4h",
@@ -59,7 +59,7 @@ def fluctuations():
             ]
         )
 
-    return _fluctuations
+    return _sample_fluctuations
 
 
 @pytest.fixture
