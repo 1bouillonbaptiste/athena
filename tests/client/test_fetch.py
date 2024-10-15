@@ -7,7 +7,7 @@ from athena.core.types import Period, Coin
 from athena.testing.generate import generate_bars, generate_candles
 
 
-def test_fetch_historical_data(mocker, sample_candles):
+def test_fetch_historical_data(mocker):
     generated_bars = generate_bars(size=10)
     mocker.patch(
         "athena.client.binance.BinanceClient.get_historical_klines",
