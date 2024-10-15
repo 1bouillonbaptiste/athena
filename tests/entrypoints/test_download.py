@@ -6,9 +6,10 @@ from athena.cli import app
 from athena.core.fluctuations import Fluctuations
 from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
+from athena.testing.generate import generate_bars
 
 
-def test_download_market_candles(generate_bars, mocker, tmp_path):
+def test_download_market_candles(mocker, tmp_path):
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 2)
     period = Period(timeframe="1m")
@@ -18,7 +19,7 @@ def test_download_market_candles(generate_bars, mocker, tmp_path):
         return_value=generate_bars(
             from_date=from_date,
             to_date=to_date,
-            timeframe=period.timeframe,
+            period=period,
         ),
     )
 

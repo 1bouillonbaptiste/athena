@@ -1,12 +1,14 @@
 from pytest_cases import parametrize_with_cases
 
 from athena.core.fluctuations import Fluctuations
+from athena.core.types import Period
 from athena.performance.optimize.split import (
     _create_cross_validation_divisions,
     _division_to_split,
     Split,
     create_ccpv_splits,
 )
+from athena.testing.generate import generate_candles
 
 
 def test_create_cross_validation_divisions():
@@ -115,12 +117,12 @@ def test_division_to_split(division, total_size, purge_size, expected_split):
     assert new_split.test_indexes == expected_split.test_indexes
 
 
-def test_create_ccpv_splits(generate_candles):
+def test_create_ccpv_splits():
     split_generator = create_ccpv_splits(
         fluctuations=Fluctuations.from_candles(
             generate_candles(
                 size=1000,
-                timeframe="1h",
+                period=Period(timeframe="1m"),
             )
         ),
         test_size=0.2,

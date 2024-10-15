@@ -10,6 +10,7 @@ from athena.core.fluctuations import Fluctuations
 from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
 from athena.entrypoints.visualize import _build_indicator_lines
+from athena.testing.generate import generate_candles
 
 
 @pytest.fixture
@@ -39,7 +40,7 @@ def indicators_config():
     }
 
 
-def test_build_indicator_lines(indicators_config, generate_candles):
+def test_build_indicator_lines(indicators_config):
     indicator_lines = _build_indicator_lines(
         config=IndicatorsConfig.model_validate(indicators_config),
         fluctuations=Fluctuations.from_candles(generate_candles(size=10)),
@@ -56,7 +57,9 @@ def test_build_indicator_lines(indicators_config, generate_candles):
 
 
 def test_run_visualize(
-    data_config, indicators_config, generate_candles, tmp_path, mocker
+    data_config,
+    indicators_config,
+    tmp_path,
 ):
     data_config_path = tmp_path / "data_config.yaml"
     indicators_config_path = tmp_path / "indicators_config.yaml"

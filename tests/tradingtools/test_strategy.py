@@ -34,12 +34,14 @@ def test_strategy_name():
     assert strategy.name == "strategy_buy_week_sell_friday"
 
 
-def test_strategy_get_signals(fluctuations):
+def test_strategy_get_signals(sample_fluctuations):
     strategy = StrategyBuyWeekSellFriday()
-    assert list(strategy.get_signals(fluctuations=fluctuations(timeframe="1d"))) == [
+    assert list(
+        strategy.get_signals(fluctuations=sample_fluctuations(timeframe="1d"))
+    ) == [
         (candle, signal)
         for candle, signal in zip(
-            fluctuations(timeframe="1d").candles,
+            sample_fluctuations(timeframe="1d").candles,
             [
                 Signal.BUY,
                 Signal.BUY,
@@ -53,15 +55,17 @@ def test_strategy_get_signals(fluctuations):
     ]
 
 
-def test_strategy_get_signals_raises(fluctuations):
+def test_strategy_get_signals_raises(sample_fluctuations):
     strategy = InvalidStrategy()
     with pytest.raises(ValueError):
-        list(strategy.get_signals(fluctuations=fluctuations()))
+        list(strategy.get_signals(fluctuations=sample_fluctuations()))
 
 
-def test_strategy_compute_signals(fluctuations):
+def test_strategy_compute_signals(sample_fluctuations):
     strategy = StrategyBuyWeekSellFriday()
-    assert strategy.compute_signals(fluctuations=fluctuations(timeframe="1d")) == [
+    assert strategy.compute_signals(
+        fluctuations=sample_fluctuations(timeframe="1d")
+    ) == [
         Signal.BUY,
         Signal.BUY,
         Signal.BUY,

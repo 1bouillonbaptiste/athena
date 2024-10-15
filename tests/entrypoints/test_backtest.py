@@ -8,6 +8,7 @@ from athena.cli import app
 from athena.core.fluctuations import Fluctuations
 from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
+from athena.testing.generate import generate_candles
 
 
 @pytest.fixture
@@ -35,7 +36,7 @@ def config():
     }
 
 
-def test_run_backtest(config, generate_candles, tmp_path, mocker):
+def test_run_backtest(config, tmp_path, mocker):
     config_path = tmp_path / "config.yaml"
     root_dir = tmp_path / "raw_market_data"
     output_dir = tmp_path / "results"

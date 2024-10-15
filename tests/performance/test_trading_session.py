@@ -4,7 +4,8 @@ import pytest
 
 from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Portfolio
-from athena.core.types import Signal
+from athena.core.types import Signal, Period
+from athena.testing.generate import generate_fluctuations
 from athena.tradingtools import Strategy
 
 
@@ -41,11 +42,15 @@ def test_reset_state(trading_session):
     assert session.position is None
 
 
-def test_remaining_portfolio(fluctuations, trading_session):
+def test_remaining_portfolio(trading_session):
     session = trading_session(StrategyBuyMondaySellFriday())
     trades, portfolio = session.get_trades_from_fluctuations(
-        fluctuations=fluctuations(
-            timeframe="1d", include_high_time=False, include_low_time=False
+        fluctuations=generate_fluctuations(
+            size=6,
+            from_date=datetime.datetime(2024, 10, 14),  # monday
+            period=Period(timeframe="1d"),
+            include_high_time=False,
+            include_low_time=False,
         ),
     )
 
@@ -57,10 +62,10 @@ def test_remaining_portfolio(fluctuations, trading_session):
     )
 
 
-def test_get_trades_fluctuations_with_sell_signal(fluctuations, trading_session):
+def test_get_trades_fluctuations_with_sell_signal(sample_fluctuations, trading_session):
     session = trading_session(StrategyBuyMondaySellFriday())
     trades, _ = session.get_trades_from_fluctuations(
-        fluctuations=fluctuations(
+        fluctuations=sample_fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
     )
@@ -91,11 +96,13 @@ def test_get_trades_fluctuations_with_sell_signal(fluctuations, trading_session)
     assert trade.is_win
 
 
-def test_get_trades_from_fluctuations_price_reach_tp(fluctuations, trading_session):
+def test_get_trades_from_fluctuations_price_reach_tp(
+    sample_fluctuations, trading_session
+):
     session = trading_session(StrategyBuyMondaySellFriday())
     session.config.take_profit_pct = 0.1
     trades, portfolio = session.get_trades_from_fluctuations(
-        fluctuations=fluctuations(
+        fluctuations=sample_fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
     )
@@ -108,11 +115,13 @@ def test_get_trades_from_fluctuations_price_reach_tp(fluctuations, trading_sessi
     assert trade.close_price == pytest.approx(110, abs=1e-3)
 
 
-def test_get_trades_from_fluctuations_price_reach_sl(fluctuations, trading_session):
+def test_get_trades_from_fluctuations_price_reach_sl(
+    sample_fluctuations, trading_session
+):
     session = trading_session(StrategyBuyMondaySellFriday())
     session.config.stop_loss_pct = 0.1
     trades, _ = session.get_trades_from_fluctuations(
-        fluctuations=fluctuations(
+        fluctuations=sample_fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
     )
