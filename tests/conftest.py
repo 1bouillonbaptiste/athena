@@ -48,18 +48,20 @@ def sample_bars():
 
 
 @pytest.fixture()
-def sample_candles(sample_bars):
-    def generate_candles(coin=Coin.BTC, currency=Coin.USDT, timeframe="4h"):
+def sample_candles():
+    def _sample_candles(
+        coin=Coin.BTC, currency=Coin.USDT, period=Period(timeframe="4h")
+    ):
         return [
             Candle(
                 coin=coin,
                 currency=currency,
-                period=Period(timeframe=timeframe),
+                period=period,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00"),
                 high_time=datetime.datetime.fromisoformat("2020-01-01 03:35:00"),
                 low_time=datetime.datetime.fromisoformat("2020-01-01 01:15:00"),
                 close_time=datetime.datetime.fromisoformat("2020-01-01 00:00:00")
-                + Period(timeframe=timeframe).to_timedelta(),
+                + period.to_timedelta(),
                 open=7195.2,
                 high=7245.0,
                 low=7175.4,
@@ -73,12 +75,12 @@ def sample_candles(sample_bars):
             Candle(
                 coin=coin,
                 currency=currency,
-                period=timeframe,
+                period=period,
                 open_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00"),
                 high_time=datetime.datetime.fromisoformat("2020-01-01 07:35:00"),
                 low_time=datetime.datetime.fromisoformat("2020-01-01 05:15:00"),
                 close_time=datetime.datetime.fromisoformat("2020-01-01 04:00:00")
-                + Period(timeframe=timeframe).to_timedelta(),
+                + period.to_timedelta(),
                 open=7225.0,
                 high=7236.2,
                 low=7199.1,
@@ -91,7 +93,7 @@ def sample_candles(sample_bars):
             ),
         ]
 
-    return generate_candles
+    return _sample_candles
 
 
 @pytest.fixture()

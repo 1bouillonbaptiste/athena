@@ -53,7 +53,6 @@ class Candle:
     currency: Coin
     period: Period
     open_time: datetime.datetime
-
     close_time: datetime.datetime
     open: float
     high: float
@@ -68,6 +67,24 @@ class Candle:
     high_time: datetime.datetime | None = None
     low_time: datetime.datetime | None = None
 
+    def __post_init__(self):
+        if isinstance(self.coin, str):
+            self.coin = Coin[self.coin]
+        if isinstance(self.currency, str):
+            self.currency = Coin[self.currency]
+
+        if isinstance(self.period, str):
+            self.period = Period(timeframe=self.period)
+
+        if isinstance(self.open_time, pd.Timestamp):
+            self.open_time = self.open_time.to_pydatetime()
+        if isinstance(self.close_time, pd.Timestamp):
+            self.close_time = self.close_time.to_pydatetime()
+        if isinstance(self.high_time, pd.Timestamp):
+            self.high_time = self.high_time.to_pydatetime()
+        if isinstance(self.low_time, pd.Timestamp):
+            self.low_time = self.low_time.to_pydatetime()
+
     def __eq__(self, other):
         return asdict(self) == asdict(other)
 
@@ -77,7 +94,24 @@ class Candle:
 
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(
-            {attribute: str(value) for attribute, value in asdict(self).items()},
+            {
+                "coin": self.coin.value,
+                "currency": self.currency.value,
+                "period": self.period.timeframe,
+                "open_time": self.open_time,
+                "close_time": self.close_time,
+                "open": self.open,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+                "volume": self.volume,
+                "quote_volume": self.quote_volume,
+                "nb_trades": self.nb_trades,
+                "taker_volume": self.taker_volume,
+                "taker_quote_volume": self.taker_quote_volume,
+                "high_time": self.high_time,
+                "low_time": self.low_time,
+            },
             index=[0],
         )
 

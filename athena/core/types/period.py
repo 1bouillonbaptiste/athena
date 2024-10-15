@@ -28,6 +28,9 @@ class Period:
     def __eq__(self, other):
         return self.timeframe == other.timeframe
 
+    def __hash__(self):
+        return hash(self.timeframe)
+
 
 def _fill_missing_attributes(
     timeframe: str | None = None,

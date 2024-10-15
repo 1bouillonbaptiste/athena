@@ -50,9 +50,9 @@ class Fluctuations(BaseModel):
         sorted_candles = sorted(sanitized_candles, key=lambda candle: candle.open_time)
         return cls(
             candles=sorted_candles,
-            period=candles[0].period if candles else "1m",
-            coin=candles[0].coin if candles else Coin.BTC,
-            currency=candles[0].currency if candles else Coin.USDT,
+            period=candles[0].period if candles else Period(timeframe="1m"),
+            coin=candles[0].coin if candles else Coin.default_coin(),
+            currency=candles[0].currency if candles else Coin.default_currency(),
         )
 
     @model_validator(mode="after")
@@ -70,17 +70,21 @@ class Fluctuations(BaseModel):
         )
 
         if len(set(periods)) > 1:
-            periods_str = "[" + ", ".join(set(periods)) + "]"
+            periods_str = (
+                "[" + ", ".join([period.timeframe for period in set(periods)]) + "]"
+            )
             raise ValueError(
                 f"All candles must have the same period, found {periods_str}."
             )
 
         if len(set(coins)) > 1:
-            coins_str = "[" + ", ".join(set(coins)) + "]"
+            coins_str = "[" + ", ".join([coin.value for coin in set(coins)]) + "]"
             raise ValueError(f"All candles must have the same coin, found {coins_str}.")
 
         if len(set(currencies)) > 1:
-            currencies_str = "[" + ", ".join(set(currencies)) + "]"
+            currencies_str = (
+                "[" + ", ".join([coin.value for coin in set(currencies)]) + "]"
+            )
             raise ValueError(
                 f"All candles must have the same currency, found {currencies_str}."
             )
@@ -263,7 +267,7 @@ def _convert_candles_to_period(
     if not candles:
         return []
 
-    src_period = Period(timeframe=candles[0].period)
+    src_period = candles[0].period
 
     if src_period.to_timedelta() > target_period.to_timedelta():
         raise ValueError("Cannot convert candles to lower timeframe.")

@@ -28,7 +28,7 @@ def test_fetch_historical_data(mocker, sample_bars, sample_candles):
         ],
     )
     period = Period(timeframe="4h")
-    candles = sample_candles(timeframe=period.timeframe)
+    candles = sample_candles(period=period)
     for candle in candles:
         candle.high_time = None
         candle.low_time = None

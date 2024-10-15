@@ -13,7 +13,7 @@ from athena.testing.generate import generate_candles
 
 def test_fluctuations_from_candles(sample_candles):
     assert Fluctuations.from_candles(
-        candles=sample_candles(timeframe="4h")
+        candles=sample_candles(period=Period(timeframe="4h"))
     ).model_dump() == {
         "candles": [
             {
@@ -21,9 +21,9 @@ def test_fluctuations_from_candles(sample_candles):
                 "close_time": datetime.datetime(2020, 1, 1, 4, 0),
                 "high_time": datetime.datetime(2020, 1, 1, 3, 35),
                 "low_time": datetime.datetime(2020, 1, 1, 1, 15),
-                "coin": "BTC",
-                "currency": "USDT",
-                "period": "4h",
+                "coin": Coin.BTC,
+                "currency": Coin.USDT,
+                "period": Period(timeframe="4h"),
                 "open": 7195.2,
                 "high": 7245.0,
                 "low": 7175.4,
@@ -39,9 +39,9 @@ def test_fluctuations_from_candles(sample_candles):
                 "close_time": datetime.datetime(2020, 1, 1, 8, 0),
                 "high_time": datetime.datetime(2020, 1, 1, 7, 35),
                 "low_time": datetime.datetime(2020, 1, 1, 5, 15),
-                "coin": "BTC",
-                "currency": "USDT",
-                "period": "4h",
+                "coin": Coin.BTC,
+                "currency": Coin.USDT,
+                "period": Period(timeframe="4h"),
                 "open": 7225.0,
                 "high": 7236.2,
                 "low": 7199.1,
@@ -60,7 +60,7 @@ def test_fluctuations_from_candles(sample_candles):
 
 
 def test_fluctuations_get_candle(sample_candles):
-    candles = sample_candles(timeframe="4h")
+    candles = sample_candles(period=Period(timeframe="4h"))
     assert (
         Fluctuations.from_candles(candles=candles).get_candle(
             open_time=candles[0].open_time
