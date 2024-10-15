@@ -11,6 +11,7 @@ from athena.core.fluctuations import (
     load_candles_from_file,
 )
 from athena.core.types import Coin, Period
+from athena.testing.generate import generate_candles
 
 
 def test_load_candles_from_file(sample_candles, sample_fluctuations, tmp_path):
@@ -18,10 +19,12 @@ def test_load_candles_from_file(sample_candles, sample_fluctuations, tmp_path):
     assert load_candles_from_file(tmp_path / "fluctuations.csv") == sample_candles()
 
 
-def test_merge_candles(generate_candles):
+def test_merge_candles():
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 1, hour=1)
-    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+    candles = generate_candles(
+        period=Period(timeframe="1m"), from_date=from_date, to_date=to_date
+    )
 
     merged_candle = _merge_candles(candles)
 
@@ -34,11 +37,13 @@ def test_merge_candles(generate_candles):
     assert (merged_candle.close_time - merged_candle.open_time) == (to_date - from_date)
 
 
-def test_convert_candles_to_same_period(generate_candles):
+def test_convert_candles_to_same_period():
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 2)
 
-    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+    candles = generate_candles(
+        period=Period(timeframe="1m"), from_date=from_date, to_date=to_date
+    )
     target_period = Period(timeframe="1m")
 
     merged_candles = _convert_candles_to_period(candles, target_period)
@@ -46,11 +51,13 @@ def test_convert_candles_to_same_period(generate_candles):
     assert len(merged_candles) == len(candles)
 
 
-def test_convert_candles_to_period(generate_candles):
+def test_convert_candles_to_period():
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 2)
 
-    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+    candles = generate_candles(
+        period=Period(timeframe="1m"), from_date=from_date, to_date=to_date
+    )
     target_period = Period(timeframe="4h")
 
     merged_candles = _convert_candles_to_period(candles, target_period)
@@ -58,11 +65,13 @@ def test_convert_candles_to_period(generate_candles):
     assert len(merged_candles) == 6
 
 
-def test_convert_candles_to_period_missing_data(generate_candles, caplog):
+def test_convert_candles_to_period_missing_data(caplog):
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 2, hour=3)
 
-    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+    candles = generate_candles(
+        period=Period(timeframe="1m"), from_date=from_date, to_date=to_date
+    )
     target_period = Period(timeframe="4h")
 
     logging.getLogger().setLevel(logging.DEBUG)
@@ -73,11 +82,13 @@ def test_convert_candles_to_period_missing_data(generate_candles, caplog):
     assert "Last candle could not be closed, won't be kept." in caplog.text
 
 
-def test_convert_candles_to_period_wrong_timeframe(generate_candles):
+def test_convert_candles_to_period_wrong_timeframe():
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 2, hour=3)
 
-    candles = generate_candles(timeframe="4m", from_date=from_date, to_date=to_date)
+    candles = generate_candles(
+        period=Period(timeframe="4m"), from_date=from_date, to_date=to_date
+    )
     target_period = Period(timeframe="1m")
 
     with pytest.raises(ValueError, match="Cannot convert candles to lower timeframe"):
@@ -114,7 +125,7 @@ def raw_candles():
     return _raw_candles
 
 
-def test_sanitize_candles(generate_candles):
+def test_sanitize_candles():
     """Remove invalid candles."""
 
     candles = generate_candles(size=5)

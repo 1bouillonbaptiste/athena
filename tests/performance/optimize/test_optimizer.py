@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field
 
 from athena.core.fluctuations import Fluctuations
-from athena.core.types import Signal
+from athena.core.types import Signal, Period
 
 from athena.performance.optimize.optimizer import Optimizer
 from athena.performance.optimize.split import create_ccpv_splits
+from athena.testing.generate import generate_candles
 from athena.tradingtools import Strategy
 
 
@@ -36,17 +37,17 @@ class NewStrategy(Strategy):
         return signals
 
 
-def test_optimizer(trading_session, generate_candles):
+def test_optimizer(trading_session):
     optimizer = Optimizer(
         trading_session=trading_session(NewStrategy(config=NewStrategyModel())),
         n_trials=2,
     )
     best_parameters = optimizer.optimize(
         train_fluctuations=Fluctuations.from_candles(
-            generate_candles(size=100, timeframe="1h")
+            generate_candles(size=100, period=Period(timeframe="1m"))
         ),
         val_fluctuations=Fluctuations.from_candles(
-            generate_candles(size=100, timeframe="1h")
+            generate_candles(size=100, period=Period(timeframe="1m"))
         ),
     )
     assert "parameter_a" in best_parameters
@@ -60,14 +61,14 @@ def test_optimizer(trading_session, generate_candles):
     assert best_parameters["val"] == 0
 
 
-def test_find_ccpv_best_parameters(trading_session, generate_candles):
+def test_find_ccpv_best_parameters(trading_session):
     optimizer = Optimizer(
         trading_session=trading_session(NewStrategy(config=NewStrategyModel())),
         n_trials=2,
     )
     split_generator = create_ccpv_splits(
         fluctuations=Fluctuations.from_candles(
-            generate_candles(size=200, timeframe="1h")
+            generate_candles(size=200, period=Period(timeframe="1m"))
         ),
         test_size=0.2,
         test_samples=2,

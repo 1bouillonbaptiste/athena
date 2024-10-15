@@ -8,6 +8,7 @@ from pandas.testing import assert_frame_equal
 from athena.core.fluctuations import Fluctuations
 from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
+from athena.testing.generate import generate_candles
 
 
 def test_fluctuations_from_candles(sample_candles):
@@ -68,38 +69,42 @@ def test_fluctuations_get_candle(sample_candles):
     )
 
 
-def test_fluctuations_fails_on_coins(generate_candles):
+def test_fluctuations_fails_on_coins():
     with pytest.raises(ValueError, match="All candles must have the same coin"):
         Fluctuations.from_candles(
             candles=generate_candles(
-                coin="BTC", from_date=datetime.datetime(2020, 1, 1), size=5
+                coin=Coin.BTC, from_date=datetime.datetime(2020, 1, 1), size=5
             )
             + generate_candles(
-                coin="ETH", from_date=datetime.datetime(2020, 1, 2), size=5
+                coin=Coin.ETH, from_date=datetime.datetime(2020, 1, 2), size=5
             )
         )
 
 
-def test_fluctuations_fails_on_currencies(generate_candles):
+def test_fluctuations_fails_on_currencies():
     with pytest.raises(ValueError, match="All candles must have the same currency"):
         Fluctuations.from_candles(
             candles=generate_candles(
-                currency="USDT", from_date=datetime.datetime(2020, 1, 1), size=5
+                currency=Coin.USDT, from_date=datetime.datetime(2020, 1, 1), size=5
             )
             + generate_candles(
-                currency="EUR", from_date=datetime.datetime(2020, 1, 2), size=5
+                currency=Coin.EUR, from_date=datetime.datetime(2020, 1, 2), size=5
             )
         )
 
 
-def test_fluctuations_fails_on_periods(generate_candles):
+def test_fluctuations_fails_on_periods():
     with pytest.raises(ValueError, match="All candles must have the same period"):
         Fluctuations.from_candles(
             candles=generate_candles(
-                timeframe="1m", from_date=datetime.datetime(2020, 1, 1), size=5
+                period=Period(timeframe="1m"),
+                from_date=datetime.datetime(2020, 1, 1),
+                size=5,
             )
             + generate_candles(
-                timeframe="2m", from_date=datetime.datetime(2020, 1, 2), size=5
+                period=Period(timeframe="2m"),
+                from_date=datetime.datetime(2020, 1, 2),
+                size=5,
             )
         )
 
@@ -123,7 +128,7 @@ def test_fluctuations_save_to_file(tmp_path, sample_candles, sample_fluctuations
     )
 
 
-def test_load_from_dataset(tmp_path, generate_candles):
+def test_load_from_dataset(tmp_path):
     start_date = datetime.datetime(2020, 1, 1)
     Fluctuations.from_candles(
         generate_candles(
@@ -147,10 +152,12 @@ def test_load_from_dataset(tmp_path, generate_candles):
     assert len(fluctuations.candles) == 12
 
 
-def test_load_fluctuations_get_series(tmp_path, sample_candles, generate_candles):
+def test_load_fluctuations_get_series(tmp_path, sample_candles):
     from_date = datetime.datetime(2020, 1, 1)
     to_date = datetime.datetime(2020, 1, 1, hour=8)
-    candles = generate_candles(timeframe="1m", from_date=from_date, to_date=to_date)
+    candles = generate_candles(
+        period=Period(timeframe="1m"), from_date=from_date, to_date=to_date
+    )
 
     fluctuations = Fluctuations.from_candles(candles=candles)
 
