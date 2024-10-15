@@ -78,6 +78,7 @@ def generate_bars(
 
 
 def generate_candles(
+    bars: list | None = None,
     size: int = 1000,
     coin: Coin = Coin.default_coin(),
     currency: Coin = Coin.default_currency(),
@@ -88,6 +89,7 @@ def generate_candles(
     """Generate candles from random bars.
 
     Args:
+        bars: generate candles from bars if available
         size: number of candles to generate
         coin: the coin to base the candles on
         currency: the currency to base the candles on
@@ -98,6 +100,10 @@ def generate_candles(
     Returns:
 
     """
+    if bars is None:
+        bars = generate_bars(
+            size=size, period=period, from_date=from_date, to_date=to_date
+        )
     return [
         Candle(
             coin=coin,
@@ -116,7 +122,5 @@ def generate_candles(
             taker_volume=float(bar[9]),
             taker_quote_volume=float(bar[10]),
         )
-        for bar in generate_bars(
-            size=size, period=period, from_date=from_date, to_date=to_date
-        )
+        for bar in bars
     ]
