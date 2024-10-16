@@ -7,6 +7,9 @@ from athena.core.market_entities import Portfolio, Trade
 from athena.core.types import Coin
 
 
+RISK_FREE_RATE = 0.01
+
+
 @dataclass
 class TradingMetrics:
     """Raw statistics.
@@ -125,6 +128,7 @@ def calculate_max_drawdown(trades: list[Trade]) -> float:
     """
     if len(trades) < 2:
         return 0
+
     wealth, _ = trades_to_wealth(trades)
     drawdown = [np.max(wealth[: ii + 1]) - wealth[ii] for ii in range(1, len(wealth))]
     return round(float(np.max(drawdown)), 3)
@@ -142,9 +146,16 @@ def calculate_cagr(trades: list[Trade]) -> float:
     Returns:
         the annualized average return
     """
-    # TODO: add cagr code
-    _, _ = trades_to_wealth(trades)
-    return 0
+    initial_money = Portfolio.default().get_available(Coin.default_currency())
+    total_profit = np.sum([trade.total_profit for trade in trades])
+    session_years = (trades[-1].close_date - trades[0].open_date).days / 365.0
+    if session_years == 0:
+        return 0
+
+    cagr = float(
+        np.pow((initial_money + total_profit) / initial_money, 1 / session_years)
+    )
+    return round(cagr, 3)
 
 
 def calculate_sharpe(trades: list[Trade]) -> float:
@@ -158,9 +169,14 @@ def calculate_sharpe(trades: list[Trade]) -> float:
 
     Returns:
     """
-    # TODO: add sharpe code
-    _, _ = trades_to_wealth(trades)
-    return 0
+    trades_return = [trade.total_profit / trade.initial_investment for trade in trades]
+    returns_avg = np.mean(trades_return)
+    returns_std = np.std(trades_return)
+    if returns_std == 0:
+        return 0
+
+    sharpe = float((returns_avg - RISK_FREE_RATE) / returns_std)
+    return round(sharpe, 3)
 
 
 def calculate_sortino(trades: list[Trade]) -> float:
@@ -172,9 +188,15 @@ def calculate_sortino(trades: list[Trade]) -> float:
 
     Returns:
     """
-    # TODO: add sortino code
-    _, _ = trades_to_wealth(trades)
-    return 0
+    trades_return = [trade.total_profit / trade.initial_investment for trade in trades]
+    returns_avg = np.mean(trades_return)
+    returns_negative_std = np.std([ret for ret in trades_return if ret < 0])
+
+    if returns_negative_std == 0:
+        return 0
+
+    sharpe = float((returns_avg - RISK_FREE_RATE) / returns_negative_std)
+    return round(sharpe, 3)
 
 
 def calculate_calmar(trades: list[Trade]) -> float:
@@ -188,6 +210,7 @@ def calculate_calmar(trades: list[Trade]) -> float:
 
     Returns:
     """
-    # TODO: add calmar code
-    _, _ = trades_to_wealth(trades)
-    return 0
+    max_drawdown = calculate_max_drawdown(trades)
+    if max_drawdown == 0:
+        return 0
+    return calculate_cagr(trades) / calculate_max_drawdown(trades)

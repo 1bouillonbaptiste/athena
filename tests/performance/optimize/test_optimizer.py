@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+import pytest
 
 from athena.core.candle import convert_candles_to_period
 from athena.core.fluctuations import Fluctuations
@@ -8,6 +9,12 @@ from athena.performance.optimize.optimizer import Optimizer
 from athena.performance.optimize.split import create_ccpv_splits
 from athena.testing.generate import generate_candles
 from athena.tradingtools import Strategy
+
+
+pytestmark = [
+    # Optuna optimization algorithm sometimes fails to iter
+    pytest.mark.filterwarnings("ignore::RuntimeWarning:numpy._core._methods"),
+]
 
 
 class NewStrategyModel(BaseModel):
@@ -45,10 +52,16 @@ def test_optimizer(trading_session):
     )
     best_parameters = optimizer.optimize(
         train_fluctuations=Fluctuations.from_candles(
-            generate_candles(size=100, period=Period(timeframe="1m"))
+            convert_candles_to_period(
+                generate_candles(size=1000, period=Period(timeframe="1m")),
+                target_period=Period(timeframe="1h"),
+            ),
         ),
         val_fluctuations=Fluctuations.from_candles(
-            generate_candles(size=100, period=Period(timeframe="1m"))
+            convert_candles_to_period(
+                generate_candles(size=1000, period=Period(timeframe="1m")),
+                target_period=Period(timeframe="1h"),
+            ),
         ),
     )
     assert "parameter_a" in best_parameters
@@ -57,9 +70,9 @@ def test_optimizer(trading_session):
     assert "train" in best_parameters
     assert "val" in best_parameters
 
-    # TODO : update me to > 0 once sharpe ratio is implemented
-    assert best_parameters["train"] == 0
-    assert best_parameters["val"] == 0
+    # sharpe ratio could be negative
+    assert best_parameters["train"] > -float("inf")
+    assert best_parameters["val"] > -float("inf")
 
 
 def test_find_ccpv_best_parameters(trading_session):

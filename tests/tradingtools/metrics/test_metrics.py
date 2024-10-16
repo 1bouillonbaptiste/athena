@@ -2,7 +2,14 @@ import datetime
 import pytest
 import numpy as np
 
-from athena.tradingtools.metrics.metrics import trades_to_wealth
+from athena.tradingtools.metrics.metrics import (
+    trades_to_wealth,
+    calculate_max_drawdown,
+    calculate_cagr,
+    calculate_sharpe,
+    calculate_sortino,
+    calculate_calmar,
+)
 
 
 @pytest.mark.parametrize(
@@ -62,3 +69,23 @@ def test_trades_to_wealth(
     )
     assert np.allclose(wealth, expected_wealth, rtol=1e-3)
     assert time == expected_time
+
+
+def test_calculate_max_drawdown(sample_trades):
+    assert calculate_max_drawdown(trades=sample_trades) == 0.041
+
+
+def test_calculate_cagr(sample_trades):
+    assert calculate_cagr(trades=sample_trades) == 1.358
+
+
+def test_calculate_shape(sample_trades):
+    assert calculate_sharpe(sample_trades) == 0.24
+
+
+def test_calculate_sortino(sample_trades):
+    assert calculate_sortino(sample_trades) == 0.728
+
+
+def test_calculate_calmar(sample_trades):
+    assert calculate_calmar(sample_trades) == pytest.approx(33.1219512195122)
