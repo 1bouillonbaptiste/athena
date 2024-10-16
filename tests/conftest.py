@@ -76,20 +76,20 @@ def sample_trades():
         trades as list of closed positions
     """
     trade1 = Position.open(
-        open_date=datetime.datetime(2024, 8, 20),
+        open_date=datetime.datetime(2024, 8, 1),
         open_price=100,
         money_to_invest=50,
-    ).close(close_date=datetime.datetime(2024, 8, 21), close_price=120)
+    ).close(close_date=datetime.datetime(2024, 8, 6), close_price=120)
 
     trade2 = Position.open(
-        open_date=datetime.datetime(2024, 8, 22),
+        open_date=datetime.datetime(2024, 9, 1),
         open_price=130,
         money_to_invest=50,
-    ).close(close_date=datetime.datetime(2024, 8, 23), close_price=130)
+    ).close(close_date=datetime.datetime(2024, 9, 6), close_price=130)
 
     trade3 = Position.open(
-        open_date=datetime.datetime(2024, 8, 24),
+        open_date=datetime.datetime(2024, 10, 1),
         open_price=130,
         money_to_invest=50,
-    ).close(close_date=datetime.datetime(2024, 8, 25), close_price=120)
+    ).close(close_date=datetime.datetime(2024, 10, 6), close_price=120)
     return [trade1, trade2, trade3]

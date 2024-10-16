@@ -3,7 +3,7 @@ import datetime
 
 import numpy as np
 
-from athena.core.market_entities import Position, Portfolio, Trade
+from athena.core.market_entities import Portfolio, Trade
 from athena.core.types import Coin
 
 
@@ -81,7 +81,7 @@ class TradingStatistics:
 
 
 def trades_to_wealth(
-    trades: list[Position],
+    trades: list[Trade],
     start_time: datetime.datetime | None = None,
     end_time: datetime.datetime | None = None,
 ) -> tuple[np.ndarray, list[datetime.datetime]]:
@@ -111,7 +111,7 @@ def trades_to_wealth(
     return np.cumsum(wealth) / initial_money, time
 
 
-def calculate_max_drawdown(trades: list[Position]) -> float:
+def calculate_max_drawdown(trades: list[Trade]) -> float:
     """Calculate the biggest loss of a portofolio during its lifetime.
 
     A drawdown is peak-to-trough decline in the value of an investment during a specific period.
@@ -127,10 +127,10 @@ def calculate_max_drawdown(trades: list[Position]) -> float:
         return 0
     wealth, _ = trades_to_wealth(trades)
     drawdown = [np.max(wealth[: ii + 1]) - wealth[ii] for ii in range(1, len(wealth))]
-    return round(np.max(drawdown), 3)
+    return round(float(np.max(drawdown)), 3)
 
 
-def calculate_cagr(trades: list[Position]) -> float:
+def calculate_cagr(trades: list[Trade]) -> float:
     """Calculate the CAGR (annualized average return) of the portfolio.
 
     The CAGR (Compound Annual Growth Rate) is the average annual growth rate of an investment over a specified period,
@@ -147,7 +147,7 @@ def calculate_cagr(trades: list[Position]) -> float:
     return 0
 
 
-def calculate_sharpe(trades: list[Position]) -> float:
+def calculate_sharpe(trades: list[Trade]) -> float:
     """Calculate the risk-reward of a portfolio.
 
     The Sharpe ratio measures an investment's return relative to its total risk (volatility),
@@ -163,7 +163,7 @@ def calculate_sharpe(trades: list[Position]) -> float:
     return 0
 
 
-def calculate_sortino(trades: list[Position]) -> float:
+def calculate_sortino(trades: list[Trade]) -> float:
     """The Sortino ratio measures an investment's return relative to its downside risk, focusing only on negative
     volatility, rather than total volatility like the Sharpe ratio.
 
@@ -177,7 +177,7 @@ def calculate_sortino(trades: list[Position]) -> float:
     return 0
 
 
-def calculate_calmar(trades: list[Position]) -> float:
+def calculate_calmar(trades: list[Trade]) -> float:
     """Calculate the Calmar ratio.
 
     The Calmar ratio measures an investment's return relative to its maximum drawdown,

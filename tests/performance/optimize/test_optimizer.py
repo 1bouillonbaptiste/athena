@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from athena.core.candle import convert_candles_to_period
 from athena.core.fluctuations import Fluctuations
 from athena.core.types import Signal, Period
 
@@ -68,14 +69,19 @@ def test_find_ccpv_best_parameters(trading_session):
     )
     split_generator = create_ccpv_splits(
         fluctuations=Fluctuations.from_candles(
-            generate_candles(size=200, period=Period(timeframe="1m"))
+            convert_candles_to_period(
+                generate_candles(size=1000, period=Period(timeframe="1m")),
+                target_period=Period(timeframe="1h"),
+            ),
         ),
         test_size=0.2,
-        test_samples=2,
+        test_samples=1,
     )
 
     best_parameters = optimizer.find_ccpv_best_parameters(
         split_generator=split_generator
     )
 
-    assert len(best_parameters) == len(split_generator.splits) == 45
+    assert (
+        len(best_parameters) == len(split_generator.splits) == 5
+    )  # 5 test splits of size 20%
