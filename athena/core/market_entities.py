@@ -11,6 +11,61 @@ from athena.core.types.signal import ExitSignal
 FEES_PCT = 0.001
 
 
+@dataclass
+class Trade:
+    """A Trade is a closed Position.
+
+    Can only be instantiated with Position.close()
+
+    Attributes:
+        strategy_name: the nickname of the strategy used to open the position
+        coin: the coin that have been bought
+        currency: the currency used to buy the coin
+        amount: coin's amount that have been bought
+        side: weather the position is a 'LONG' or a 'SHORT'
+
+        open_date: the date when the position was open, usually the open_date of a candle
+        open_price: coin's price when the position was open
+        initial_investment: the initial amount of currency the trader invested
+        open_fees: cost of opening the position, fees are being taken before calculating coin amount
+        stop_loss: stop your loss if price drops too low (close the position)
+        take_profit: take your profits if price reaches your target (close the position)
+
+        close_date: the date when a position was closed, could be any time
+        close_price: coin's price when the position was closed
+        close_fees: fees from selling the position
+
+        total_fees: sum of open and close fees
+        total_profit: remaining money when we compare initial investment, return and fees
+        profit_pct: trade's return
+        is_win: if we made money on this trade or not
+        trade_duration: position total lifetime
+    """
+
+    strategy_name: str
+    coin: Coin
+    currency: Coin
+    amount: float
+    side: Side
+
+    open_date: datetime.datetime
+    open_price: float
+    initial_investment: float
+    open_fees: float
+    stop_loss: float
+    take_profit: float
+
+    close_date: datetime.datetime
+    close_price: float
+    close_fees: float
+
+    total_fees: float
+    total_profit: float
+    profit_pct: float
+    is_win: bool
+    trade_duration: datetime.timedelta
+
+
 class Position(BaseModel):
     """A position is the expression of a market commitment, or exposure, held by a trader.
 
@@ -80,7 +135,7 @@ class Position(BaseModel):
             side=side,
         )
 
-    def close(self, close_date: datetime.datetime, close_price: float) -> "Trade":
+    def close(self, close_date: datetime.datetime, close_price: float) -> Trade:
         """Sell the traded amount.
 
         Args:
@@ -170,61 +225,6 @@ class Position(BaseModel):
         return None
 
 
-@dataclass
-class Trade:
-    """A Trade is a closed Position.
-
-    Can only be instantiated with Position.close()
-
-    Attributes:
-        strategy_name: the nickname of the strategy used to open the position
-        coin: the coin that have been bought
-        currency: the currency used to buy the coin
-        amount: coin's amount that have been bought
-        side: weather the position is a 'LONG' or a 'SHORT'
-
-        open_date: the date when the position was open, usually the open_date of a candle
-        open_price: coin's price when the position was open
-        initial_investment: the initial amount of currency the trader invested
-        open_fees: cost of opening the position, fees are being taken before calculating coin amount
-        stop_loss: stop your loss if price drops too low (close the position)
-        take_profit: take your profits if price reaches your target (close the position)
-
-        close_date: the date when a position was closed, could be any time
-        close_price: coin's price when the position was closed
-        close_fees: fees from selling the position
-
-        total_fees: sum of open and close fees
-        total_profit: remaining money when we compare initial investment, return and fees
-        profit_pct: trade's return
-        is_win: if we made money on this trade or not
-        trade_duration: position total lifetime
-    """
-
-    strategy_name: str
-    coin: Coin
-    currency: Coin
-    amount: float
-    side: Side
-
-    open_date: datetime.datetime
-    open_price: float
-    initial_investment: float
-    open_fees: float
-    stop_loss: float
-    take_profit: float
-
-    close_date: datetime.datetime
-    close_price: float
-    close_fees: float
-
-    total_fees: float
-    total_profit: float
-    profit_pct: float
-    is_win: bool
-    trade_duration: datetime.timedelta
-
-
 class Portfolio(BaseModel):
     """Account's available coins mapping.
 
@@ -276,22 +276,26 @@ class Portfolio(BaseModel):
 
 
 def signal_to_values(
-    exit_signal: ExitSignal, position: Position, candle: Candle
+    signal: ExitSignal, position: Position, candle: Candle
 ) -> tuple[float, datetime.datetime]:
     """Convert the signal to actual price and date."""
-    match exit_signal.price_signal:
+    match signal.price_signal:
         case "take_profit":
             price = position.take_profit
         case "stop_loss":
             price = position.stop_loss
         case "close":
             price = candle.close
-    match exit_signal.date_signal:
+        case _:
+            price = None
+    match signal.date_signal:
         case "high":
             date = candle.high_time
         case "low":
             date = candle.low_time
         case "close":
             date = candle.close_time
+        case _:
+            date = None
 
     return price, date
