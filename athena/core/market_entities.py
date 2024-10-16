@@ -1,162 +1,14 @@
 import datetime
 from dataclasses import dataclass
-from typing import Literal
-from dataclasses import asdict
 
 
-import pandas as pd
 from pydantic import BaseModel
 
-from athena.core.types import Coin, Side, Period
-
+from athena.core.candle import Candle
+from athena.core.types import Coin, Side
+from athena.core.types.signal import ExitSignal
 
 FEES_PCT = 0.001
-
-
-AVAILABLE_ATTRIBUTES = (
-    "open",
-    "high",
-    "low",
-    "close",
-    "open_time",
-    "high_time",
-    "low_time",
-    "close_time",
-    "volume",
-    "quote_volume",
-    "nb_trades",
-    "taker_volume",
-    "taker_quote_volume",
-)
-
-
-@dataclass
-class Candle:
-    """Indicators of a specific candle.
-
-    coin: the base coin
-    currency: the currency used to trade the coin
-    period: the time frame of the candle (e.g. '1m' or '4h')
-    open_time: candle opening time
-    open: opening price of the base coin
-    high: highest price reached by the base coin during the candle life
-    low: lowest price reached by the base coin during the candle life
-    close: last price of the coin during the candle life
-    volume: coin's total traded volume
-    quote_volume: currency's total traded volume
-    nb_trades: number of trades completed in the candle
-    taker_volume: the volume of coin from selling orders that have been filled (taker_volume / volume > 0.5 is high demand)
-    taker_quote_volume: the volume of currency earned by selling orders that have been filled
-    """
-
-    coin: Coin
-    currency: Coin
-    period: Period
-    open_time: datetime.datetime
-    close_time: datetime.datetime
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: float
-    quote_volume: float
-    nb_trades: int
-    taker_volume: float
-    taker_quote_volume: float
-
-    high_time: datetime.datetime | None = None
-    low_time: datetime.datetime | None = None
-
-    def __post_init__(self):
-        if isinstance(self.coin, str):
-            self.coin = Coin[self.coin]
-        if isinstance(self.currency, str):
-            self.currency = Coin[self.currency]
-
-        if isinstance(self.period, str):
-            self.period = Period(timeframe=self.period)
-
-        if isinstance(self.open_time, pd.Timestamp):
-            self.open_time = self.open_time.to_pydatetime()
-        if isinstance(self.close_time, pd.Timestamp):
-            self.close_time = self.close_time.to_pydatetime()
-
-        if pd.isna(self.high_time):
-            self.high_time = None
-        if pd.isna(self.low_time):
-            self.low_time = None
-
-        if isinstance(self.high_time, pd.Timestamp):
-            self.high_time = self.high_time.to_pydatetime()
-        if isinstance(self.low_time, pd.Timestamp):
-            self.low_time = self.low_time.to_pydatetime()
-
-    def __eq__(self, other):
-        return asdict(self) == asdict(other)
-
-    @classmethod
-    def is_available_attribute(cls, attr: str) -> bool:
-        return attr in AVAILABLE_ATTRIBUTES
-
-    def to_dataframe(self) -> pd.DataFrame:
-        return pd.DataFrame(
-            {
-                "coin": self.coin.value,
-                "currency": self.currency.value,
-                "period": self.period.timeframe,
-                "open_time": self.open_time,
-                "close_time": self.close_time,
-                "open": self.open,
-                "high": self.high,
-                "low": self.low,
-                "close": self.close,
-                "volume": self.volume,
-                "quote_volume": self.quote_volume,
-                "nb_trades": self.nb_trades,
-                "taker_volume": self.taker_volume,
-                "taker_quote_volume": self.taker_quote_volume,
-                "high_time": self.high_time,
-                "low_time": self.low_time,
-            },
-            index=[0],
-        )
-
-
-@dataclass
-class ExitSignal:
-    """How a Position needs to be closed.
-
-    The signal can be:
-    - take profit at high time
-    - take profit at undefined time (take close time)
-    - stop loss at low time
-    - stop loss at undefined time (take close time)
-    - close at close time
-    """
-
-    price_signal: Literal["take_profit", "stop_loss", "close"]
-    date_signal: Literal["high", "low", "close"]
-
-    def to_price_date(
-        self, position: "Position", candle: Candle
-    ) -> tuple[float, datetime.datetime]:
-        """Convert the signal to actual price and date."""
-        match self.price_signal:
-            case "take_profit":
-                price = position.take_profit
-            case "stop_loss":
-                price = position.stop_loss
-            case "close":
-                price = candle.close
-        match self.date_signal:
-            case "high":
-                date = candle.high_time
-            case "low":
-                date = candle.low_time
-            case "close":
-                date = candle.close_time
-
-        return price, date
 
 
 class Position(BaseModel):
@@ -421,3 +273,25 @@ class Portfolio(BaseModel):
         if updated_amount < 0:
             raise ValueError(f"Trying to set a negative amount of `{coin}`")
         self.assets[coin] = updated_amount
+
+
+def signal_to_values(
+    exit_signal: ExitSignal, position: Position, candle: Candle
+) -> tuple[float, datetime.datetime]:
+    """Convert the signal to actual price and date."""
+    match exit_signal.price_signal:
+        case "take_profit":
+            price = position.take_profit
+        case "stop_loss":
+            price = position.stop_loss
+        case "close":
+            price = candle.close
+    match exit_signal.date_signal:
+        case "high":
+            date = candle.high_time
+        case "low":
+            date = candle.low_time
+        case "close":
+            date = candle.close_time
+
+    return price, date
