@@ -1,162 +1,69 @@
 import datetime
 from dataclasses import dataclass
-from typing import Literal
-from dataclasses import asdict
 
 
-import pandas as pd
 from pydantic import BaseModel
 
-from athena.core.types import Coin, Side, Period
-
+from athena.core.candle import Candle
+from athena.core.types import Coin, Side
+from athena.core.types.signal import ExitSignal
 
 FEES_PCT = 0.001
 
 
-AVAILABLE_ATTRIBUTES = (
-    "open",
-    "high",
-    "low",
-    "close",
-    "open_time",
-    "high_time",
-    "low_time",
-    "close_time",
-    "volume",
-    "quote_volume",
-    "nb_trades",
-    "taker_volume",
-    "taker_quote_volume",
-)
-
-
 @dataclass
-class Candle:
-    """Indicators of a specific candle.
+class Trade:
+    """A Trade is a closed Position.
 
-    coin: the base coin
-    currency: the currency used to trade the coin
-    period: the time frame of the candle (e.g. '1m' or '4h')
-    open_time: candle opening time
-    open: opening price of the base coin
-    high: highest price reached by the base coin during the candle life
-    low: lowest price reached by the base coin during the candle life
-    close: last price of the coin during the candle life
-    volume: coin's total traded volume
-    quote_volume: currency's total traded volume
-    nb_trades: number of trades completed in the candle
-    taker_volume: the volume of coin from selling orders that have been filled (taker_volume / volume > 0.5 is high demand)
-    taker_quote_volume: the volume of currency earned by selling orders that have been filled
+    Can only be instantiated with Position.close()
+
+    Attributes:
+        strategy_name: the nickname of the strategy used to open the position
+        coin: the coin that have been bought
+        currency: the currency used to buy the coin
+        amount: coin's amount that have been bought
+        side: weather the position is a 'LONG' or a 'SHORT'
+
+        open_date: the date when the position was open, usually the open_date of a candle
+        open_price: coin's price when the position was open
+        initial_investment: the initial amount of currency the trader invested
+        open_fees: cost of opening the position, fees are being taken before calculating coin amount
+        stop_loss: stop your loss if price drops too low (close the position)
+        take_profit: take your profits if price reaches your target (close the position)
+
+        close_date: the date when a position was closed, could be any time
+        close_price: coin's price when the position was closed
+        close_fees: fees from selling the position
+
+        total_fees: sum of open and close fees
+        total_profit: remaining money when we compare initial investment, return and fees
+        profit_pct: trade's return
+        is_win: if we made money on this trade or not
+        trade_duration: position total lifetime
     """
 
+    strategy_name: str
     coin: Coin
     currency: Coin
-    period: Period
-    open_time: datetime.datetime
-    close_time: datetime.datetime
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: float
-    quote_volume: float
-    nb_trades: int
-    taker_volume: float
-    taker_quote_volume: float
+    amount: float
+    side: Side
 
-    high_time: datetime.datetime | None = None
-    low_time: datetime.datetime | None = None
+    open_date: datetime.datetime
+    open_price: float
+    initial_investment: float
+    open_fees: float
+    stop_loss: float
+    take_profit: float
 
-    def __post_init__(self):
-        if isinstance(self.coin, str):
-            self.coin = Coin[self.coin]
-        if isinstance(self.currency, str):
-            self.currency = Coin[self.currency]
+    close_date: datetime.datetime
+    close_price: float
+    close_fees: float
 
-        if isinstance(self.period, str):
-            self.period = Period(timeframe=self.period)
-
-        if isinstance(self.open_time, pd.Timestamp):
-            self.open_time = self.open_time.to_pydatetime()
-        if isinstance(self.close_time, pd.Timestamp):
-            self.close_time = self.close_time.to_pydatetime()
-
-        if pd.isna(self.high_time):
-            self.high_time = None
-        if pd.isna(self.low_time):
-            self.low_time = None
-
-        if isinstance(self.high_time, pd.Timestamp):
-            self.high_time = self.high_time.to_pydatetime()
-        if isinstance(self.low_time, pd.Timestamp):
-            self.low_time = self.low_time.to_pydatetime()
-
-    def __eq__(self, other):
-        return asdict(self) == asdict(other)
-
-    @classmethod
-    def is_available_attribute(cls, attr: str) -> bool:
-        return attr in AVAILABLE_ATTRIBUTES
-
-    def to_dataframe(self) -> pd.DataFrame:
-        return pd.DataFrame(
-            {
-                "coin": self.coin.value,
-                "currency": self.currency.value,
-                "period": self.period.timeframe,
-                "open_time": self.open_time,
-                "close_time": self.close_time,
-                "open": self.open,
-                "high": self.high,
-                "low": self.low,
-                "close": self.close,
-                "volume": self.volume,
-                "quote_volume": self.quote_volume,
-                "nb_trades": self.nb_trades,
-                "taker_volume": self.taker_volume,
-                "taker_quote_volume": self.taker_quote_volume,
-                "high_time": self.high_time,
-                "low_time": self.low_time,
-            },
-            index=[0],
-        )
-
-
-@dataclass
-class ExitSignal:
-    """How a Position needs to be closed.
-
-    The signal can be:
-    - take profit at high time
-    - take profit at undefined time (take close time)
-    - stop loss at low time
-    - stop loss at undefined time (take close time)
-    - close at close time
-    """
-
-    price_signal: Literal["take_profit", "stop_loss", "close"]
-    date_signal: Literal["high", "low", "close"]
-
-    def to_price_date(
-        self, position: "Position", candle: Candle
-    ) -> tuple[float, datetime.datetime]:
-        """Convert the signal to actual price and date."""
-        match self.price_signal:
-            case "take_profit":
-                price = position.take_profit
-            case "stop_loss":
-                price = position.stop_loss
-            case "close":
-                price = candle.close
-        match self.date_signal:
-            case "high":
-                date = candle.high_time
-            case "low":
-                date = candle.low_time
-            case "close":
-                date = candle.close_time
-
-        return price, date
+    total_fees: float
+    total_profit: float
+    profit_pct: float
+    is_win: bool
+    trade_duration: datetime.timedelta
 
 
 class Position(BaseModel):
@@ -228,7 +135,7 @@ class Position(BaseModel):
             side=side,
         )
 
-    def close(self, close_date: datetime.datetime, close_price: float) -> "Trade":
+    def close(self, close_date: datetime.datetime, close_price: float) -> Trade:
         """Sell the traded amount.
 
         Args:
@@ -318,61 +225,6 @@ class Position(BaseModel):
         return None
 
 
-@dataclass
-class Trade:
-    """A Trade is a closed Position.
-
-    Can only be instantiated with Position.close()
-
-    Attributes:
-        strategy_name: the nickname of the strategy used to open the position
-        coin: the coin that have been bought
-        currency: the currency used to buy the coin
-        amount: coin's amount that have been bought
-        side: weather the position is a 'LONG' or a 'SHORT'
-
-        open_date: the date when the position was open, usually the open_date of a candle
-        open_price: coin's price when the position was open
-        initial_investment: the initial amount of currency the trader invested
-        open_fees: cost of opening the position, fees are being taken before calculating coin amount
-        stop_loss: stop your loss if price drops too low (close the position)
-        take_profit: take your profits if price reaches your target (close the position)
-
-        close_date: the date when a position was closed, could be any time
-        close_price: coin's price when the position was closed
-        close_fees: fees from selling the position
-
-        total_fees: sum of open and close fees
-        total_profit: remaining money when we compare initial investment, return and fees
-        profit_pct: trade's return
-        is_win: if we made money on this trade or not
-        trade_duration: position total lifetime
-    """
-
-    strategy_name: str
-    coin: Coin
-    currency: Coin
-    amount: float
-    side: Side
-
-    open_date: datetime.datetime
-    open_price: float
-    initial_investment: float
-    open_fees: float
-    stop_loss: float
-    take_profit: float
-
-    close_date: datetime.datetime
-    close_price: float
-    close_fees: float
-
-    total_fees: float
-    total_profit: float
-    profit_pct: float
-    is_win: bool
-    trade_duration: datetime.timedelta
-
-
 class Portfolio(BaseModel):
     """Account's available coins mapping.
 
@@ -421,3 +273,29 @@ class Portfolio(BaseModel):
         if updated_amount < 0:
             raise ValueError(f"Trying to set a negative amount of `{coin}`")
         self.assets[coin] = updated_amount
+
+
+def signal_to_values(
+    signal: ExitSignal, position: Position, candle: Candle
+) -> tuple[float, datetime.datetime]:
+    """Convert the signal to actual price and date."""
+    match signal.price_signal:
+        case "take_profit":
+            price = position.take_profit
+        case "stop_loss":
+            price = position.stop_loss
+        case "close":
+            price = candle.close
+        case _:
+            price = None
+    match signal.date_signal:
+        case "high":
+            date = candle.high_time
+        case "low":
+            date = candle.low_time
+        case "close":
+            date = candle.close_time
+        case _:
+            date = None
+
+    return price, date

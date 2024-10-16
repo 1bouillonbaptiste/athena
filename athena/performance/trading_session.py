@@ -1,6 +1,12 @@
 from athena.configs import TradingSessionConfig
 from athena.core.fluctuations import Fluctuations
-from athena.core.market_entities import Portfolio, Position, Candle, Trade
+from athena.core.market_entities import (
+    Portfolio,
+    Position,
+    Candle,
+    Trade,
+    signal_to_values,
+)
 from athena.core.types import Signal, Coin
 from athena.tradingtools.strategies.strategy import Strategy
 
@@ -78,8 +84,8 @@ class TradingSession:
             return
         signal = self.position.get_exit_signal(candle=candle)
         if signal is not None:
-            close_price, close_date = signal.to_price_date(
-                position=self.position, candle=candle
+            close_price, close_date = signal_to_values(
+                signal=signal, position=self.position, candle=candle
             )
             trade = self.position.close(
                 close_date=close_date,
