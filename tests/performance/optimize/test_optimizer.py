@@ -52,7 +52,7 @@ def test_optimizer(trading_session):
         strategy=NewStrategy(config=NewStrategyModel()),
         n_trials=2,
     )
-    best_parameters = optimizer.optimize(
+    split_results = optimizer.optimize(
         train_fluctuations=Fluctuations.from_candles(
             convert_candles_to_period(
                 generate_candles(size=1000, period=Period(timeframe="1m")),
@@ -66,15 +66,13 @@ def test_optimizer(trading_session):
             ),
         ),
     )
-    assert "parameter_a" in best_parameters
-    assert "parameter_b" in best_parameters
 
-    assert "train" in best_parameters
-    assert "val" in best_parameters
+    #
+    assert split_results.parameters.keys() == {"parameter_a", "parameter_b"}
 
-    # sharpe ratio could be negative
-    assert best_parameters["train"] > -float("inf")
-    assert best_parameters["val"] > -float("inf")
+    # score is defined in ] 0 ; inf [
+    assert split_results.train_score > 0
+    assert split_results.val_score > 0
 
 
 def test_find_ccpv_best_parameters(trading_session):

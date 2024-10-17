@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from typing import Any
+import numpy as np
+
 import optuna
 from tqdm import tqdm
 import logging
@@ -14,6 +18,25 @@ from athena.tradingtools.metrics.metrics import TradingStatistics
 
 logger = logging.getLogger()
 optuna.logging.set_verbosity(optuna.logging.WARNING)
+
+
+@dataclass
+class SplitResult:
+    """Store a cross-validation split results.
+
+    Attributes:
+        train_statistics: trading statistics from train fluctuations
+        val_statistics: trading statistics from validation fluctuations
+        parameters: strategy parameters to obtain the results
+        train_score: objective function value for train split
+        val_score: objective function value for validation split
+    """
+
+    train_statistics: TradingStatistics
+    val_statistics: TradingStatistics
+    parameters: dict[str, Any]
+    train_score: float
+    val_score: float
 
 
 class Optimizer:
@@ -48,7 +71,11 @@ class Optimizer:
         Returns:
             best parameters as a dict
         """
-        objective_scores: list[dict[str : float | int]] = []
+        all_splits_results: list[SplitResult] = []
+
+        def _score(statistics: TradingStatistics):
+            """"""
+            return 1 / np.exp(statistics.calmar_ratio + statistics.sharpe_ratio)
 
         def _objective(trial: optuna.Trial):
             """Objective function to be minimized or maximized."""
@@ -57,27 +84,32 @@ class Optimizer:
             )
             self.strategy.update_config(strategy_parameters)
 
-            train_metrics = TradingStatistics.from_trades(
+            train_statistics = TradingStatistics.from_trades(
                 trades=self.trading_session.get_trades(
                     fluctuations=train_fluctuations,
                     strategy=self.strategy,
                 )[0]
             )
-            val_metrics = TradingStatistics.from_trades(
+            val_statistics = TradingStatistics.from_trades(
                 trades=self.trading_session.get_trades(
                     fluctuations=val_fluctuations,
                     strategy=self.strategy,
                 )[0]
             )
-            objective_scores.append(
-                strategy_parameters
-                | {"train": train_metrics.sharpe_ratio, "val": val_metrics.sharpe_ratio}
+            new_split_results = SplitResult(
+                train_statistics=train_statistics,
+                val_statistics=val_statistics,
+                parameters=strategy_parameters,
+                train_score=_score(train_statistics),
+                val_score=_score(val_statistics),
             )
-            return train_metrics.sharpe_ratio
+            all_splits_results.append(new_split_results)
+
+            return new_split_results.train_score
 
         study = optuna.create_study()
         study.optimize(_objective, n_trials=self.n_trials)
-        return min(objective_scores, key=lambda d: d["val"])
+        return min(all_splits_results, key=lambda results: results.val_score)
 
     def find_ccpv_best_parameters(
         self,
