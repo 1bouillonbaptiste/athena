@@ -69,11 +69,11 @@ def backtest(
     trading_session = TradingSession(
         coin=data_config.coin,
         currency=data_config.currency,
-        strategy=strategy,
+        strategy_name=strategy.name,
         config=session_config,
     )
 
-    trades, _ = trading_session.get_trades_from_fluctuations(fluctuations=fluctuations)
+    trades, _ = trading_session.get_trades(fluctuations=fluctuations, strategy=strategy)
 
     build_and_save_trading_report(
         trades=trades,

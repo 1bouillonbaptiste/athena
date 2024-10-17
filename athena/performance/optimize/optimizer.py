@@ -7,6 +7,7 @@ from athena.performance.optimize.optuna import (
 )
 from athena.performance.optimize.split import SplitGenerator
 from athena.performance.trading_session import TradingSession
+from athena.tradingtools import Strategy
 from athena.tradingtools.metrics.metrics import TradingStatistics
 
 
@@ -15,16 +16,18 @@ class Optimizer:
 
     Args:
         trading_session: the session that will be used to get trades from fluctuations
+        strategy: a strategy to be optimized
         n_trials: the number of parameter search trials to run
     """
 
-    def __init__(self, trading_session: TradingSession, n_trials: int = 100):
+    def __init__(
+        self, trading_session: TradingSession, strategy: Strategy, n_trials: int = 100
+    ):
         self.trading_session = trading_session
+        self.strategy = strategy
         self.n_trials = n_trials
 
-        self.constraints = pydantic_model_to_constraints(
-            self.trading_session.strategy.config
-        )
+        self.constraints = pydantic_model_to_constraints(self.strategy.config)
 
     def optimize(
         self,
@@ -47,20 +50,20 @@ class Optimizer:
             strategy_parameters = constraints_to_parameters(
                 trial=trial, constraints=self.constraints
             )
-            self.trading_session.strategy.config = (
-                self.trading_session.strategy.config.model_copy(
-                    update=strategy_parameters
-                )
+            self.strategy.config = self.strategy.config.model_copy(
+                update=strategy_parameters
             )
 
             train_metrics = TradingStatistics.from_trades(
-                trades=self.trading_session.get_trades_from_fluctuations(
-                    fluctuations=train_fluctuations
+                trades=self.trading_session.get_trades(
+                    fluctuations=train_fluctuations,
+                    strategy=self.strategy,
                 )[0]
             )
             val_metrics = TradingStatistics.from_trades(
-                trades=self.trading_session.get_trades_from_fluctuations(
-                    fluctuations=val_fluctuations
+                trades=self.trading_session.get_trades(
+                    fluctuations=val_fluctuations,
+                    strategy=self.strategy,
                 )[0]
             )
             objective_scores.append(

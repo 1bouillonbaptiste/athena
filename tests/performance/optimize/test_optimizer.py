@@ -47,7 +47,8 @@ class NewStrategy(Strategy):
 
 def test_optimizer(trading_session):
     optimizer = Optimizer(
-        trading_session=trading_session(NewStrategy(config=NewStrategyModel())),
+        trading_session=trading_session(),
+        strategy=NewStrategy(config=NewStrategyModel()),
         n_trials=2,
     )
     best_parameters = optimizer.optimize(
@@ -77,7 +78,8 @@ def test_optimizer(trading_session):
 
 def test_find_ccpv_best_parameters(trading_session):
     optimizer = Optimizer(
-        trading_session=trading_session(NewStrategy(config=NewStrategyModel())),
+        trading_session=trading_session(),
+        strategy=NewStrategy(config=NewStrategyModel()),
         n_trials=2,
     )
     split_generator = create_ccpv_splits(
