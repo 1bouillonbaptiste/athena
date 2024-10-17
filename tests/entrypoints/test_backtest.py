@@ -38,6 +38,11 @@ def config():
             "take_profit_pct": 0.01,
             "position_size": 0.01,
         },
+        "ccpv": {
+            "test_size": 0.2,
+            "test_samples": 1,
+            "purge_factor": 0.01,
+        },
     }
 
 

@@ -5,7 +5,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from plotly.subplots import make_subplots
 
 from athena.core.fluctuations import Fluctuations
-from athena.core.market_entities import Position
+from athena.core.market_entities import Position, Trade
 from athena.performance.models import (
     TradingMetrics,
     TradingPerformance,
@@ -188,7 +188,7 @@ def _performance_table(trading_performance: TradingPerformance):
 
 
 def build_and_save_trading_report(
-    trades: list[Position],
+    trades: list[Trade],
     fluctuations: Fluctuations,
     output_path: Path,
     show_trades: bool = True,

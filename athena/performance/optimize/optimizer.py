@@ -107,11 +107,11 @@ class Optimizer:
 
             return new_split_results.train_score
 
-        study = optuna.create_study(directions="minimize")
+        study = optuna.create_study(directions=["minimize"])
         study.optimize(_objective, n_trials=self.n_trials)
         return min(all_splits_results, key=lambda results: results.val_score)
 
-    def find_ccpv_best_parameters(
+    def get_results(
         self,
         split_generator: SplitGenerator,
     ) -> list[SplitResult]:
@@ -123,9 +123,9 @@ class Optimizer:
         Returns:
             best parameters for each split as a list of dict
         """
-        best_parameters = []
+        ccpv_results = []
         logger.info("Running CCPV")
         for ii in tqdm(range(len(split_generator.splits))):
             train_fluctuations, val_fluctuations = split_generator.get_split(ii)
-            best_parameters.append(self.optimize(train_fluctuations, val_fluctuations))
-        return best_parameters
+            ccpv_results.append(self.optimize(train_fluctuations, val_fluctuations))
+        return ccpv_results

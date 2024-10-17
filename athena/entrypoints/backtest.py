@@ -2,14 +2,10 @@ from pathlib import Path
 
 import click
 
-from athena.configs import DataConfig, StrategyConfig, TradingSessionConfig
+from athena.configs import DataConfig, StrategyConfig, TradingSessionConfig, CCPVConfig
+from athena.performance.backtesting import run_backtest
 from athena.settings import Settings
-from athena.core.fluctuations import Fluctuations
-from athena.core.dataset_layout import DatasetLayout
 from athena.entrypoints.utils import load_config
-from athena.performance.report import build_and_save_trading_report
-from athena.performance.trading_session import TradingSession
-from athena.tradingtools.strategies import init_strategy
 
 
 @click.command()
@@ -53,30 +49,13 @@ def backtest(
     data_config = DataConfig.model_validate(config.get("data"))
     strategy_config = StrategyConfig.model_validate(config.get("strategy"))
     session_config = TradingSessionConfig.model_validate(config.get("session"))
+    ccpv_config = CCPVConfig.model_validate(config.get("ccpv"))
 
-    fluctuations = Fluctuations.load_from_dataset(
-        dataset=DatasetLayout(root_dir=root_dir or Settings().raw_data_directory),
-        coin=data_config.coin,
-        currency=data_config.currency,
-        target_period=data_config.period,
-        from_date=data_config.from_date,
-        to_date=data_config.to_date,
-    )
-    strategy = init_strategy(
-        strategy_name=strategy_config.name, strategy_params=strategy_config.parameters
-    )
-
-    trading_session = TradingSession(
-        coin=data_config.coin,
-        currency=data_config.currency,
-        strategy_name=strategy.name,
-        config=session_config,
-    )
-
-    trades, _ = trading_session.get_trades(fluctuations=fluctuations, strategy=strategy)
-
-    build_and_save_trading_report(
-        trades=trades,
-        fluctuations=fluctuations,
+    run_backtest(
+        data_config=data_config,
+        strategy_config=strategy_config,
+        session_config=session_config,
+        ccpv_config=ccpv_config,
+        dataset_directory=root_dir or Settings().raw_data_directory,
         output_path=output_dir / "performance_report.html",
     )
