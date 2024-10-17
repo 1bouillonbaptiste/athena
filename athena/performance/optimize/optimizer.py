@@ -50,9 +50,7 @@ class Optimizer:
             strategy_parameters = constraints_to_parameters(
                 trial=trial, constraints=self.constraints
             )
-            self.strategy.config = self.strategy.config.model_copy(
-                update=strategy_parameters
-            )
+            self.strategy.update_config(strategy_parameters)
 
             train_metrics = TradingStatistics.from_trades(
                 trades=self.trading_session.get_trades(

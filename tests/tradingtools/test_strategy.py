@@ -1,11 +1,29 @@
 import pytest
+from pydantic import BaseModel, Field
 
 from athena.core.fluctuations import Fluctuations
 from athena.core.types import Signal
 from athena.tradingtools import Strategy
 
 
+class StrategyBuyWeekSellFridayConfig(BaseModel):
+    """Dummy config for strategy.BuyWeekSellFriday."""
+
+    foo: int = Field(default=0)
+
+
 class StrategyBuyWeekSellFriday(Strategy):
+    """Dummy description"""
+
+    def __init__(
+        self,
+        config: StrategyBuyWeekSellFridayConfig = Field(
+            default_factory=StrategyBuyWeekSellFridayConfig
+        ),
+    ):
+        super().__init__()
+        self.config = config
+
     def compute_signals(self, fluctuations: Fluctuations) -> list[Signal]:
         """Return dummy signals."""
         signals = []
@@ -74,3 +92,13 @@ def test_strategy_compute_signals(sample_fluctuations):
         Signal.WAIT,
         Signal.WAIT,
     ]
+
+
+def test_update_parameters():
+    strategy = StrategyBuyWeekSellFriday(config=StrategyBuyWeekSellFridayConfig())
+
+    assert strategy.config.foo == 0
+
+    strategy.update_config({"foo": 1})
+
+    assert strategy.config.foo == 1
