@@ -146,6 +146,8 @@ def calculate_cagr(trades: list[Trade]) -> float:
     Returns:
         the annualized average return
     """
+    if len(trades) < 2:
+        return 0
     initial_money = Portfolio.default().get_available(Coin.default_currency())
     total_profit = np.sum([trade.total_profit for trade in trades])
     session_years = (trades[-1].close_date - trades[0].open_date).days / 365.0
@@ -169,6 +171,8 @@ def calculate_sharpe(trades: list[Trade]) -> float:
 
     Returns:
     """
+    if len(trades) < 2:
+        return 0
     trades_return = [trade.total_profit / trade.initial_investment for trade in trades]
     returns_avg = np.mean(trades_return)
     returns_std = np.std(trades_return)
@@ -188,6 +192,8 @@ def calculate_sortino(trades: list[Trade]) -> float:
 
     Returns:
     """
+    if len(trades) < 2:
+        return 0
     trades_return = [trade.total_profit / trade.initial_investment for trade in trades]
     returns_avg = np.mean(trades_return)
     returns_negative_std = np.std([ret for ret in trades_return if ret < 0])
@@ -210,6 +216,8 @@ def calculate_calmar(trades: list[Trade]) -> float:
 
     Returns:
     """
+    if len(trades) < 2:
+        return 0
     max_drawdown = calculate_max_drawdown(trades)
     if max_drawdown == 0:
         return 0

@@ -1,4 +1,6 @@
-from optuna import Trial, create_study
+import optuna
+from tqdm import tqdm
+import logging
 
 from athena.core.fluctuations import Fluctuations
 from athena.performance.optimize.optuna import (
@@ -9,6 +11,9 @@ from athena.performance.optimize.split import SplitGenerator
 from athena.performance.trading_session import TradingSession
 from athena.tradingtools import Strategy
 from athena.tradingtools.metrics.metrics import TradingStatistics
+
+logger = logging.getLogger()
+optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 
 class Optimizer:
@@ -45,7 +50,7 @@ class Optimizer:
         """
         objective_scores: list[dict[str : float | int]] = []
 
-        def _objective(trial: Trial):
+        def _objective(trial: optuna.Trial):
             """Objective function to be minimized or maximized."""
             strategy_parameters = constraints_to_parameters(
                 trial=trial, constraints=self.constraints
@@ -70,7 +75,7 @@ class Optimizer:
             )
             return train_metrics.sharpe_ratio
 
-        study = create_study()
+        study = optuna.create_study()
         study.optimize(_objective, n_trials=self.n_trials)
         return min(objective_scores, key=lambda d: d["val"])
 
@@ -87,7 +92,8 @@ class Optimizer:
             best parameters for each split as a list of dict
         """
         best_parameters = []
-        for ii in range(len(split_generator.splits)):
+        logger.info("Running CCPV")
+        for ii in tqdm(range(len(split_generator.splits))):
             train_fluctuations, val_fluctuations = split_generator.get_split(ii)
             best_parameters.append(self.optimize(train_fluctuations, val_fluctuations))
         return best_parameters
