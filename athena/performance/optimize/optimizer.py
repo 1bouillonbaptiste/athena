@@ -61,7 +61,7 @@ class Optimizer:
         self,
         train_fluctuations: Fluctuations,
         val_fluctuations: Fluctuations,
-    ):
+    ) -> SplitResult:
         """Find the parameters that maximizes the trading performances of the strategy on fluctuations.
 
         Args:
@@ -75,7 +75,7 @@ class Optimizer:
 
         def _score(statistics: TradingStatistics):
             """"""
-            return 1 / np.exp(statistics.calmar_ratio + statistics.sharpe_ratio)
+            return 1 / np.exp(statistics.sharpe_ratio)
 
         def _objective(trial: optuna.Trial):
             """Objective function to be minimized or maximized."""
@@ -107,14 +107,14 @@ class Optimizer:
 
             return new_split_results.train_score
 
-        study = optuna.create_study()
+        study = optuna.create_study(directions="minimize")
         study.optimize(_objective, n_trials=self.n_trials)
         return min(all_splits_results, key=lambda results: results.val_score)
 
     def find_ccpv_best_parameters(
         self,
         split_generator: SplitGenerator,
-    ):
+    ) -> list[SplitResult]:
         """Store best parameters for each split.
 
         Args:
