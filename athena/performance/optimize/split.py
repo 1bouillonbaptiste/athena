@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from athena.configs import CCPVConfig
 from athena.core.fluctuations import Fluctuations
 
 
@@ -110,31 +111,27 @@ def _division_to_split(division: list[int], total_size: int, purge_size: int):
 
 def create_ccpv_splits(
     fluctuations: Fluctuations,
-    test_size: float = 0.2,
-    test_samples: int = 1,
-    purge_factor: float = 0,
+    config: CCPVConfig,
 ) -> SplitGenerator:
     """Create the Combinatorial Purged Cross Validation Splits of the fluctuations.
 
     Args:
         fluctuations: market data
-        test_size: the overall ratio of candles to be put in test
-        test_samples: number of test samples
-        purge_factor: the ratio of purged indexes before and after test split to avoid leakage between train and test
+        config: parameters of the CCPV algorithm
 
     Returns:
         an instance of SplitGenerator
     """
 
-    nb_divisions = round(test_samples / test_size)
-    purge_size = round(len(fluctuations) * purge_factor)
+    nb_divisions = round(config.test_samples / config.test_size)
+    purge_size = round(len(fluctuations) * config.purge_factor)
 
     all_splits = [
         _division_to_split(
             division=division, total_size=len(fluctuations), purge_size=purge_size
         )
         for division in _create_cross_validation_divisions(
-            nb_divisions=nb_divisions, nb_test=test_samples
+            nb_divisions=nb_divisions, nb_test=config.test_samples
         )
     ]
 

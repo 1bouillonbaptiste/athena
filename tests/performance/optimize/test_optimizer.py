@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 import pytest
 
+from athena.configs import CCPVConfig
 from athena.core.candle import convert_candles_to_period
 from athena.core.fluctuations import Fluctuations
 from athena.core.types import Signal, Period
@@ -89,8 +90,7 @@ def test_find_ccpv_best_parameters(trading_session):
                 target_period=Period(timeframe="1h"),
             ),
         ),
-        test_size=0.2,
-        test_samples=1,
+        config=CCPVConfig.model_validate({"test_size": 0.2, "test_samples": 1}),
     )
 
     best_parameters = optimizer.find_ccpv_best_parameters(

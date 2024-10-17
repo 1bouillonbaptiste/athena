@@ -115,3 +115,23 @@ class TradingSessionConfig(BaseModel):
     @classmethod
     def parse_take_profit_pct(cls, value: Any) -> float:
         return 1 if value is None else value
+
+
+class CCPVConfig(BaseModel):
+    """Parameters to create Combinatorial Purge Cross Validation splits
+
+    Data can be purged before and after each test sample to avoid shared information between train and test.
+    Be cautious using a purge_factor value higher than 1%.
+    For example, with :
+    - 5 samples, 1% purge, test size of 30% : 5 * 2 * 1% = 10% of overall data be removed, 60% kept for training
+    - 10 samples, 1% purge, test size of 40% : 10 * 2 * 1% = 20% of overall data be removed, 40% kept for training
+
+    Attributes:
+        test_size: the ratio of data to put in test samples
+        test_samples: number of test samples, each sample has a size of `test_size` / `nb_samples`
+        purge_factor: the ratio of data to remove between train and test samples
+    """
+
+    test_size: float = Field(gt=0, lt=0.5, default=0.2)
+    test_samples: int = Field(ge=1, default=1)
+    purge_factor: float = Field(ge=0, le=0.1, default=0)
