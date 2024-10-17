@@ -75,7 +75,7 @@ def test_optimizer(trading_session):
     assert split_results.val_score > 0
 
 
-def test_find_ccpv_best_parameters(trading_session):
+def test_get_results(trading_session):
     optimizer = Optimizer(
         trading_session=trading_session(),
         strategy=NewStrategy(config=NewStrategyModel()),
@@ -91,9 +91,7 @@ def test_find_ccpv_best_parameters(trading_session):
         config=CCPVConfig.model_validate({"test_size": 0.2, "test_samples": 1}),
     )
 
-    best_parameters = optimizer.find_ccpv_best_parameters(
-        split_generator=split_generator
-    )
+    best_parameters = optimizer.get_results(split_generator=split_generator)
 
     assert (
         len(best_parameters) == len(split_generator.splits) == 5
