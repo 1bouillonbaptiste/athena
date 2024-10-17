@@ -146,9 +146,15 @@ def calculate_cagr(trades: list[Trade]) -> float:
     Returns:
         the annualized average return
     """
+    DAYS_IN_YEAR = 365
+
+    if len(trades) < 2:
+        return 0
+
     initial_money = Portfolio.default().get_available(Coin.default_currency())
     total_profit = np.sum([trade.total_profit for trade in trades])
-    session_years = (trades[-1].close_date - trades[0].open_date).days / 365.0
+    session_years = (trades[-1].close_date - trades[0].open_date).days / DAYS_IN_YEAR
+
     if session_years == 0:
         return 0
 
@@ -169,6 +175,8 @@ def calculate_sharpe(trades: list[Trade]) -> float:
 
     Returns:
     """
+    if len(trades) < 2:
+        return 0
     trades_return = [trade.total_profit / trade.initial_investment for trade in trades]
     returns_avg = np.mean(trades_return)
     returns_std = np.std(trades_return)
@@ -188,6 +196,8 @@ def calculate_sortino(trades: list[Trade]) -> float:
 
     Returns:
     """
+    if len(trades) < 2:
+        return 0
     trades_return = [trade.total_profit / trade.initial_investment for trade in trades]
     returns_avg = np.mean(trades_return)
     returns_negative_std = np.std([ret for ret in trades_return if ret < 0])
@@ -210,7 +220,34 @@ def calculate_calmar(trades: list[Trade]) -> float:
 
     Returns:
     """
+    if len(trades) < 2:
+        return 0
     max_drawdown = calculate_max_drawdown(trades)
     if max_drawdown == 0:
         return 0
     return calculate_cagr(trades) / calculate_max_drawdown(trades)
+
+
+def calculate_qar(trades: list[Trade]) -> float:
+    """The Quantile Adjusted Return is a custom statistic.
+
+    The idea is to multiply two opposite quantiles.
+    If the result is above 1, the 'good' scenario overcome the 'bad' scenario.
+
+    We multiply many quantiles, and it gives an intuition on how worth it is to risk our money.
+
+    Args:
+        trades:
+
+    Returns:
+    """
+    trades_return = [trade.total_profit / trade.initial_investment for trade in trades]
+
+    qar = np.multiply(
+        [
+            np.quantile(trades_return, q) * np.quantile(trades_return, 1 - q)
+            for q in [0.05, 0.1, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45]
+        ]
+    )
+
+    return qar

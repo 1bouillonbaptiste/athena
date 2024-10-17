@@ -1,5 +1,5 @@
 import re
-from typing import Iterable
+from typing import Iterable, Any
 
 from athena.core.fluctuations import Fluctuations
 from athena.core.market_entities import Candle
@@ -62,6 +62,10 @@ class Strategy:
             NotImplementedError: if the strategy is not implemented.
         """
         raise NotImplementedError
+
+    def update_config(self, parameters: dict[str:Any]):
+        """Update strategy config with new parameters"""
+        self.config = self.config.model_copy(update=parameters)
 
 
 def _split_uppercase_words(string: str) -> list[str]:

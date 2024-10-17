@@ -3,16 +3,15 @@ import pytest
 from athena.configs import TradingSessionConfig
 from athena.core.types import Coin
 from athena.performance.trading_session import TradingSession
-from athena.tradingtools import Strategy
 
 
 @pytest.fixture
 def trading_session():
-    def _trading_session(strategy: Strategy) -> TradingSession:
+    def _trading_session() -> TradingSession:
         return TradingSession(
             coin=Coin.default_coin(),
             currency=Coin.default_currency(),
-            strategy=strategy,
+            strategy_name="my_strategy",
             config=TradingSessionConfig.model_validate(
                 {
                     "position_size": 0.33,

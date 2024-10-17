@@ -27,7 +27,7 @@ class StrategyBuyMondaySellFriday(Strategy):
 
 
 def test_reset_state(trading_session):
-    session = trading_session(StrategyBuyMondaySellFriday())
+    session = trading_session()
     assert session.trades == []
 
     session.trades.append("foo")
@@ -43,8 +43,8 @@ def test_reset_state(trading_session):
 
 
 def test_remaining_portfolio(trading_session):
-    session = trading_session(StrategyBuyMondaySellFriday())
-    trades, portfolio = session.get_trades_from_fluctuations(
+    session = trading_session()
+    trades, portfolio = session.get_trades(
         fluctuations=generate_fluctuations(
             size=6,
             from_date=datetime.datetime(2024, 10, 14),  # monday
@@ -52,22 +52,23 @@ def test_remaining_portfolio(trading_session):
             include_high_time=False,
             include_low_time=False,
         ),
+        strategy=StrategyBuyMondaySellFriday(),
     )
 
     assert len(trades) == 1
-    assert (
-        portfolio.get_available(session.currency)
-        == Portfolio.default(session.currency).get_available(session.currency)
+    assert portfolio.get_available(session.currency) == pytest.approx(
+        Portfolio.default(session.currency).get_available(session.currency)
         + trades[0].total_profit
     )
 
 
 def test_get_trades_fluctuations_with_sell_signal(sample_fluctuations, trading_session):
-    session = trading_session(StrategyBuyMondaySellFriday())
-    trades, _ = session.get_trades_from_fluctuations(
+    session = trading_session()
+    trades, _ = session.get_trades(
         fluctuations=sample_fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
+        strategy=StrategyBuyMondaySellFriday(),
     )
 
     assert len(trades) == 1
@@ -96,15 +97,14 @@ def test_get_trades_fluctuations_with_sell_signal(sample_fluctuations, trading_s
     assert trade.is_win
 
 
-def test_get_trades_from_fluctuations_price_reach_tp(
-    sample_fluctuations, trading_session
-):
-    session = trading_session(StrategyBuyMondaySellFriday())
+def test_get_trades_price_reach_tp(sample_fluctuations, trading_session):
+    session = trading_session()
     session.config.take_profit_pct = 0.1
-    trades, portfolio = session.get_trades_from_fluctuations(
+    trades, portfolio = session.get_trades(
         fluctuations=sample_fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
+        strategy=StrategyBuyMondaySellFriday(),
     )
 
     assert len(trades) == 1
@@ -115,15 +115,14 @@ def test_get_trades_from_fluctuations_price_reach_tp(
     assert trade.close_price == pytest.approx(110, abs=1e-3)
 
 
-def test_get_trades_from_fluctuations_price_reach_sl(
-    sample_fluctuations, trading_session
-):
-    session = trading_session(StrategyBuyMondaySellFriday())
+def test_get_trades_price_reach_sl(sample_fluctuations, trading_session):
+    session = trading_session()
     session.config.stop_loss_pct = 0.1
-    trades, _ = session.get_trades_from_fluctuations(
+    trades, _ = session.get_trades(
         fluctuations=sample_fluctuations(
             timeframe="1d", include_high_time=False, include_low_time=False
         ),
+        strategy=StrategyBuyMondaySellFriday(),
     )
 
     assert len(trades) == 1

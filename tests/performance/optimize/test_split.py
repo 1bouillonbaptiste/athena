@@ -1,5 +1,6 @@
 from pytest_cases import parametrize_with_cases
 
+from athena.configs import CCPVConfig
 from athena.core.fluctuations import Fluctuations
 from athena.core.types import Period
 from athena.performance.optimize.split import (
@@ -125,9 +126,13 @@ def test_create_ccpv_splits():
                 period=Period(timeframe="1m"),
             )
         ),
-        test_size=0.2,
-        test_samples=3,
-        purge_factor=0.01,
+        config=CCPVConfig.model_validate(
+            {
+                "test_size": 0.2,
+                "test_samples": 3,
+                "purge_factor": 0.01,
+            }
+        ),
     )
     assert len(split_generator.splits) == 455
     assert (

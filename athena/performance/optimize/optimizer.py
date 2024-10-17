@@ -1,4 +1,10 @@
-from optuna import Trial, create_study
+from dataclasses import dataclass
+from typing import Any
+import numpy as np
+
+import optuna
+from tqdm import tqdm
+import logging
 
 from athena.core.fluctuations import Fluctuations
 from athena.performance.optimize.optuna import (
@@ -7,7 +13,30 @@ from athena.performance.optimize.optuna import (
 )
 from athena.performance.optimize.split import SplitGenerator
 from athena.performance.trading_session import TradingSession
+from athena.tradingtools import Strategy
 from athena.tradingtools.metrics.metrics import TradingStatistics
+
+logger = logging.getLogger()
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+
+
+@dataclass
+class SplitResult:
+    """Store a cross-validation split results.
+
+    Attributes:
+        train_statistics: trading statistics from train fluctuations
+        val_statistics: trading statistics from validation fluctuations
+        parameters: strategy parameters to obtain the results
+        train_score: objective function value for train split
+        val_score: objective function value for validation split
+    """
+
+    train_statistics: TradingStatistics
+    val_statistics: TradingStatistics
+    parameters: dict[str, Any]
+    train_score: float
+    val_score: float
 
 
 class Optimizer:
@@ -15,22 +44,24 @@ class Optimizer:
 
     Args:
         trading_session: the session that will be used to get trades from fluctuations
+        strategy: a strategy to be optimized
         n_trials: the number of parameter search trials to run
     """
 
-    def __init__(self, trading_session: TradingSession, n_trials: int = 100):
+    def __init__(
+        self, trading_session: TradingSession, strategy: Strategy, n_trials: int = 100
+    ):
         self.trading_session = trading_session
+        self.strategy = strategy
         self.n_trials = n_trials
 
-        self.constraints = pydantic_model_to_constraints(
-            self.trading_session.strategy.config
-        )
+        self.constraints = pydantic_model_to_constraints(self.strategy.config)
 
     def optimize(
         self,
         train_fluctuations: Fluctuations,
         val_fluctuations: Fluctuations,
-    ):
+    ) -> SplitResult:
         """Find the parameters that maximizes the trading performances of the strategy on fluctuations.
 
         Args:
@@ -40,43 +71,50 @@ class Optimizer:
         Returns:
             best parameters as a dict
         """
-        objective_scores: list[dict[str : float | int]] = []
+        all_splits_results: list[SplitResult] = []
 
-        def _objective(trial: Trial):
+        def _score(statistics: TradingStatistics):
+            """"""
+            return 1 / np.exp(statistics.sharpe_ratio)
+
+        def _objective(trial: optuna.Trial):
             """Objective function to be minimized or maximized."""
             strategy_parameters = constraints_to_parameters(
                 trial=trial, constraints=self.constraints
             )
-            self.trading_session.strategy.config = (
-                self.trading_session.strategy.config.model_copy(
-                    update=strategy_parameters
-                )
-            )
+            self.strategy.update_config(strategy_parameters)
 
-            train_metrics = TradingStatistics.from_trades(
-                trades=self.trading_session.get_trades_from_fluctuations(
-                    fluctuations=train_fluctuations
+            train_statistics = TradingStatistics.from_trades(
+                trades=self.trading_session.get_trades(
+                    fluctuations=train_fluctuations,
+                    strategy=self.strategy,
                 )[0]
             )
-            val_metrics = TradingStatistics.from_trades(
-                trades=self.trading_session.get_trades_from_fluctuations(
-                    fluctuations=val_fluctuations
+            val_statistics = TradingStatistics.from_trades(
+                trades=self.trading_session.get_trades(
+                    fluctuations=val_fluctuations,
+                    strategy=self.strategy,
                 )[0]
             )
-            objective_scores.append(
-                strategy_parameters
-                | {"train": train_metrics.sharpe_ratio, "val": val_metrics.sharpe_ratio}
+            new_split_results = SplitResult(
+                train_statistics=train_statistics,
+                val_statistics=val_statistics,
+                parameters=strategy_parameters,
+                train_score=_score(train_statistics),
+                val_score=_score(val_statistics),
             )
-            return train_metrics.sharpe_ratio
+            all_splits_results.append(new_split_results)
 
-        study = create_study()
+            return new_split_results.train_score
+
+        study = optuna.create_study(directions=["minimize"])
         study.optimize(_objective, n_trials=self.n_trials)
-        return min(objective_scores, key=lambda d: d["val"])
+        return min(all_splits_results, key=lambda results: results.val_score)
 
-    def find_ccpv_best_parameters(
+    def get_results(
         self,
         split_generator: SplitGenerator,
-    ):
+    ) -> list[SplitResult]:
         """Store best parameters for each split.
 
         Args:
@@ -85,8 +123,9 @@ class Optimizer:
         Returns:
             best parameters for each split as a list of dict
         """
-        best_parameters = []
-        for ii in range(len(split_generator.splits)):
+        ccpv_results = []
+        logger.info("Running CCPV")
+        for ii in tqdm(range(len(split_generator.splits))):
             train_fluctuations, val_fluctuations = split_generator.get_split(ii)
-            best_parameters.append(self.optimize(train_fluctuations, val_fluctuations))
-        return best_parameters
+            ccpv_results.append(self.optimize(train_fluctuations, val_fluctuations))
+        return ccpv_results

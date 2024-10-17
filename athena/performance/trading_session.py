@@ -17,7 +17,7 @@ class TradingSession:
     Args:
         coin: traded coin
         currency: traded currency
-        strategy: strategy to generate signals
+        strategy_name: name of the strategy to be evaluated
         config: session configuration
     """
 
@@ -25,12 +25,12 @@ class TradingSession:
         self,
         coin: Coin,
         currency: Coin,
-        strategy: Strategy,
+        strategy_name: str,
         config: TradingSessionConfig,
     ):
         self.coin = coin
         self.currency = currency
-        self.strategy = strategy
+        self.strategy_name = strategy_name
         self.config = config
         self.portfolio = Portfolio.default(currency=self.currency)
         self.position = None
@@ -52,7 +52,7 @@ class TradingSession:
         )
         if self.portfolio.get_available(self.currency) > money_to_invest:
             self.position = Position.open(
-                strategy_name=self.strategy.name,
+                strategy_name=self.strategy_name,
                 coin=self.coin,
                 currency=self.currency,
                 open_date=candle.close_time,
@@ -95,13 +95,14 @@ class TradingSession:
             self.trades.append(trade)
             self.portfolio.update_from_trade(trade=trade)
 
-    def get_trades_from_fluctuations(
-        self, fluctuations: Fluctuations
+    def get_trades(
+        self, fluctuations: Fluctuations, strategy: Strategy
     ) -> tuple[list[Trade], Portfolio]:
         """Apply the trading strategy on market data and get the trades that would have been made on live trading.
 
         Args:
             fluctuations: collection of candles, mocks a market
+            strategy: the strategy to evaluate
 
         Returns:
             market movement as a list of trades
@@ -109,7 +110,7 @@ class TradingSession:
 
         self._reset_state()
 
-        for candle, signal in self.strategy.get_signals(fluctuations):
+        for candle, signal in strategy.get_signals(fluctuations):
             self._check_position_exit_signal(candle=candle)
             if signal == Signal.BUY:
                 self._buy_signal(candle=candle)

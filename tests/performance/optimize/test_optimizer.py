@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 import pytest
 
+from athena.configs import CCPVConfig
 from athena.core.candle import convert_candles_to_period
 from athena.core.fluctuations import Fluctuations
 from athena.core.types import Signal, Period
@@ -47,10 +48,11 @@ class NewStrategy(Strategy):
 
 def test_optimizer(trading_session):
     optimizer = Optimizer(
-        trading_session=trading_session(NewStrategy(config=NewStrategyModel())),
+        trading_session=trading_session(),
+        strategy=NewStrategy(config=NewStrategyModel()),
         n_trials=2,
     )
-    best_parameters = optimizer.optimize(
+    split_results = optimizer.optimize(
         train_fluctuations=Fluctuations.from_candles(
             convert_candles_to_period(
                 generate_candles(size=1000, period=Period(timeframe="1m")),
@@ -64,20 +66,19 @@ def test_optimizer(trading_session):
             ),
         ),
     )
-    assert "parameter_a" in best_parameters
-    assert "parameter_b" in best_parameters
 
-    assert "train" in best_parameters
-    assert "val" in best_parameters
+    #
+    assert split_results.parameters.keys() == {"parameter_a", "parameter_b"}
 
-    # sharpe ratio could be negative
-    assert best_parameters["train"] > -float("inf")
-    assert best_parameters["val"] > -float("inf")
+    # score is defined in ] 0 ; inf [
+    assert split_results.train_score > 0
+    assert split_results.val_score > 0
 
 
-def test_find_ccpv_best_parameters(trading_session):
+def test_get_results(trading_session):
     optimizer = Optimizer(
-        trading_session=trading_session(NewStrategy(config=NewStrategyModel())),
+        trading_session=trading_session(),
+        strategy=NewStrategy(config=NewStrategyModel()),
         n_trials=2,
     )
     split_generator = create_ccpv_splits(
@@ -87,13 +88,10 @@ def test_find_ccpv_best_parameters(trading_session):
                 target_period=Period(timeframe="1h"),
             ),
         ),
-        test_size=0.2,
-        test_samples=1,
+        config=CCPVConfig.model_validate({"test_size": 0.2, "test_samples": 1}),
     )
 
-    best_parameters = optimizer.find_ccpv_best_parameters(
-        split_generator=split_generator
-    )
+    best_parameters = optimizer.get_results(split_generator=split_generator)
 
     assert (
         len(best_parameters) == len(split_generator.splits) == 5

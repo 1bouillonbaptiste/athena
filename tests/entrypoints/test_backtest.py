@@ -10,6 +10,11 @@ from athena.core.dataset_layout import DatasetLayout
 from athena.core.types import Coin, Period
 from athena.testing.generate import generate_candles
 
+pytestmark = [
+    # Optuna optimization algorithm sometimes fails to iter
+    pytest.mark.filterwarnings("ignore::RuntimeWarning:numpy._core._methods"),
+]
+
 
 @pytest.fixture
 def config():
@@ -32,6 +37,11 @@ def config():
             "stop_loss_pct": 0.01,
             "take_profit_pct": 0.01,
             "position_size": 0.01,
+        },
+        "ccpv": {
+            "test_size": 0.2,
+            "test_samples": 1,
+            "purge_factor": 0.01,
         },
     }
 
